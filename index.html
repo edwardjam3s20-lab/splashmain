@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SplashPass — Unlimited Car Washes. Mombasa.</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0d1b2a;
+    --navy2: #152236;
+    --navy3: #1e3050;
+    --gold: #f5a623;
+    --gold2: #ffc04d;
+    --white: #f0f4f8;
+    --grey: #8a9bb0;
+    --success: #2ecc71;
+    --danger: #e74c3c;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--navy);
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+  }
+
+  h1, h2, h3, h4, .logo-text { font-family: 'Syne', sans-serif; }
+
+  /* ─── UTILS ─── */
+  .hidden { display: none !important; }
+  .btn {
+    display: inline-block;
+    padding: 14px 28px;
+    border-radius: 8px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    text-decoration: none;
+    text-align: center;
+  }
+  .btn-gold { background: var(--gold); color: var(--navy); }
+  .btn-gold:hover { background: var(--gold2); transform: translateY(-1px); }
+  .btn-outline { background: transparent; color: var(--white); border: 1.5px solid var(--grey); }
+  .btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+  .btn-danger { background: var(--danger); color: white; }
+  .btn-sm { padding: 8px 16px; font-size: 13px; }
+  .btn-full { width: 100%; display: block; }
+
+  input, select, textarea {
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--navy3);
+    border: 1.5px solid var(--navy3);
+    border-radius: 8px;
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    outline: none;
+    transition: border 0.2s;
+  }
+  input:focus, select:focus { border-color: var(--gold); }
+  input::placeholder { color: var(--grey); }
+  label { display: block; font-size: 13px; color: var(--grey); margin-bottom: 6px; font-weight: 500; }
+  .form-group { margin-bottom: 18px; }
+  .form-error { color: var(--danger); font-size: 13px; margin-top: 6px; }
+
+  /* ─── NAV ─── */
+  nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 32px;
+    background: var(--navy);
+    border-bottom: 1px solid var(--navy3);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: var(--gold);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    color: var(--navy);
+    font-size: 16px;
+  }
+  .logo-text { font-size: 20px; font-weight: 700; color: var(--white); }
+  .nav-links { display: flex; align-items: center; gap: 12px; }
+
+  /* ─── PAGES ─── */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ─── LANDING ─── */
+  .hero {
+    padding: 80px 32px 60px;
+    max-width: 700px;
+    margin: 0 auto;
+    text-align: center;
+  }
+  .badge {
+    display: inline-block;
+    padding: 6px 16px;
+    background: rgba(245,166,35,0.15);
+    border: 1px solid rgba(245,166,35,0.4);
+    border-radius: 100px;
+    color: var(--gold);
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 28px;
+  }
+  .hero h1 {
+    font-size: clamp(36px, 6vw, 64px);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 20px;
+  }
+  .hero h1 span { color: var(--gold); }
+  .hero p {
+    font-size: 18px;
+    color: var(--grey);
+    line-height: 1.6;
+    margin-bottom: 36px;
+  }
+  .hero-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+  /* FEATURES */
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    padding: 40px 32px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .feature-card {
+    background: var(--navy2);
+    border-radius: 12px;
+    padding: 24px;
+    border: 1px solid var(--navy3);
+  }
+  .feature-icon { font-size: 28px; margin-bottom: 12px; }
+  .feature-card h3 { font-size: 16px; margin-bottom: 8px; }
+  .feature-card p { font-size: 14px; color: var(--grey); line-height: 1.5; }
+
+  /* PRICING */
+  .section-title {
+    text-align: center;
+    padding: 20px 32px 0;
+    font-size: clamp(24px, 4vw, 36px);
+    font-weight: 800;
+  }
+  .section-sub {
+    text-align: center;
+    color: var(--grey);
+    padding: 8px 32px 32px;
+    font-size: 15px;
+  }
+  .plans {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+    padding: 0 32px 60px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .plan-card {
+    background: var(--navy2);
+    border-radius: 16px;
+    padding: 32px;
+    border: 1.5px solid var(--navy3);
+    position: relative;
+    transition: transform 0.2s;
+  }
+  .plan-card:hover { transform: translateY(-4px); }
+  .plan-card.popular { border-color: var(--gold); }
+  .popular-badge {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--gold);
+    color: var(--navy);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 14px;
+    border-radius: 100px;
+    font-family: 'Syne', sans-serif;
+  }
+  .plan-name { font-size: 14px; color: var(--grey); font-weight: 500; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+  .plan-price { font-family: 'Syne', sans-serif; font-size: 42px; font-weight: 800; color: var(--gold); }
+  .plan-price span { font-size: 16px; font-weight: 400; color: var(--grey); }
+  .plan-alt { font-size: 13px; color: var(--grey); margin: 4px 0 20px; }
+  .plan-features { list-style: none; margin-bottom: 24px; }
+  .plan-features li { padding: 8px 0; font-size: 14px; border-bottom: 1px solid var(--navy3); display: flex; align-items: center; gap: 8px; }
+  .plan-features li:last-child { border-bottom: none; }
+  .check { color: var(--gold); font-weight: 700; }
+
+  /* ─── AUTH ─── */
+  .auth-wrap {
+    min-height: calc(100vh - 77px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+  }
+  .auth-card {
+    background: var(--navy2);
+    border-radius: 16px;
+    padding: 40px;
+    width: 100%;
+    max-width: 420px;
+    border: 1px solid var(--navy3);
+  }
+  .auth-card h2 { font-size: 26px; margin-bottom: 6px; }
+  .auth-card p { color: var(--grey); font-size: 14px; margin-bottom: 28px; }
+  .auth-switch { text-align: center; margin-top: 20px; font-size: 14px; color: var(--grey); }
+  .auth-switch a { color: var(--gold); cursor: pointer; text-decoration: none; }
+
+  /* ─── DASHBOARD ─── */
+  .dashboard-wrap {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 32px 20px;
+  }
+  .dash-header { margin-bottom: 32px; }
+  .dash-header h2 { font-size: 28px; font-weight: 800; }
+  .dash-header p { color: var(--grey); font-size: 15px; margin-top: 4px; }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .stat-card {
+    background: var(--navy2);
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid var(--navy3);
+  }
+  .stat-label { font-size: 12px; color: var(--grey); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .stat-value { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; color: var(--gold); }
+  .card {
+    background: var(--navy2);
+    border-radius: 12px;
+    padding: 24px;
+    border: 1px solid var(--navy3);
+    margin-bottom: 20px;
+  }
+  .card h3 { font-size: 18px; margin-bottom: 16px; }
+  .sub-info { display: flex; flex-wrap: wrap; gap: 16px; }
+  .sub-detail { font-size: 14px; }
+  .sub-detail span { color: var(--grey); display: block; font-size: 12px; margin-bottom: 2px; }
+  .status-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .status-active { background: rgba(46,204,113,0.15); color: var(--success); }
+  .status-pending { background: rgba(245,166,35,0.15); color: var(--gold); }
+
+  /* BOOKING */
+  .booking-slots {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .slot {
+    padding: 10px;
+    background: var(--navy3);
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 13px;
+    border: 1.5px solid transparent;
+    transition: all 0.15s;
+  }
+  .slot:hover { border-color: var(--gold); }
+  .slot.selected { border-color: var(--gold); background: rgba(245,166,35,0.15); color: var(--gold); }
+  .slot.booked { opacity: 0.4; cursor: not-allowed; }
+
+  /* BOOKINGS LIST */
+  .booking-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--navy3);
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .booking-item:last-child { border-bottom: none; }
+  .booking-info h4 { font-size: 15px; font-weight: 600; }
+  .booking-info p { font-size: 13px; color: var(--grey); margin-top: 2px; }
+
+  /* OPERATOR */
+  .op-table { width: 100%; border-collapse: collapse; }
+  .op-table th { text-align: left; font-size: 12px; color: var(--grey); text-transform: uppercase; letter-spacing: 1px; padding: 8px 12px; border-bottom: 1px solid var(--navy3); }
+  .op-table td { padding: 12px; font-size: 14px; border-bottom: 1px solid var(--navy3); }
+  .op-table tr:last-child td { border-bottom: none; }
+  .op-tabs { display: flex; gap: 4px; margin-bottom: 20px; }
+  .op-tab {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    border: none;
+    background: var(--navy3);
+    color: var(--grey);
+    transition: all 0.15s;
+  }
+  .op-tab.active { background: var(--gold); color: var(--navy); }
+
+  /* MPESA */
+  .mpesa-steps { counter-reset: step; }
+  .mpesa-step {
+    display: flex;
+    gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--navy3);
+    align-items: flex-start;
+  }
+  .mpesa-step:last-child { border-bottom: none; }
+  .step-num {
+    width: 32px; height: 32px;
+    background: var(--gold);
+    color: var(--navy);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .step-content h4 { font-size: 15px; margin-bottom: 4px; }
+  .step-content p { font-size: 13px; color: var(--grey); line-height: 1.5; }
+  .paybill-box {
+    background: var(--navy3);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 16px 0;
+    text-align: center;
+    border: 1.5px dashed var(--gold);
+  }
+  .paybill-box .big { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; color: var(--gold); }
+  .paybill-box .label { font-size: 12px; color: var(--grey); margin-top: 4px; }
+
+  /* TOAST */
+  #toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--navy2);
+    border: 1px solid var(--navy3);
+    border-left: 4px solid var(--gold);
+    padding: 14px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    z-index: 999;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s;
+    max-width: 300px;
+  }
+  #toast.show { transform: translateY(0); opacity: 1; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  /* FOOTER */
+  footer {
+    text-align: center;
+    padding: 32px;
+    color: var(--grey);
+    font-size: 13px;
+    border-top: 1px solid var(--navy3);
+    margin-top: 40px;
+  }
+
+  @media (max-width: 600px) {
+    nav { padding: 16px 20px; }
+    .hero { padding: 50px 20px 40px; }
+    .features, .plans { padding-left: 20px; padding-right: 20px; }
+    .auth-card { padding: 28px 20px; }
+    .op-table { font-size: 12px; }
+    .op-table th, .op-table td { padding: 8px 6px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo" onclick="showPage('landing')">
+    <div class="logo-icon">S</div>
+    <span class="logo-text">SplashPass</span>
+  </div>
+  <div class="nav-links" id="navLinks">
+    <button class="btn btn-outline btn-sm" onclick="showPage('login')">Log in</button>
+    <button class="btn btn-gold btn-sm" onclick="showPage('register')">Get Started</button>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════
+     LANDING PAGE
+═══════════════════════════════════════════ -->
+<div id="page-landing" class="page active">
+  <div class="hero">
+    <div class="badge">✦ Now available in Mombasa</div>
+    <h1>Unlimited Car Washes.<br><span>One Simple Subscription.</span></h1>
+    <p>Weekly and monthly carwash subscriptions for Kenyan drivers.<br>Pay with M-Pesa. Skip the queue. Keep your car spotless.</p>
+    <div class="hero-btns">
+      <button class="btn btn-gold" onclick="showPage('register')">Start Your Free Week</button>
+      <button class="btn btn-outline" onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'})">View Pricing</button>
+    </div>
+  </div>
+
+  <div class="features">
+    <div class="feature-card">
+      <div class="feature-icon">💧</div>
+      <h3>Unlimited Washes</h3>
+      <p>Book as many washes as your plan allows. No hidden fees.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📱</div>
+      <h3>M-Pesa Payments</h3>
+      <p>Pay via M-Pesa Paybill — fast, easy, Kenyan.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🗓️</div>
+      <h3>Easy Booking</h3>
+      <p>Pick your time slot in seconds. Cancel or reschedule anytime.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🚐</div>
+      <h3>Fleet Plans</h3>
+      <p>Manage 3+ vehicles with one corporate account and monthly reporting.</p>
+    </div>
+  </div>
+
+  <h2 class="section-title" id="pricing">Choose Your Plan</h2>
+  <p class="section-sub">All plans include free booking cancellation and rescheduling</p>
+
+  <div class="plans">
+    <div class="plan-card">
+      <div class="plan-name">Basic</div>
+      <div class="plan-price">KSh 500<span>/week</span></div>
+      <div class="plan-alt">or KSh 2,000/month</div>
+      <ul class="plan-features">
+        <li><span class="check">✓</span> 1 wash per week</li>
+        <li><span class="check">✓</span> Exterior wash</li>
+        <li><span class="check">✓</span> Wheel cleaning</li>
+        <li><span class="check">✓</span> Spot-free rinse</li>
+      </ul>
+      <button class="btn btn-outline btn-full" onclick="selectPlan('Basic', 500)">Get Started</button>
+    </div>
+    <div class="plan-card popular">
+      <div class="popular-badge">Most Popular</div>
+      <div class="plan-name">Premium</div>
+      <div class="plan-price">KSh 800<span>/week</span></div>
+      <div class="plan-alt">or KSh 3,000/month</div>
+      <ul class="plan-features">
+        <li><span class="check">✓</span> 2 washes per week</li>
+        <li><span class="check">✓</span> Full interior + exterior</li>
+        <li><span class="check">✓</span> Tyre shine</li>
+        <li><span class="check">✓</span> Dashboard wipe</li>
+        <li><span class="check">✓</span> Priority booking</li>
+      </ul>
+      <button class="btn btn-gold btn-full" onclick="selectPlan('Premium', 800)">Get Started</button>
+    </div>
+    <div class="plan-card">
+      <div class="plan-name">Fleet</div>
+      <div class="plan-price">KSh 2,000<span>/week</span></div>
+      <div class="plan-alt">or KSh 7,000/month</div>
+      <ul class="plan-features">
+        <li><span class="check">✓</span> Unlimited washes (3+ vehicles)</li>
+        <li><span class="check">✓</span> Full service</li>
+        <li><span class="check">✓</span> Priority booking</li>
+        <li><span class="check">✓</span> Dedicated account manager</li>
+        <li><span class="check">✓</span> Flexible scheduling</li>
+        <li><span class="check">✓</span> Monthly reporting</li>
+      </ul>
+      <button class="btn btn-outline btn-full" onclick="selectPlan('Fleet', 2000)">Get Started</button>
+    </div>
+  </div>
+
+  <footer>
+    <strong style="font-family:'Syne',sans-serif">SplashPass</strong> · Mombasa, Kenya · info@splashpass.co.ke<br>
+    <span style="margin-top:6px;display:block">© 2026 SplashPass. All rights reserved.</span>
+  </footer>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     REGISTER
+═══════════════════════════════════════════ -->
+<div id="page-register" class="page">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <h2>Create your account</h2>
+      <p>Start your carwash subscription today</p>
+      <div class="form-group">
+        <label>Full name</label>
+        <input type="text" id="reg-name" placeholder="John Kamau">
+      </div>
+      <div class="form-group">
+        <label>Email address</label>
+        <input type="email" id="reg-email" placeholder="you@example.com">
+      </div>
+      <div class="form-group">
+        <label>Phone number (M-Pesa)</label>
+        <input type="tel" id="reg-phone" placeholder="+254 712 345 678">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="reg-pass" placeholder="At least 6 characters">
+      </div>
+      <div class="form-group">
+        <label>Confirm password</label>
+        <input type="password" id="reg-pass2" placeholder="Repeat your password">
+      </div>
+      <div id="reg-error" class="form-error"></div>
+      <button class="btn btn-gold btn-full" id="reg-btn" onclick="register()">Create account</button>
+      <div class="auth-switch">Already have an account? <a onclick="showPage('login')">Log in</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     LOGIN
+═══════════════════════════════════════════ -->
+<div id="page-login" class="page">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <h2>Welcome back</h2>
+      <p>Log in to manage your subscription</p>
+      <div class="form-group">
+        <label>Email address</label>
+        <input type="email" id="login-email" placeholder="you@example.com">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-pass" placeholder="Your password">
+      </div>
+      <div id="login-error" class="form-error"></div>
+      <button class="btn btn-gold btn-full" id="login-btn" onclick="login()">Log in</button>
+      <div style="margin-top:12px">
+        <button class="btn btn-outline btn-full btn-sm" onclick="operatorLogin()">🔧 Operator Login</button>
+      </div>
+      <div class="auth-switch">No account? <a onclick="showPage('register')">Sign up</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     CUSTOMER DASHBOARD
+═══════════════════════════════════════════ -->
+<div id="page-dashboard" class="page">
+  <div class="dashboard-wrap">
+    <div class="dash-header">
+      <h2>My Dashboard</h2>
+      <p id="dash-greeting">Welcome back!</p>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Plan</div>
+        <div class="stat-value" id="stat-plan" style="font-size:20px">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Bookings</div>
+        <div class="stat-value" id="stat-bookings">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Status</div>
+        <div class="stat-value" style="font-size:16px"><span class="status-badge status-active" id="stat-status">Active</span></div>
+      </div>
+    </div>
+
+    <!-- Subscription Info -->
+    <div class="card" id="sub-card">
+      <h3>My Subscription</h3>
+      <div id="no-sub">
+        <p style="color:var(--grey);margin-bottom:16px">You don't have an active subscription yet.</p>
+        <button class="btn btn-gold btn-sm" onclick="showPage('landing')">Choose a Plan</button>
+      </div>
+      <div id="has-sub" class="hidden">
+        <div class="sub-info">
+          <div class="sub-detail"><span>Plan</span><strong id="sub-plan-name">—</strong></div>
+          <div class="sub-detail"><span>Price</span><strong id="sub-price">—</strong></div>
+          <div class="sub-detail"><span>Started</span><strong id="sub-start">—</strong></div>
+          <div class="sub-detail"><span>Renews</span><strong id="sub-renew">—</strong></div>
+        </div>
+        <div style="margin-top:16px">
+          <button class="btn btn-gold btn-sm" onclick="showPage('mpesa')">Pay via M-Pesa</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Book a Wash -->
+    <div class="card">
+      <h3>Book a Wash</h3>
+      <div class="form-group">
+        <label>Select date</label>
+        <input type="date" id="book-date" onchange="renderSlots()">
+      </div>
+      <div class="form-group">
+        <label>Select time slot</label>
+        <div class="booking-slots" id="time-slots"></div>
+      </div>
+      <div class="form-group">
+        <label>Location / address</label>
+        <input type="text" id="book-location" placeholder="e.g. Nyali, Mombasa">
+      </div>
+      <button class="btn btn-gold" id="book-btn" onclick="bookWash()">Confirm Booking</button>
+    </div>
+
+    <!-- My Bookings -->
+    <div class="card">
+      <h3>My Bookings</h3>
+      <div id="bookings-list"><p style="color:var(--grey);font-size:14px">No bookings yet.</p></div>
+    </div>
+
+    <button class="btn btn-outline btn-sm" onclick="logout()">Log out</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     MPESA PAYMENT
+═══════════════════════════════════════════ -->
+<div id="page-mpesa" class="page">
+  <div class="dashboard-wrap">
+    <div class="dash-header">
+      <h2>Pay via M-Pesa</h2>
+      <p>Follow these steps to activate your subscription</p>
+    </div>
+    <div class="card">
+      <div class="paybill-box">
+        <div class="label">Paybill Number</div>
+        <div class="big">522522</div>
+        <div class="label" style="margin-top:8px">Account: SPLASH + your phone number</div>
+      </div>
+      <div class="mpesa-steps">
+        <div class="mpesa-step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>Go to M-Pesa</h4>
+            <p>Open M-Pesa on your phone and select <strong>Lipa na M-Pesa</strong></p>
+          </div>
+        </div>
+        <div class="mpesa-step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>Select Pay Bill</h4>
+            <p>Enter Paybill number <strong>522522</strong></p>
+          </div>
+        </div>
+        <div class="mpesa-step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>Enter Account Number</h4>
+            <p>Type <strong>SPLASH</strong> followed by your phone number e.g. SPLASH0712345678</p>
+          </div>
+        </div>
+        <div class="mpesa-step">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <h4>Enter Amount</h4>
+            <p>Enter your plan amount: Basic KSh 500 · Premium KSh 800 · Fleet KSh 2,000</p>
+          </div>
+        </div>
+        <div class="mpesa-step">
+          <div class="step-num">5</div>
+          <div class="step-content">
+            <h4>Confirm & Send</h4>
+            <p>Enter your M-Pesa PIN and confirm. You'll receive an SMS confirmation.</p>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:24px;display:flex;gap:12px;flex-wrap:wrap">
+        <button class="btn btn-gold" id="pay-btn" onclick="confirmPayment()">I've Made Payment</button>
+        <button class="btn btn-outline" onclick="showPage('dashboard')">Back to Dashboard</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     OPERATOR DASHBOARD
+═══════════════════════════════════════════ -->
+<div id="page-operator" class="page">
+  <div class="dashboard-wrap">
+    <div class="dash-header">
+      <h2>Operator Dashboard</h2>
+      <p>Manage bookings and subscribers</p>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Subscribers</div>
+        <div class="stat-value" id="op-total-subs">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Today's Bookings</div>
+        <div class="stat-value" id="op-today">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Revenue (Month)</div>
+        <div class="stat-value" id="op-revenue" style="font-size:18px">KSh 0</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="op-tabs">
+        <button class="op-tab active" onclick="opTab('bookings',this)">Bookings</button>
+        <button class="op-tab" onclick="opTab('subscribers',this)">Subscribers</button>
+      </div>
+
+      <div id="op-bookings">
+        <table class="op-table">
+          <thead>
+            <tr>
+              <th>Customer</th>
+              <th>Date</th>
+              <th>Time</th>
+              <th>Location</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="op-bookings-body">
+            <tr><td colspan="6" style="color:var(--grey);text-align:center;padding:20px">No bookings yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div id="op-subscribers" class="hidden">
+        <table class="op-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Phone</th>
+              <th>Plan</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="op-subs-body">
+            <tr><td colspan="4" style="color:var(--grey);text-align:center;padding:20px">No subscribers yet</td></tr>
+          </tbody>
+        </<script>
+// ─── CONFIG ───────────────────────────────────────
+const SUPABASE_URL = 'https://msdvyiqjoogafzyaoycg.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_N_g24aU7TLHLNeu72gnfeg_1d7OleFW';
+const OPERATOR = { email: 'operator@splashpass.co.ke', password: 'splash2026' };
+const SLOTS = ['7:00 AM','8:00 AM','9:00 AM','10:00 AM','11:00 AM','12:00 PM','1:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM'];
+
+// ─── STATE ───────────────────────────────────────
+let currentUser = null;
+let selectedSlot = null;
+let selectedPlanData = null;
+
+// ─── SUPABASE HELPERS ────────────────────────────
+async function sbFetch(path, options = {}) {
+  const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
+    ...options,
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': options.prefer || 'return=representation',
+      ...(options.headers || {})
+    }
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || 'Request failed');
+  }
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+
+async function getUserByEmail(email) {
+  const rows = await sbFetch('profiles?email=eq.' + encodeURIComponent(email) + '&select=*');
+  return rows && rows[0] ? rows[0] : null;
+}
+async function createUser(data) {
+  return await sbFetch('profiles', { method: 'POST', body: JSON.stringify(data), prefer: 'return=representation' });
+}
+async function updateUser(email, data) {
+  return await sbFetch('profiles?email=eq.' + encodeURIComponent(email), { method: 'PATCH', body: JSON.stringify(data), prefer: 'return=representation' });
+}
+async function getAllUsers() {
+  return await sbFetch('profiles?select=*&order=created_at.desc');
+}
+async function getBookingsByDate(date) {
+  return await sbFetch('bookings?date=eq.' + encodeURIComponent(date) + '&select=*');
+}
+async function getBookingsByEmail(email) {
+  return await sbFetch('bookings?user_email=eq.' + encodeURIComponent(email) + '&select=*&order=created_at.desc');
+}
+async function getAllBookings() {
+  return await sbFetch('bookings?select=*&order=created_at.desc');
+}
+async function createBooking(data) {
+  return await sbFetch('bookings', { method: 'POST', body: JSON.stringify(data), prefer: 'return=representation' });
+}
+async function updateBooking(id, data) {
+  return await sbFetch('bookings?id=eq.' + id, { method: 'PATCH', body: JSON.stringify(data), prefer: 'return=representation' });
+}
+async function deleteBooking(id) {
+  return await sbFetch('bookings?id=eq.' + id, { method: 'DELETE', prefer: 'return=minimal' });
+}
+
+// ─── UI HELPERS ──────────────────────────────────
+function toast(msg, isError = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.borderLeftColor = isError ? 'var(--danger)' : 'var(--gold)';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+function setBtn(id, loading, label) {
+  const b = document.getElementById(id);
+  if (!b) return;
+  b.disabled = loading;
+  b.innerHTML = loading ? '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px"></span>Wait...' : label;
+}
+
+// ─── NAVIGATION ──────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  window.scrollTo(0, 0);
+  const nav = document.getElementById('navLinks');
+  if (currentUser && currentUser.role === 'customer') {
+    nav.innerHTML = `<span style="color:var(--grey);font-size:14px">${currentUser.name.split(' ')[0]}</span>
+      <button class="btn btn-gold btn-sm" onclick="showPage('dashboard')">Dashboard</button>`;
+  } else if (currentUser && currentUser.role === 'operator') {
+    nav.innerHTML = `<span style="color:var(--grey);font-size:14px">Operator</span>
+      <button class="btn btn-gold btn-sm" onclick="showPage('operator')">Dashboard</button>`;
+  } else {
+    nav.innerHTML = `<button class="btn btn-outline btn-sm" onclick="showPage('login')">Log in</button>
+      <button class="btn btn-gold btn-sm" onclick="showPage('register')">Get Started</button>`;
+  }
+  if (name === 'dashboard') renderDashboard();
+  if (name === 'operator') renderOperator();
+}
+
+// ─── AUTH ─────────────────────────────────────────
+async function register() {
+  const name = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim().toLowerCase();
+  const phone = document.getElementById('reg-phone').value.trim();
+  const pass = document.getElementById('reg-pass').value;
+  const pass2 = document.getElementById('reg-pass2').value;
+  const err = document.getElementById('reg-error');
+  if (!name || !email || !phone || !pass) { err.textContent = 'Please fill in all fields.'; return; }
+  if (pass.length < 6) { err.textContent = 'Password must be at least 6 characters.'; return; }
+  if (pass !== pass2) { err.textContent = 'Passwords do not match.'; return; }
+  setBtn('reg-btn', true, 'Create account');
+  try {
+    const existing = await getUserByEmail(email);
+    if (existing) { err.textContent = 'An account with this email already exists.'; return; }
+    const result = await createUser({
+      name, email, phone, password: pass, role: 'customer',
+      plan: selectedPlanData ? selectedPlanData.name : null,
+      plan_price: selectedPlanData ? selectedPlanData.price : null,
+      sub_start: selectedPlanData ? new Date().toISOString() : null,
+      sub_status: 'pending'
+    });
+    currentUser = result[0];
+    err.textContent = '';
+    toast('Account created! Welcome to SplashPass.');
+    showPage('dashboard');
+    if (selectedPlanData) setTimeout(() => showPage('mpesa'), 1000);
+  } catch(e) { err.textContent = 'Error: ' + e.message; }
+  finally { setBtn('reg-btn', false, 'Create account'); }
+}
+
+async function login() {
+  const email = document.getElementById('login-email').value.trim().toLowerCase();
+  const pass = document.getElementById('login-pass').value;
+  const err = document.getElementById('login-error');
+  setBtn('login-btn', true, 'Log in');
+  try {
+    const user = await getUserByEmail(email);
+    if (!user || user.password !== pass) { err.textContent = 'Invalid email or password.'; return; }
+    currentUser = user;
+    err.textContent = '';
+    toast('Welcome back, ' + user.name.split(' ')[0] + '!');
+    showPage('dashboard');
+  } catch(e) { err.textContent = 'Error: ' + e.message; }
+  finally { setBtn('login-btn', false, 'Log in'); }
+}
+
+function operatorLogin() {
+  const email = document.getElementById('login-email').value.trim().toLowerCase();
+  const pass = document.getElementById('login-pass').value;
+  const err = document.getElementById('login-error');
+  if (email === OPERATOR.email && pass === OPERATOR.password) {
+    currentUser = { name: 'Operator', role: 'operator' };
+    toast('Welcome, Operator!');
+    showPage('operator');
+  } else { err.textContent = 'Invalid operator credentials.'; }
+}
+
+function logout() {
+  currentUser = null; selectedPlanData = null;
+  toast('Logged out successfully.');
+  showPage('landing');
+}
+
+function selectPlan(name, price) {
+  selectedPlanData = { name, price };
+  showPage('register');
+}
+
+// ─── DASHBOARD ────────────────────────────────────
+async function renderDashboard() {
+  if (!currentUser) return;
+  document.getElementById('dash-greeting').textContent = 'Welcome back, ' + currentUser.name + '!';
+  document.getElementById('stat-plan').textContent = currentUser.plan || 'None';
+  if (currentUser.plan) {
+    document.getElementById('no-sub').classList.add('hidden');
+    document.getElementById('has-sub').classList.remove('hidden');
+    document.getElementById('sub-plan-name').textContent = currentUser.plan;
+    document.getElementById('sub-price').textContent = 'KSh ' + currentUser.plan_price + '/week';
+    const start = new Date(currentUser.sub_start);
+    document.getElementById('sub-start').textContent = start.toLocaleDateString('en-KE');
+    const renew = new Date(start); renew.setDate(renew.getDate() + 7);
+    document.getElementById('sub-renew').textContent = renew.toLocaleDateString('en-KE');
+    document.getElementById('stat-status').textContent = currentUser.sub_status === 'active' ? 'Active' : 'Pending';
+    document.getElementById('stat-status').className = 'status-badge ' + (currentUser.sub_status === 'active' ? 'status-active' : 'status-pending');
+  }
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('book-date').min = today;
+  document.getElementById('book-date').value = today;
+  await renderSlots();
+  await renderMyBookings();
+}
+
+async function renderSlots() {
+  const date = document.getElementById('book-date').value;
+  const container = document.getElementById('time-slots');
+  container.innerHTML = '<p style="color:var(--grey);font-size:13px">Loading...</p>';
+  try {
+    const bookings = await getBookingsByDate(date);
+    const bookedSlots = bookings.map(b => b.time);
+    container.innerHTML = SLOTS.map(s => {
+      const isBooked = bookedSlots.includes(s);
+      const isSel = selectedSlot === s;
+      return `<div class="slot ${isBooked?'booked':''} ${isSel?'selected':''}" onclick="${isBooked?'':"selectSlot('" + s + "')"}">${s}</div>`;
+    }).join('');
+  } catch(e) { container.innerHTML = '<p style="color:var(--danger);font-size:13px">Could not load slots.</p>'; }
+}
+
+function selectSlot(s) { selectedSlot = s; renderSlots(); }
+
+async function bookWash() {
+  if (!currentUser.plan) { toast('Please choose a plan first.', true); return; }
+  const date = document.getElementById('book-date').value;
+  const location = document.getElementById('book-location').value.trim();
+  if (!selectedSlot) { toast('Please select a time slot.', true); return; }
+  if (!location) { toast('Please enter your location.', true); return; }
+  setBtn('book-btn', true, 'Confirm Booking');
+  try {
+    const slot = selectedSlot;
+    await createBooking({ user_email: currentUser.email, user_name: currentUser.name, date, time: slot, location, status: 'confirmed', plan: currentUser.plan });
+    selectedSlot = null;
+    toast('Wash booked for ' + date + ' at ' + slot + '!');
+    await renderSlots();
+    await renderMyBookings();
+  } catch(e) { toast('Booking failed: ' + e.message, true); }
+  finally { setBtn('book-btn', false, 'Confirm Booking'); }
+}
+
+async function renderMyBookings() {
+  const container = document.getElementById('bookings-list');
+  try {
+    const myBookings = await getBookingsByEmail(currentUser.email);
+    document.getElementById('stat-bookings').textContent = myBookings.length;
+    if (!myBookings.length) { container.innerHTML = '<p style="color:var(--grey);font-size:14px">No bookings yet.</p>'; return; }
+    container.innerHTML = myBookings.map(b => `
+      <div class="booking-item">
+        <div class="booking-info"><h4>${b.date} · ${b.time}</h4><p>${b.location} · ${b.plan} plan</p></div>
+        <span class="status-badge ${b.status==='completed'?'status-active':'status-pending'}">${b.status}</span>
+      </div>`).join('');
+  } catch(e) { container.innerHTML = '<p style="color:var(--danger);font-size:14px">Could not load bookings.</p>'; }
+}
+
+async function confirmPayment() {
+  setBtn('pay-btn', true, "I've Made Payment");
+  try {
+    await updateUser(currentUser.email, { sub_status: 'active' });
+    currentUser.sub_status = 'active';
+    toast('Payment confirmed! Your subscription is now active. 🎉');
+    showPage('dashboard');
+  } catch(e) { toast('Error: ' + e.message, true); }
+  finally { setBtn('pay-btn', false, "I've Made Payment"); }
+}
+
+// ─── OPERATOR ────────────────────────────────────
+async function renderOperator() {
+  try {
+    const [users, bookings] = await Promise.all([getAllUsers(), getAllBookings()]);
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('op-total-subs').textContent = users.length;
+    document.getElementById('op-today').textContent = bookings.filter(b => b.date === today).length;
+    const revenue = users.reduce((sum, u) => sum + (u.plan_price ? parseInt(u.plan_price) * 4 : 0), 0);
+    document.getElementById('op-revenue').textContent = 'KSh ' + revenue.toLocaleString();
+    const tbody = document.getElementById('op-bookings-body');
+    tbody.innerHTML = !bookings.length
+      ? '<tr><td colspan="6" style="color:var(--grey);text-align:center;padding:20px">No bookings yet</td></tr>'
+      : bookings.map(b => `<tr>
+          <td>${b.user_name}</td><td>${b.date}</td><td>${b.time}</td><td>${b.location}</td>
+          <td><span class="status-badge ${b.status==='completed'?'status-active':'status-pending'}">${b.status}</span></td>
+          <td>
+            ${b.status!=='completed'?`<button class="btn btn-gold btn-sm" onclick="markComplete(${b.id})">Done</button>`:''}
+            <button class="btn btn-danger btn-sm" onclick="cancelBooking(${b.id})" style="margin-left:4px">Cancel</button>
+          </td></tr>`).join('');
+    const sBody = document.getElementById('op-subs-body');
+    sBody.innerHTML = !users.length
+      ? '<tr><td colspan="4" style="color:var(--grey);text-align:center;padding:20px">No subscribers yet</td></tr>'
+      : users.map(u => `<tr>
+          <td>${u.name}</td><td>${u.phone||'—'}</td><td>${u.plan||'—'}</td>
+          <td><span class="status-badge ${u.sub_status==='active'?'status-active':'status-pending'}">${u.sub_status||'pending'}</span></td>
+        </tr>`).join('');
+  } catch(e) { toast('Error loading data: ' + e.message, true); }
+}
+
+async function markComplete(id) {
+  try { await updateBooking(id, { status: 'completed' }); toast('Marked complete.'); renderOperator(); }
+  catch(e) { toast('Error: ' + e.message, true); }
+}
+async function cancelBooking(id) {
+  try { await deleteBooking(id); toast('Booking cancelled.'); renderOperator(); }
+  catch(e) { toast('Error: ' + e.message, true); }
+}
+
+function opTab(tab, el) {
+  document.querySelectorAll('.op-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('op-bookings').classList.toggle('hidden', tab !== 'bookings');
+  document.getElementById('op-subscribers').classList.toggle('hidden', tab !== 'subscribers');
+}
+</script>
+</body>
+</html>
