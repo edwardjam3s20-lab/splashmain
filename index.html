@@ -377,8 +377,6 @@
     max-width: 300px;
   }
   #toast.show { transform: translateY(0); opacity: 1; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
   /* FOOTER */
   footer {
@@ -759,19 +757,26 @@
           <tbody id="op-subs-body">
             <tr><td colspan="4" style="color:var(--grey);text-align:center;padding:20px">No subscribers yet</td></tr>
           </tbody>
-        </<script>
-// ─── CONFIG ───────────────────────────────────────
+        </table>
+      </div>
+    </div>
+    <button class="btn btn-outline btn-sm" onclick="logout()">Log out</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
 const SUPABASE_URL = 'https://msdvyiqjoogafzyaoycg.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_N_g24aU7TLHLNeu72gnfeg_1d7OleFW';
 const OPERATOR = { email: 'operator@splashpass.co.ke', password: 'splash2026' };
 const SLOTS = ['7:00 AM','8:00 AM','9:00 AM','10:00 AM','11:00 AM','12:00 PM','1:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM'];
 
-// ─── STATE ───────────────────────────────────────
 let currentUser = null;
 let selectedSlot = null;
 let selectedPlanData = null;
 
-// ─── SUPABASE HELPERS ────────────────────────────
 async function sbFetch(path, options = {}) {
   const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
     ...options,
@@ -823,7 +828,6 @@ async function deleteBooking(id) {
   return await sbFetch('bookings?id=eq.' + id, { method: 'DELETE', prefer: 'return=minimal' });
 }
 
-// ─── UI HELPERS ──────────────────────────────────
 function toast(msg, isError = false) {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -831,34 +835,33 @@ function toast(msg, isError = false) {
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 3500);
 }
+
 function setBtn(id, loading, label) {
   const b = document.getElementById(id);
   if (!b) return;
   b.disabled = loading;
-  b.innerHTML = loading ? '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px"></span>Wait...' : label;
+  b.innerHTML = loading ? 'Please wait...' : label;
 }
 
-// ─── NAVIGATION ──────────────────────────────────
 function showPage(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
   window.scrollTo(0, 0);
   const nav = document.getElementById('navLinks');
   if (currentUser && currentUser.role === 'customer') {
-    nav.innerHTML = `<span style="color:var(--grey);font-size:14px">${currentUser.name.split(' ')[0]}</span>
-      <button class="btn btn-gold btn-sm" onclick="showPage('dashboard')">Dashboard</button>`;
+    nav.innerHTML = '<span style="color:var(--grey);font-size:14px">' + currentUser.name.split(' ')[0] + '</span>' +
+      '<button class="btn btn-gold btn-sm" onclick="showPage('dashboard')">Dashboard</button>';
   } else if (currentUser && currentUser.role === 'operator') {
-    nav.innerHTML = `<span style="color:var(--grey);font-size:14px">Operator</span>
-      <button class="btn btn-gold btn-sm" onclick="showPage('operator')">Dashboard</button>`;
+    nav.innerHTML = '<span style="color:var(--grey);font-size:14px">Operator</span>' +
+      '<button class="btn btn-gold btn-sm" onclick="showPage('operator')">Dashboard</button>';
   } else {
-    nav.innerHTML = `<button class="btn btn-outline btn-sm" onclick="showPage('login')">Log in</button>
-      <button class="btn btn-gold btn-sm" onclick="showPage('register')">Get Started</button>`;
+    nav.innerHTML = '<button class="btn btn-outline btn-sm" onclick="showPage('login')">Log in</button>' +
+      '<button class="btn btn-gold btn-sm" onclick="showPage('register')">Get Started</button>';
   }
   if (name === 'dashboard') renderDashboard();
   if (name === 'operator') renderOperator();
 }
 
-// ─── AUTH ─────────────────────────────────────────
 async function register() {
   const name = document.getElementById('reg-name').value.trim();
   const email = document.getElementById('reg-email').value.trim().toLowerCase();
@@ -884,7 +887,7 @@ async function register() {
     err.textContent = '';
     toast('Account created! Welcome to SplashPass.');
     showPage('dashboard');
-    if (selectedPlanData) setTimeout(() => showPage('mpesa'), 1000);
+    if (selectedPlanData) setTimeout(function() { showPage('mpesa'); }, 1000);
   } catch(e) { err.textContent = 'Error: ' + e.message; }
   finally { setBtn('reg-btn', false, 'Create account'); }
 }
@@ -927,7 +930,6 @@ function selectPlan(name, price) {
   showPage('register');
 }
 
-// ─── DASHBOARD ────────────────────────────────────
 async function renderDashboard() {
   if (!currentUser) return;
   document.getElementById('dash-greeting').textContent = 'Welcome back, ' + currentUser.name + '!';
@@ -957,11 +959,13 @@ async function renderSlots() {
   container.innerHTML = '<p style="color:var(--grey);font-size:13px">Loading...</p>';
   try {
     const bookings = await getBookingsByDate(date);
-    const bookedSlots = bookings.map(b => b.time);
-    container.innerHTML = SLOTS.map(s => {
+    const bookedSlots = bookings.map(function(b) { return b.time; });
+    container.innerHTML = SLOTS.map(function(s) {
       const isBooked = bookedSlots.includes(s);
       const isSel = selectedSlot === s;
-      return `<div class="slot ${isBooked?'booked':''} ${isSel?'selected':''}" onclick="${isBooked?'':"selectSlot('" + s + "')"}">${s}</div>`;
+      const cls = 'slot' + (isBooked ? ' booked' : '') + (isSel ? ' selected' : '');
+      const click = isBooked ? '' : 'selectSlot('' + s + '')';
+      return '<div class="' + cls + '" onclick="' + click + '">' + s + '</div>';
     }).join('');
   } catch(e) { container.innerHTML = '<p style="color:var(--danger);font-size:13px">Could not load slots.</p>'; }
 }
@@ -977,7 +981,7 @@ async function bookWash() {
   setBtn('book-btn', true, 'Confirm Booking');
   try {
     const slot = selectedSlot;
-    await createBooking({ user_email: currentUser.email, user_name: currentUser.name, date, time: slot, location, status: 'confirmed', plan: currentUser.plan });
+    await createBooking({ user_email: currentUser.email, user_name: currentUser.name, date: date, time: slot, location: location, status: 'confirmed', plan: currentUser.plan });
     selectedSlot = null;
     toast('Wash booked for ' + date + ' at ' + slot + '!');
     await renderSlots();
@@ -992,11 +996,10 @@ async function renderMyBookings() {
     const myBookings = await getBookingsByEmail(currentUser.email);
     document.getElementById('stat-bookings').textContent = myBookings.length;
     if (!myBookings.length) { container.innerHTML = '<p style="color:var(--grey);font-size:14px">No bookings yet.</p>'; return; }
-    container.innerHTML = myBookings.map(b => `
-      <div class="booking-item">
-        <div class="booking-info"><h4>${b.date} · ${b.time}</h4><p>${b.location} · ${b.plan} plan</p></div>
-        <span class="status-badge ${b.status==='completed'?'status-active':'status-pending'}">${b.status}</span>
-      </div>`).join('');
+    container.innerHTML = myBookings.map(function(b) {
+      return '<div class="booking-item"><div class="booking-info"><h4>' + b.date + ' · ' + b.time + '</h4><p>' + b.location + ' · ' + b.plan + ' plan</p></div>' +
+        '<span class="status-badge ' + (b.status === 'completed' ? 'status-active' : 'status-pending') + '">' + b.status + '</span></div>';
+    }).join('');
   } catch(e) { container.innerHTML = '<p style="color:var(--danger);font-size:14px">Could not load bookings.</p>'; }
 }
 
@@ -1005,38 +1008,41 @@ async function confirmPayment() {
   try {
     await updateUser(currentUser.email, { sub_status: 'active' });
     currentUser.sub_status = 'active';
-    toast('Payment confirmed! Your subscription is now active. 🎉');
+    toast('Payment confirmed! Your subscription is now active.');
     showPage('dashboard');
   } catch(e) { toast('Error: ' + e.message, true); }
   finally { setBtn('pay-btn', false, "I've Made Payment"); }
 }
 
-// ─── OPERATOR ────────────────────────────────────
 async function renderOperator() {
   try {
-    const [users, bookings] = await Promise.all([getAllUsers(), getAllBookings()]);
+    const users = await getAllUsers();
+    const bookings = await getAllBookings();
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('op-total-subs').textContent = users.length;
-    document.getElementById('op-today').textContent = bookings.filter(b => b.date === today).length;
-    const revenue = users.reduce((sum, u) => sum + (u.plan_price ? parseInt(u.plan_price) * 4 : 0), 0);
+    document.getElementById('op-today').textContent = bookings.filter(function(b) { return b.date === today; }).length;
+    const revenue = users.reduce(function(sum, u) { return sum + (u.plan_price ? parseInt(u.plan_price) * 4 : 0); }, 0);
     document.getElementById('op-revenue').textContent = 'KSh ' + revenue.toLocaleString();
     const tbody = document.getElementById('op-bookings-body');
-    tbody.innerHTML = !bookings.length
-      ? '<tr><td colspan="6" style="color:var(--grey);text-align:center;padding:20px">No bookings yet</td></tr>'
-      : bookings.map(b => `<tr>
-          <td>${b.user_name}</td><td>${b.date}</td><td>${b.time}</td><td>${b.location}</td>
-          <td><span class="status-badge ${b.status==='completed'?'status-active':'status-pending'}">${b.status}</span></td>
-          <td>
-            ${b.status!=='completed'?`<button class="btn btn-gold btn-sm" onclick="markComplete(${b.id})">Done</button>`:''}
-            <button class="btn btn-danger btn-sm" onclick="cancelBooking(${b.id})" style="margin-left:4px">Cancel</button>
-          </td></tr>`).join('');
+    if (!bookings.length) {
+      tbody.innerHTML = '<tr><td colspan="6" style="color:var(--grey);text-align:center;padding:20px">No bookings yet</td></tr>';
+    } else {
+      tbody.innerHTML = bookings.map(function(b) {
+        return '<tr><td>' + b.user_name + '</td><td>' + b.date + '</td><td>' + b.time + '</td><td>' + b.location + '</td>' +
+          '<td><span class="status-badge ' + (b.status === 'completed' ? 'status-active' : 'status-pending') + '">' + b.status + '</span></td>' +
+          '<td>' + (b.status !== 'completed' ? '<button class="btn btn-gold btn-sm" onclick="markComplete(' + b.id + ')">Done</button>' : '') +
+          '<button class="btn btn-danger btn-sm" onclick="cancelBooking(' + b.id + ')" style="margin-left:4px">Cancel</button></td></tr>';
+      }).join('');
+    }
     const sBody = document.getElementById('op-subs-body');
-    sBody.innerHTML = !users.length
-      ? '<tr><td colspan="4" style="color:var(--grey);text-align:center;padding:20px">No subscribers yet</td></tr>'
-      : users.map(u => `<tr>
-          <td>${u.name}</td><td>${u.phone||'—'}</td><td>${u.plan||'—'}</td>
-          <td><span class="status-badge ${u.sub_status==='active'?'status-active':'status-pending'}">${u.sub_status||'pending'}</span></td>
-        </tr>`).join('');
+    if (!users.length) {
+      sBody.innerHTML = '<tr><td colspan="4" style="color:var(--grey);text-align:center;padding:20px">No subscribers yet</td></tr>';
+    } else {
+      sBody.innerHTML = users.map(function(u) {
+        return '<tr><td>' + u.name + '</td><td>' + (u.phone || '—') + '</td><td>' + (u.plan || '—') + '</td>' +
+          '<td><span class="status-badge ' + (u.sub_status === 'active' ? 'status-active' : 'status-pending') + '">' + (u.sub_status || 'pending') + '</span></td></tr>';
+      }).join('');
+    }
   } catch(e) { toast('Error loading data: ' + e.message, true); }
 }
 
@@ -1044,13 +1050,14 @@ async function markComplete(id) {
   try { await updateBooking(id, { status: 'completed' }); toast('Marked complete.'); renderOperator(); }
   catch(e) { toast('Error: ' + e.message, true); }
 }
+
 async function cancelBooking(id) {
   try { await deleteBooking(id); toast('Booking cancelled.'); renderOperator(); }
   catch(e) { toast('Error: ' + e.message, true); }
 }
 
 function opTab(tab, el) {
-  document.querySelectorAll('.op-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.op-tab').forEach(function(t) { t.classList.remove('active'); });
   el.classList.add('active');
   document.getElementById('op-bookings').classList.toggle('hidden', tab !== 'bookings');
   document.getElementById('op-subscribers').classList.toggle('hidden', tab !== 'subscribers');
