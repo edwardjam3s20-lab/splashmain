@@ -925,9 +925,28 @@ function logout() {
   showPage('landing');
 }
 
-function selectPlan(name, price) {
-  selectedPlanData = { name, price };
-  showPage('register');
+async function selectPlan(name, price) {
+  selectedPlanData = { name: name, price: price };
+  if (currentUser && currentUser.role === 'customer') {
+    try {
+      await updateUser(currentUser.email, {
+        plan: name,
+        plan_price: price,
+        sub_start: new Date().toISOString(),
+        sub_status: 'pending'
+      });
+      currentUser.plan = name;
+      currentUser.plan_price = price;
+      currentUser.sub_start = new Date().toISOString();
+      currentUser.sub_status = 'pending';
+      toast('Plan selected: ' + name + '. Complete payment to activate.');
+      showPage('mpesa');
+    } catch(e) {
+      toast('Error selecting plan: ' + e.message, true);
+    }
+  } else {
+    showPage('register');
+  }
 }
 
 async function renderDashboard() {
