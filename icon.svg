@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="80" fill="#0d1b2a"/>
+  <!-- Water drop shape -->
+  <path d="M256 100 C256 100 160 220 160 300 C160 355 203 400 256 400 C309 400 352 355 352 300 C352 220 256 100 256 100Z" fill="#f5a623"/>
+  <!-- S letter -->
+  <text x="256" y="340" font-family="Arial Black, sans-serif" font-size="140" font-weight="900" text-anchor="middle" fill="#0d1b2a">S</text>
+</svg>
