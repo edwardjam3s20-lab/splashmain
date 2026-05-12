@@ -850,13 +850,13 @@ function showPage(name) {
   const nav = document.getElementById('navLinks');
   if (currentUser && currentUser.role === 'customer') {
     nav.innerHTML = '<span style="color:var(--grey);font-size:14px">' + currentUser.name.split(' ')[0] + '</span>' +
-      '<button class="btn btn-gold btn-sm" onclick="showPage('dashboard')">Dashboard</button>';
+      '<button class="btn btn-gold btn-sm" onclick="showPage(&quot;dashboard&quot;)">Dashboard</button>';
   } else if (currentUser && currentUser.role === 'operator') {
     nav.innerHTML = '<span style="color:var(--grey);font-size:14px">Operator</span>' +
-      '<button class="btn btn-gold btn-sm" onclick="showPage('operator')">Dashboard</button>';
+      '<button class="btn btn-gold btn-sm" onclick="showPage(&quot;operator&quot;)">Dashboard</button>';
   } else {
-    nav.innerHTML = '<button class="btn btn-outline btn-sm" onclick="showPage('login')">Log in</button>' +
-      '<button class="btn btn-gold btn-sm" onclick="showPage('register')">Get Started</button>';
+    nav.innerHTML = '<button class="btn btn-outline btn-sm" onclick="showPage(&quot;login&quot;)">Log in</button>' +
+      '<button class="btn btn-gold btn-sm" onclick="showPage(&quot;register&quot;)">Get Started</button>';
   }
   if (name === 'dashboard') renderDashboard();
   if (name === 'operator') renderOperator();
@@ -964,7 +964,7 @@ async function renderSlots() {
       const isBooked = bookedSlots.includes(s);
       const isSel = selectedSlot === s;
       const cls = 'slot' + (isBooked ? ' booked' : '') + (isSel ? ' selected' : '');
-      const click = isBooked ? '' : 'selectSlot('' + s + '')';
+      const click = isBooked ? '' : "selectSlot('" + s + "')";
       return '<div class="' + cls + '" onclick="' + click + '">' + s + '</div>';
     }).join('');
   } catch(e) { container.innerHTML = '<p style="color:var(--danger);font-size:13px">Could not load slots.</p>'; }
