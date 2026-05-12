@@ -1,0 +1,18 @@
+{
+  "name": "SplashPass",
+  "short_name": "SplashPass",
+  "description": "Unlimited car washes. One simple subscription. Mombasa.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d1b2a",
+  "theme_color": "#f5a623",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
