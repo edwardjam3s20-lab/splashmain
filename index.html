@@ -642,53 +642,21 @@
   <div class="dashboard-wrap">
     <div class="dash-header">
       <h2>Pay via M-Pesa</h2>
-      <p>Follow these steps to activate your subscription</p>
+      <p>Enter your M-Pesa number and click Pay — a prompt will appear on your phone</p>
     </div>
     <div class="card">
       <div class="paybill-box">
-        <div class="label">Paybill Number</div>
-        <div class="big">522522</div>
-        <div class="label" style="margin-top:8px">Account: SPLASH + your phone number</div>
+        <div class="label">Amount</div>
+        <div class="big" id="mpesa-amount">KSh —</div>
+        <div class="label" style="margin-top:8px" id="mpesa-plan-label">SplashPass Subscription</div>
       </div>
-      <div class="mpesa-steps">
-        <div class="mpesa-step">
-          <div class="step-num">1</div>
-          <div class="step-content">
-            <h4>Go to M-Pesa</h4>
-            <p>Open M-Pesa on your phone and select <strong>Lipa na M-Pesa</strong></p>
-          </div>
-        </div>
-        <div class="mpesa-step">
-          <div class="step-num">2</div>
-          <div class="step-content">
-            <h4>Select Pay Bill</h4>
-            <p>Enter Paybill number <strong>522522</strong></p>
-          </div>
-        </div>
-        <div class="mpesa-step">
-          <div class="step-num">3</div>
-          <div class="step-content">
-            <h4>Enter Account Number</h4>
-            <p>Type <strong>SPLASH</strong> followed by your phone number e.g. SPLASH0712345678</p>
-          </div>
-        </div>
-        <div class="mpesa-step">
-          <div class="step-num">4</div>
-          <div class="step-content">
-            <h4>Enter Amount</h4>
-            <p>Enter your plan amount: Basic KSh 500 · Premium KSh 800 · Fleet KSh 2,000</p>
-          </div>
-        </div>
-        <div class="mpesa-step">
-          <div class="step-num">5</div>
-          <div class="step-content">
-            <h4>Confirm & Send</h4>
-            <p>Enter your M-Pesa PIN and confirm. You'll receive an SMS confirmation.</p>
-          </div>
-        </div>
+      <div class="form-group" style="margin-top:20px">
+        <label>M-Pesa Phone Number</label>
+        <input type="tel" id="mpesa-phone" placeholder="07XX XXX XXX">
       </div>
-      <div style="margin-top:24px;display:flex;gap:12px;flex-wrap:wrap">
-        <button class="btn btn-gold" id="pay-btn" onclick="confirmPayment()">I've Made Payment</button>
+      <div id="mpesa-msg" style="font-size:14px;margin-bottom:16px"></div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <button class="btn btn-gold" id="pay-btn" onclick="confirmPayment()">Pay Now</button>
         <button class="btn btn-outline" onclick="showPage('dashboard')">Back to Dashboard</button>
       </div>
     </div>
@@ -698,7 +666,7 @@
 <!-- ═══════════════════════════════════════════
      OPERATOR DASHBOARD
 ═══════════════════════════════════════════ -->
-<div id="page-operator" class="page">
+<div age-operator" class="page">
   <div class="dashboard-wrap">
     <div class="dash-header">
       <h2>Operator Dashboard</h2>
@@ -860,6 +828,16 @@ function showPage(name) {
   }
   if (name === 'dashboard') renderDashboard();
   if (name === 'operator') renderOperator();
+  if (name === 'mpesa' && currentUser) {
+    var amountEl = document.getElementById('mpesa-amount');
+    var labelEl = document.getElementById('mpesa-plan-label');
+    var phoneEl = document.getElementById('mpesa-phone');
+    if (amountEl) amountEl.textContent = 'KSh ' + (currentUser.plan_price || '—');
+    if (labelEl) labelEl.textContent = (currentUser.plan || 'SplashPass') + ' Plan';
+    if (phoneEl && currentUser.phone) phoneEl.value = currentUser.phone;
+    var msgEl = document.getElementById('mpesa-msg');
+    if (msgEl) msgEl.textContent = '';
+  }
 }
 
 async function register() {
@@ -1023,14 +1001,54 @@ async function renderMyBookings() {
 }
 
 async function confirmPayment() {
-  setBtn('pay-btn', true, "I've Made Payment");
+  var phone = document.getElementById('mpesa-phone').value.trim();
+  var msgEl = document.getElementById('mpesa-msg');
+  if (!phone) { msgEl.style.color = 'var(--danger)'; msgEl.textContent = 'Please enter your M-Pesa phone number.'; return; }
+  if (!currentUser || !currentUser.plan_price) { msgEl.style.color = 'var(--danger)'; msgEl.textContent = 'No plan selected.'; return; }
+
+  setBtn('pay-btn', true, 'Pay Now');
+  msgEl.style.color = 'var(--grey)';
+  msgEl.textContent = 'Sending STK Push to your phone...';
+
   try {
-    await updateUser(currentUser.email, { sub_status: 'active' });
-    currentUser.sub_status = 'active';
-    toast('Payment confirmed! Your subscription is now active.');
-    showPage('dashboard');
-  } catch(e) { toast('Error: ' + e.message, true); }
-  finally { setBtn('pay-btn', false, "I've Made Payment"); }
+    var res = await fetch('/api/mpesa-stk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: phone, amount: currentUser.plan_price })
+    });
+    var data = await res.json();
+
+    if (data.success) {
+      msgEl.style.color = 'var(--success)';
+      msgEl.textContent = 'Check your phone! Enter your M-Pesa PIN to complete payment.';
+      toast('M-Pesa prompt sent to ' + phone);
+      // Poll for payment confirmation every 5 seconds for up to 60 seconds
+      var attempts = 0;
+      var poll = setInterval(async function() {
+        attempts++;
+        var updated = await getUserByEmail(currentUser.email);
+        if (updated && updated.sub_status === 'active') {
+          clearInterval(poll);
+          currentUser.sub_status = 'active';
+          toast('Payment confirmed! Subscription is now active.');
+          showPage('dashboard');
+        }
+        if (attempts >= 12) {
+          clearInterval(poll);
+          msgEl.style.color = 'var(--grey)';
+          msgEl.textContent = 'Payment pending. Your dashboard will update once confirmed.';
+        }
+      }, 5000);
+    } else {
+      msgEl.style.color = 'var(--danger)';
+      msgEl.textContent = data.message || 'Payment failed. Try again.';
+    }
+  } catch(e) {
+    msgEl.style.color = 'var(--danger)';
+    msgEl.textContent = 'Error: ' + e.message;
+  } finally {
+    setBtn('pay-btn', false, 'Pay Now');
+  }
 }
 
 async function renderOperator() {
