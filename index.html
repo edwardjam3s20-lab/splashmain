@@ -1,1120 +1,1462 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#f5a623">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="SplashPass">
-<link rel="manifest" href="/manifest.json">
-<link rel="apple-touch-icon" href="/icon.svg">
-<title>SplashPass — Unlimited Car Washes. Mombasa.</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --navy: #0d1b2a;
-    --navy2: #152236;
-    --navy3: #1e3050;
-    --gold: #f5a623;
-    --gold2: #ffc04d;
-    --white: #f0f4f8;
-    --grey: #8a9bb0;
-    --success: #2ecc71;
-    --danger: #e74c3c;
-  }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0A1628" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>SplashPass — Unlimited Car Wash</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  <style>
+    /* ─── Reset & Base ─────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  body {
-    background: var(--navy);
-    color: var(--white);
-    font-family: 'DM Sans', sans-serif;
-    min-height: 100vh;
-  }
+    :root {
+      --navy:        #0A1628;
+      --navy-mid:    #102040;
+      --navy-light:  #1A3050;
+      --cyan:        #00E5CC;
+      --cyan-dim:    #00B5A0;
+      --green:       #00D68F;
+      --orange:      #FF8C42;
+      --red:         #FF4466;
+      --white:       #F0F6FF;
+      --grey:        #7A8FA8;
+      --grey-light:  #E8EEF5;
+      --card-bg:     rgba(255,255,255,0.055);
+      --card-border: rgba(255,255,255,0.09);
+      --font-body:   'DM Sans', sans-serif;
+      --font-display:'Syne', sans-serif;
+    }
 
-  h1, h2, h3, h4, .logo-text { font-family: 'Syne', sans-serif; }
+    html, body {
+      height: 100%;
+      background: var(--navy);
+      color: var(--white);
+      font-family: var(--font-body);
+      -webkit-font-smoothing: antialiased;
+      overscroll-behavior: none;
+    }
 
-  /* ─── UTILS ─── */
-  .hidden { display: none !important; }
-  .btn {
-    display: inline-block;
-    padding: 14px 28px;
-    border-radius: 8px;
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 15px;
-    cursor: pointer;
-    border: none;
-    transition: all 0.2s;
-    text-decoration: none;
-    text-align: center;
-  }
-  .btn-gold { background: var(--gold); color: var(--navy); }
-  .btn-gold:hover { background: var(--gold2); transform: translateY(-1px); }
-  .btn-outline { background: transparent; color: var(--white); border: 1.5px solid var(--grey); }
-  .btn-outline:hover { border-color: var(--gold); color: var(--gold); }
-  .btn-danger { background: var(--danger); color: white; }
-  .btn-sm { padding: 8px 16px; font-size: 13px; }
-  .btn-full { width: 100%; display: block; }
+    button { font-family: var(--font-body); cursor: pointer; }
+    a { color: inherit; text-decoration: none; }
 
-  input, select, textarea {
-    width: 100%;
-    padding: 12px 16px;
-    background: var(--navy3);
-    border: 1.5px solid var(--navy3);
-    border-radius: 8px;
-    color: var(--white);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 15px;
-    outline: none;
-    transition: border 0.2s;
-  }
-  input:focus, select:focus { border-color: var(--gold); }
-  input::placeholder { color: var(--grey); }
-  label { display: block; font-size: 13px; color: var(--grey); margin-bottom: 6px; font-weight: 500; }
-  .form-group { margin-bottom: 18px; }
-  .form-error { color: var(--danger); font-size: 13px; margin-top: 6px; }
+    ::-webkit-scrollbar { width: 3px; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
 
-  /* ─── NAV ─── */
-  nav {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 20px 32px;
-    background: var(--navy);
-    border-bottom: 1px solid var(--navy3);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-  .logo { display: flex; align-items: center; gap: 10px; cursor: pointer; }
-  .logo-icon {
-    width: 36px; height: 36px;
-    background: var(--gold);
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Syne', sans-serif;
-    font-weight: 800;
-    color: var(--navy);
-    font-size: 16px;
-  }
-  .logo-text { font-size: 20px; font-weight: 700; color: var(--white); }
-  .nav-links { display: flex; align-items: center; gap: 12px; }
+    /* ─── Animations ────────────────────────────────────────────────── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.6; transform: scale(0.94); }
+    }
+    @keyframes scanLine {
+      0%   { top: 12%; }
+      50%  { top: 82%; }
+      100% { top: 12%; }
+    }
+    @keyframes glow {
+      0%, 100% { box-shadow: 0 0 18px rgba(0,229,204,0.25); }
+      50%       { box-shadow: 0 0 36px rgba(0,229,204,0.55), 0 0 70px rgba(0,229,204,0.15); }
+    }
+    @keyframes glowGreen {
+      0%, 100% { box-shadow: 0 0 18px rgba(0,214,143,0.3); }
+      50%       { box-shadow: 0 0 36px rgba(0,214,143,0.6); }
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    @keyframes ringFill {
+      from { stroke-dasharray: 0 276; }
+    }
 
-  /* ─── PAGES ─── */
-  .page { display: none; }
-  .page.active { display: block; }
+    /* ─── App Shell ─────────────────────────────────────────────────── */
+    #app {
+      max-width: 430px;
+      min-height: 100vh;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      background: var(--navy);
+      position: relative;
+      overflow: hidden;
+    }
 
-  /* ─── LANDING ─── */
-  .hero {
-    padding: 80px 32px 60px;
-    max-width: 700px;
-    margin: 0 auto;
-    text-align: center;
-  }
-  .badge {
-    display: inline-block;
-    padding: 6px 16px;
-    background: rgba(245,166,35,0.15);
-    border: 1px solid rgba(245,166,35,0.4);
-    border-radius: 100px;
-    color: var(--gold);
-    font-size: 13px;
-    font-weight: 500;
-    margin-bottom: 28px;
-  }
-  .hero h1 {
-    font-size: clamp(36px, 6vw, 64px);
-    font-weight: 800;
-    line-height: 1.1;
-    margin-bottom: 20px;
-  }
-  .hero h1 span { color: var(--gold); }
-  .hero p {
-    font-size: 18px;
-    color: var(--grey);
-    line-height: 1.6;
-    margin-bottom: 36px;
-  }
-  .hero-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    /* ─── Status Bar ─────────────────────────────────────────────────── */
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 24px 6px;
+      flex-shrink: 0;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+    .status-bar .icons { display: flex; gap: 6px; align-items: center; font-size: 11px; color: var(--grey); }
 
-  /* FEATURES */
-  .features {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
-    padding: 40px 32px;
-    max-width: 900px;
-    margin: 0 auto;
-  }
-  .feature-card {
-    background: var(--navy2);
-    border-radius: 12px;
-    padding: 24px;
-    border: 1px solid var(--navy3);
-  }
-  .feature-icon { font-size: 28px; margin-bottom: 12px; }
-  .feature-card h3 { font-size: 16px; margin-bottom: 8px; }
-  .feature-card p { font-size: 14px; color: var(--grey); line-height: 1.5; }
+    /* ─── Screen ─────────────────────────────────────────────────────── */
+    .screen {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-bottom: 100px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .screen.hidden { display: none; }
 
-  /* PRICING */
-  .section-title {
-    text-align: center;
-    padding: 20px 32px 0;
-    font-size: clamp(24px, 4vw, 36px);
-    font-weight: 800;
-  }
-  .section-sub {
-    text-align: center;
-    color: var(--grey);
-    padding: 8px 32px 32px;
-    font-size: 15px;
-  }
-  .plans {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 20px;
-    padding: 0 32px 60px;
-    max-width: 900px;
-    margin: 0 auto;
-  }
-  .plan-card {
-    background: var(--navy2);
-    border-radius: 16px;
-    padding: 32px;
-    border: 1.5px solid var(--navy3);
-    position: relative;
-    transition: transform 0.2s;
-  }
-  .plan-card:hover { transform: translateY(-4px); }
-  .plan-card.popular { border-color: var(--gold); }
-  .popular-badge {
-    position: absolute;
-    top: -12px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--gold);
-    color: var(--navy);
-    font-size: 12px;
-    font-weight: 700;
-    padding: 4px 14px;
-    border-radius: 100px;
-    font-family: 'Syne', sans-serif;
-  }
-  .plan-name { font-size: 14px; color: var(--grey); font-weight: 500; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
-  .plan-price { font-family: 'Syne', sans-serif; font-size: 42px; font-weight: 800; color: var(--gold); }
-  .plan-price span { font-size: 16px; font-weight: 400; color: var(--grey); }
-  .plan-alt { font-size: 13px; color: var(--grey); margin: 4px 0 20px; }
-  .plan-features { list-style: none; margin-bottom: 24px; }
-  .plan-features li { padding: 8px 0; font-size: 14px; border-bottom: 1px solid var(--navy3); display: flex; align-items: center; gap: 8px; }
-  .plan-features li:last-child { border-bottom: none; }
-  .check { color: var(--gold); font-weight: 700; }
+    /* ─── Bottom Nav ─────────────────────────────────────────────────── */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 430px;
+      display: flex;
+      background: rgba(8, 18, 35, 0.96);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid var(--card-border);
+      padding: 10px 0 max(18px, env(safe-area-inset-bottom));
+      z-index: 100;
+    }
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      background: none;
+      border: none;
+      color: var(--grey);
+      transition: color 0.2s;
+    }
+    .nav-item.active { color: var(--cyan); }
+    .nav-pill {
+      width: 44px;
+      height: 28px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+      transition: background 0.2s;
+    }
+    .nav-item.active .nav-pill { background: rgba(0,229,204,0.15); }
+    .nav-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
 
-  /* ─── AUTH ─── */
-  .auth-wrap {
-    min-height: calc(100vh - 77px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 40px 20px;
-  }
-  .auth-card {
-    background: var(--navy2);
-    border-radius: 16px;
-    padding: 40px;
-    width: 100%;
-    max-width: 420px;
-    border: 1px solid var(--navy3);
-  }
-  .auth-card h2 { font-size: 26px; margin-bottom: 6px; }
-  .auth-card p { color: var(--grey); font-size: 14px; margin-bottom: 28px; }
-  .auth-switch { text-align: center; margin-top: 20px; font-size: 14px; color: var(--grey); }
-  .auth-switch a { color: var(--gold); cursor: pointer; text-decoration: none; }
+    /* ─── Cards & Utilities ──────────────────────────────────────────── */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+    }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+    .tag.open   { color: var(--green);  background: rgba(0,214,143,0.13);  border: 1px solid rgba(0,214,143,0.25); }
+    .tag.busy   { color: var(--orange); background: rgba(255,140,66,0.13); border: 1px solid rgba(255,140,66,0.25); }
+    .tag.full   { color: var(--red);    background: rgba(255,68,102,0.13); border: 1px solid rgba(255,68,102,0.25); }
+    .tag.active { color: var(--cyan);   background: rgba(0,229,204,0.13);  border: 1px solid rgba(0,229,204,0.25); }
 
-  /* ─── DASHBOARD ─── */
-  .dashboard-wrap {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 32px 20px;
-  }
-  .dash-header { margin-bottom: 32px; }
-  .dash-header h2 { font-size: 28px; font-weight: 800; }
-  .dash-header p { color: var(--grey); font-size: 15px; margin-top: 4px; }
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 16px;
-    margin-bottom: 32px;
-  }
-  .stat-card {
-    background: var(--navy2);
-    border-radius: 12px;
-    padding: 20px;
-    border: 1px solid var(--navy3);
-  }
-  .stat-label { font-size: 12px; color: var(--grey); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
-  .stat-value { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; color: var(--gold); }
-  .card {
-    background: var(--navy2);
-    border-radius: 12px;
-    padding: 24px;
-    border: 1px solid var(--navy3);
-    margin-bottom: 20px;
-  }
-  .card h3 { font-size: 18px; margin-bottom: 16px; }
-  .sub-info { display: flex; flex-wrap: wrap; gap: 16px; }
-  .sub-detail { font-size: 14px; }
-  .sub-detail span { color: var(--grey); display: block; font-size: 12px; margin-bottom: 2px; }
-  .status-badge {
-    display: inline-block;
-    padding: 3px 10px;
-    border-radius: 100px;
-    font-size: 12px;
-    font-weight: 600;
-  }
-  .status-active { background: rgba(46,204,113,0.15); color: var(--success); }
-  .status-pending { background: rgba(245,166,35,0.15); color: var(--gold); }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--cyan), var(--cyan-dim));
+      color: var(--navy);
+      border: none;
+      border-radius: 14px;
+      font-weight: 800;
+      font-size: 14px;
+      letter-spacing: 0.02em;
+      padding: 14px 0;
+      width: 100%;
+      transition: opacity 0.2s, transform 0.15s;
+    }
+    .btn-primary:active { opacity: 0.85; transform: scale(0.98); }
 
-  /* BOOKING */
-  .booking-slots {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: 8px;
-    margin-bottom: 16px;
-  }
-  .slot {
-    padding: 10px;
-    background: var(--navy3);
-    border-radius: 8px;
-    text-align: center;
-    cursor: pointer;
-    font-size: 13px;
-    border: 1.5px solid transparent;
-    transition: all 0.15s;
-  }
-  .slot:hover { border-color: var(--gold); }
-  .slot.selected { border-color: var(--gold); background: rgba(245,166,35,0.15); color: var(--gold); }
-  .slot.booked { opacity: 0.4; cursor: not-allowed; }
+    .btn-ghost {
+      background: var(--card-bg);
+      color: var(--white);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      font-weight: 600;
+      font-size: 14px;
+      padding: 14px 0;
+      width: 100%;
+      transition: background 0.2s;
+    }
+    .btn-ghost:active { background: rgba(255,255,255,0.1); }
 
-  /* BOOKINGS LIST */
-  .booking-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 0;
-    border-bottom: 1px solid var(--navy3);
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .booking-item:last-child { border-bottom: none; }
-  .booking-info h4 { font-size: 15px; font-weight: 600; }
-  .booking-info p { font-size: 13px; color: var(--grey); margin-top: 2px; }
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--grey);
+      margin-bottom: 14px;
+    }
 
-  /* OPERATOR */
-  .op-table { width: 100%; border-collapse: collapse; }
-  .op-table th { text-align: left; font-size: 12px; color: var(--grey); text-transform: uppercase; letter-spacing: 1px; padding: 8px 12px; border-bottom: 1px solid var(--navy3); }
-  .op-table td { padding: 12px; font-size: 14px; border-bottom: 1px solid var(--navy3); }
-  .op-table tr:last-child td { border-bottom: none; }
-  .op-tabs { display: flex; gap: 4px; margin-bottom: 20px; }
-  .op-tab {
-    padding: 8px 16px;
-    border-radius: 8px;
-    font-size: 14px;
-    cursor: pointer;
-    font-family: 'Syne', sans-serif;
-    font-weight: 600;
-    border: none;
-    background: var(--navy3);
-    color: var(--grey);
-    transition: all 0.15s;
-  }
-  .op-tab.active { background: var(--gold); color: var(--navy); }
+    .fade-up { animation: fadeUp 0.45s ease both; }
 
-  /* MPESA */
-  .mpesa-steps { counter-reset: step; }
-  .mpesa-step {
-    display: flex;
-    gap: 16px;
-    padding: 16px 0;
-    border-bottom: 1px solid var(--navy3);
-    align-items: flex-start;
-  }
-  .mpesa-step:last-child { border-bottom: none; }
-  .step-num {
-    width: 32px; height: 32px;
-    background: var(--gold);
-    color: var(--navy);
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Syne', sans-serif;
-    font-weight: 800;
-    font-size: 14px;
-    flex-shrink: 0;
-  }
-  .step-content h4 { font-size: 15px; margin-bottom: 4px; }
-  .step-content p { font-size: 13px; color: var(--grey); line-height: 1.5; }
-  .paybill-box {
-    background: var(--navy3);
-    border-radius: 12px;
-    padding: 20px;
-    margin: 16px 0;
-    text-align: center;
-    border: 1.5px dashed var(--gold);
-  }
-  .paybill-box .big { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; color: var(--gold); }
-  .paybill-box .label { font-size: 12px; color: var(--grey); margin-top: 4px; }
+    /* ─── HOME SCREEN ────────────────────────────────────────────────── */
+    .home-header { padding: 16px 20px 0; }
 
-  /* TOAST */
-  #toast {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    background: var(--navy2);
-    border: 1px solid var(--navy3);
-    border-left: 4px solid var(--gold);
-    padding: 14px 20px;
-    border-radius: 8px;
-    font-size: 14px;
-    z-index: 999;
-    transform: translateY(80px);
-    opacity: 0;
-    transition: all 0.3s;
-    max-width: 300px;
-  }
-  #toast.show { transform: translateY(0); opacity: 1; }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .location-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .loc-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+    }
+    .loc-label { font-size: 12px; color: var(--grey); font-weight: 500; }
+    .loc-btn {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--white);
+    }
+    .loc-chevron { font-size: 10px; color: var(--cyan); }
 
-  /* FOOTER */
-  footer {
-    text-align: center;
-    padding: 32px;
-    color: var(--grey);
-    font-size: 13px;
-    border-top: 1px solid var(--navy3);
-    margin-top: 40px;
-  }
+    .notif-btn {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      position: relative;
+    }
+    .notif-dot {
+      position: absolute;
+      top: 8px; right: 8px;
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--cyan);
+      border: 2px solid var(--navy);
+    }
 
-  @media (max-width: 600px) {
-    nav { padding: 16px 20px; }
-    .hero { padding: 50px 20px 40px; }
-    .features, .plans { padding-left: 20px; padding-right: 20px; }
-    .auth-card { padding: 28px 20px; }
-    .op-table { font-size: 12px; }
-    .op-table th, .op-table td { padding: 8px 6px; }
-  }
-</style>
+    .greeting { margin-bottom: 20px; }
+    .greeting p { font-size: 13px; color: var(--grey); margin-bottom: 2px; }
+    .greeting h1 {
+      font-family: var(--font-display);
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    /* Subscription Card */
+    .sub-card {
+      background: linear-gradient(135deg, var(--navy-light) 0%, #0D2A4A 100%);
+      border: 1px solid var(--card-border);
+      border-radius: 22px;
+      padding: 20px;
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .sub-card-glow {
+      position: absolute;
+      top: -30px; right: -20px;
+      width: 160px; height: 160px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,229,204,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .sub-card-inner { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+    .sub-info { flex: 1; }
+    .sub-badges { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .plan-name {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      background: linear-gradient(90deg, var(--cyan), var(--green));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .credit-amount {
+      font-family: var(--font-display);
+      font-size: 46px;
+      font-weight: 700;
+      line-height: 1;
+      color: var(--white);
+    }
+    .credit-unit { font-size: 16px; color: var(--grey); font-weight: 500; margin-left: 4px; }
+    .renew-text { font-size: 12px; color: var(--grey); margin-top: 4px; margin-bottom: 16px; }
+    .renew-text span { color: var(--orange); font-weight: 600; }
+
+    .progress-bar {
+      height: 4px;
+      border-radius: 2px;
+      background: rgba(255,255,255,0.1);
+      overflow: hidden;
+      margin-bottom: 6px;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 2px;
+      background: linear-gradient(90deg, var(--cyan), var(--green));
+      transition: width 1.2s cubic-bezier(0.4,0,0.2,1);
+    }
+    .progress-meta { font-size: 11px; color: var(--grey); }
+
+    /* Credit Ring SVG */
+    .credit-ring { flex-shrink: 0; position: relative; width: 100px; height: 100px; }
+    .credit-ring svg { transform: rotate(-90deg); }
+    .ring-track { fill: none; stroke: rgba(255,255,255,0.07); stroke-width: 7; }
+    .ring-fill  {
+      fill: none; stroke: var(--cyan); stroke-width: 7;
+      stroke-linecap: round;
+      filter: drop-shadow(0 0 5px var(--cyan));
+      animation: ringFill 1.2s cubic-bezier(0.4,0,0.2,1) both;
+    }
+    .ring-label {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 12px;
+      color: var(--grey);
+      font-weight: 600;
+    }
+
+    /* Toggle */
+    .view-toggle {
+      display: flex;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 4px;
+      margin-bottom: 20px;
+    }
+    .toggle-btn {
+      flex: 1;
+      padding: 8px 0;
+      border-radius: 9px;
+      border: none;
+      background: transparent;
+      color: var(--grey);
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .toggle-btn.active {
+      background: var(--cyan);
+      color: var(--navy);
+    }
+
+    /* Wash List */
+    .wash-list { padding: 0 20px; }
+    .list-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .see-all { font-size: 12px; color: var(--cyan); }
+
+    .wash-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 16px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+      animation: fadeUp 0.4s ease both;
+    }
+    .wash-card:active { background: rgba(255,255,255,0.09); }
+    .wash-card-inner { display: flex; align-items: flex-start; gap: 12px; }
+    .wash-icon {
+      width: 46px; height: 46px;
+      border-radius: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .wash-body { flex: 1; min-width: 0; }
+    .wash-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 6px;
+    }
+    .wash-name { font-size: 15px; font-weight: 600; letter-spacing: -0.2px; }
+    .wash-meta {
+      display: flex;
+      gap: 14px;
+      margin-bottom: 10px;
+    }
+    .wash-meta span { font-size: 12px; color: var(--grey); }
+    .wash-bottom { display: flex; justify-content: space-between; align-items: center; }
+    .wash-credits {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--cyan);
+    }
+    .wash-credits small { font-size: 12px; font-weight: 400; color: var(--grey); font-family: var(--font-body); margin-left: 2px; }
+    .nav-btn {
+      background: linear-gradient(135deg, var(--cyan), var(--cyan-dim));
+      color: var(--navy);
+      border: none;
+      border-radius: 10px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      transition: opacity 0.2s;
+    }
+    .nav-btn:active { opacity: 0.8; }
+    .nav-btn.disabled {
+      background: rgba(255,255,255,0.07);
+      color: var(--grey);
+      cursor: not-allowed;
+    }
+
+    /* ─── DETAIL SCREEN ──────────────────────────────────────────────── */
+    .detail-hero {
+      height: 200px;
+      background: linear-gradient(160deg, var(--navy-light), #051020);
+      position: relative;
+      overflow: hidden;
+    }
+    .detail-hero-grid {
+      position: absolute;
+      inset: 0;
+      background-image: repeating-linear-gradient(
+        45deg,
+        rgba(0,229,204,0.03) 0, rgba(0,229,204,0.03) 1px,
+        transparent 1px, transparent 50%
+      );
+      background-size: 28px 28px;
+    }
+    .detail-hero-glow {
+      position: absolute;
+      bottom: -40px; left: 50%;
+      transform: translateX(-50%);
+      width: 260px; height: 110px;
+      background: radial-gradient(ellipse, rgba(0,229,204,0.12) 0%, transparent 70%);
+    }
+    .detail-hero-emoji {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 62px;
+    }
+    .detail-hero-bar {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+    }
+    .back-btn {
+      background: rgba(10,22,40,0.75);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      color: var(--white);
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .rating-chip {
+      background: rgba(10,22,40,0.75);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 6px 12px;
+      font-size: 13px;
+    }
+
+    .detail-body { padding: 20px; }
+    .detail-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+    .detail-name {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+    .detail-sub { font-size: 13px; color: var(--grey); margin-bottom: 16px; }
+
+    .queue-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      margin-bottom: 20px;
+    }
+    .queue-icon { font-size: 28px; }
+    .queue-label { font-size: 13px; color: var(--grey); margin-bottom: 3px; }
+    .queue-count {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 700;
+    }
+    .queue-count small { font-size: 13px; font-weight: 400; color: var(--grey); font-family: var(--font-body); }
+
+    .tabs {
+      display: flex;
+      gap: 4px;
+      border-bottom: 1px solid var(--card-border);
+      margin-bottom: 18px;
+    }
+    .tab-btn {
+      padding: 8px 16px;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--grey);
+      transition: all 0.2s;
+    }
+    .tab-btn.active { color: var(--cyan); border-bottom-color: var(--cyan); }
+
+    .service-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--card-border);
+    }
+    .service-name { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+    .service-desc { font-size: 12px; color: var(--grey); }
+    .service-credits {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--cyan);
+      white-space: nowrap;
+      margin-left: 12px;
+    }
+
+    .review-row { padding: 14px 0; border-bottom: 1px solid var(--card-border); }
+    .review-top {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+    .review-name { font-size: 14px; font-weight: 600; }
+    .review-time { font-size: 12px; color: var(--grey); }
+    .review-stars { font-size: 12px; margin-bottom: 5px; }
+    .review-text { font-size: 13px; color: #9AAFC0; line-height: 1.55; }
+
+    .detail-ctas { display: flex; gap: 12px; padding: 20px 20px 0; }
+    .btn-nav {
+      flex: 1;
+      padding: 14px 0;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      color: var(--white);
+      font-size: 14px;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+    .btn-nav:active { background: rgba(255,255,255,0.1); }
+    .btn-start {
+      flex: 2;
+      padding: 14px 0;
+      background: linear-gradient(135deg, var(--cyan), var(--cyan-dim));
+      border: none;
+      border-radius: 14px;
+      color: var(--navy);
+      font-size: 14px;
+      font-weight: 800;
+      animation: glow 3s ease infinite;
+      letter-spacing: 0.02em;
+    }
+
+    /* ─── QR SCREEN ──────────────────────────────────────────────────── */
+    .qr-screen {
+      display: flex;
+      flex-direction: column;
+      padding: 24px 24px 0;
+      min-height: calc(100vh - 120px);
+    }
+    .qr-screen h1 {
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .qr-screen > p { color: var(--grey); font-size: 14px; margin-bottom: 28px; }
+
+    .qr-center {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .qr-frame {
+      background: #F0F6FF;
+      border-radius: 24px;
+      padding: 22px;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 24px;
+      animation: glow 3s ease infinite;
+    }
+    .qr-grid {
+      display: grid;
+      grid-template-columns: repeat(21, 1fr);
+      width: 200px;
+      height: 200px;
+    }
+    .qr-cell-on  { background: var(--navy); border-radius: 1px; }
+    .qr-cell-off { background: transparent; }
+    .qr-scan-line {
+      position: absolute;
+      left: 22px; right: 22px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+      box-shadow: 0 0 8px var(--cyan);
+      animation: scanLine 2s ease-in-out infinite;
+    }
+    .qr-corner {
+      position: absolute;
+      width: 20px; height: 20px;
+      border-color: var(--cyan);
+      border-style: solid;
+      border-radius: 2px;
+    }
+    .qr-corner.tl { top: 8px; left: 8px; border-width: 3px 0 0 3px; }
+    .qr-corner.tr { top: 8px; right: 8px; border-width: 3px 3px 0 0; }
+    .qr-corner.bl { bottom: 8px; left: 8px; border-width: 0 0 3px 3px; }
+    .qr-corner.br { bottom: 8px; right: 8px; border-width: 0 3px 3px 0; }
+
+    .credit-deduct-card {
+      text-align: center;
+      padding: 16px 24px;
+      margin-bottom: 24px;
+      width: 100%;
+      max-width: 280px;
+    }
+    .credit-deduct-label { font-size: 12px; color: var(--grey); margin-bottom: 6px; }
+    .credit-deduct-amount {
+      font-family: var(--font-display);
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--cyan);
+    }
+    .credit-deduct-amount small { font-size: 14px; font-weight: 400; color: var(--grey); font-family: var(--font-body); margin-left: 4px; }
+    .credit-deduct-sub { font-size: 12px; color: var(--grey); margin-top: 4px; }
+
+    .scan-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--grey);
+    }
+    .scan-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 1.5s ease infinite;
+    }
+
+    /* Confirmation State */
+    .confirm-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(100vh - 120px);
+      padding: 32px;
+      text-align: center;
+    }
+    .confirm-icon {
+      width: 96px; height: 96px;
+      border-radius: 50%;
+      border: 3px solid var(--green);
+      background: radial-gradient(circle, rgba(0,214,143,0.2), transparent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      margin-bottom: 24px;
+      animation: glowGreen 2s ease infinite;
+    }
+    .confirm-title {
+      font-family: var(--font-display);
+      font-size: 26px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .confirm-sub { color: var(--grey); margin-bottom: 6px; }
+    .confirm-credits { color: var(--cyan); font-weight: 700; font-size: 15px; margin-bottom: 32px; }
+
+    /* ─── SUBSCRIPTION SCREEN ────────────────────────────────────────── */
+    .sub-screen { padding: 24px 20px; }
+    .sub-screen h1 {
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .sub-screen > p { color: var(--grey); font-size: 14px; margin-bottom: 24px; }
+
+    /* Usage chart */
+    .usage-card { padding: 20px; margin-bottom: 24px; }
+    .usage-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      height: 80px;
+      margin-bottom: 10px;
+    }
+    .usage-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; }
+    .usage-bar {
+      width: 100%;
+      border-radius: 6px 6px 0 0;
+      background: rgba(255,255,255,0.12);
+      transition: height 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .usage-bar.current {
+      background: linear-gradient(180deg, var(--cyan), var(--cyan-dim));
+      box-shadow: 0 0 10px rgba(0,229,204,0.4);
+    }
+    .usage-months { display: flex; gap: 8px; }
+    .usage-month {
+      flex: 1;
+      text-align: center;
+      font-size: 11px;
+      color: var(--grey);
+    }
+    .usage-month.current { color: var(--cyan); font-weight: 700; }
+
+    /* Plan cards */
+    .plan-card {
+      border-radius: 18px;
+      padding: 18px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .plan-card.current {
+      background: linear-gradient(135deg, var(--navy-light), rgba(0,229,204,0.07));
+      border: 1px solid rgba(0,229,204,0.4);
+    }
+    .plan-card.other {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+    }
+    .plan-current-badge {
+      position: absolute;
+      top: 12px; right: 14px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      background: var(--cyan);
+      color: var(--navy);
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+    .plan-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+    .plan-name {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+    .plan-credits { color: var(--cyan); font-size: 14px; font-weight: 600; }
+    .plan-price {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 700;
+      text-align: right;
+    }
+    .plan-price small { display: block; font-size: 11px; font-weight: 400; color: var(--grey); font-family: var(--font-body); }
+    .plan-features { display: flex; flex-wrap: wrap; gap: 6px; }
+    .feature-pill {
+      font-size: 11px;
+      padding: 3px 10px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      color: var(--grey);
+    }
+    .plan-action {
+      margin-top: 14px;
+      width: 100%;
+      padding: 11px 0;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      color: var(--white);
+      font-size: 13px;
+      font-weight: 700;
+      transition: background 0.2s;
+    }
+    .plan-action:active { background: rgba(255,255,255,0.13); }
+
+    /* Top-up */
+    .topup-card { padding: 18px; }
+    .topup-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .topup-sub { font-size: 13px; color: var(--grey); margin-bottom: 14px; }
+    .topup-btns { display: flex; gap: 8px; }
+    .topup-btn {
+      flex: 1;
+      padding: 10px 0;
+      background: rgba(0,229,204,0.08);
+      border: 1px solid rgba(0,229,204,0.25);
+      border-radius: 10px;
+      color: var(--cyan);
+      font-size: 13px;
+      font-weight: 700;
+      transition: background 0.2s;
+    }
+    .topup-btn:active { background: rgba(0,229,204,0.15); }
+
+    /* ─── HISTORY SCREEN ─────────────────────────────────────────────── */
+    .hist-screen { padding: 24px 20px; }
+    .hist-screen h1 {
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .hist-screen > p { color: var(--grey); font-size: 14px; margin-bottom: 20px; }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      text-align: center;
+      padding: 14px 10px;
+    }
+    .stat-value {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--cyan);
+      margin-bottom: 4px;
+    }
+    .stat-label { font-size: 11px; color: var(--grey); }
+
+    .hist-entry {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 15px 16px;
+      margin-bottom: 10px;
+      border-radius: 14px;
+      animation: fadeUp 0.4s ease both;
+    }
+    .hist-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      background: rgba(0,229,204,0.09);
+      border: 1px solid rgba(0,229,204,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .hist-body { flex: 1; min-width: 0; }
+    .hist-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 3px;
+    }
+    .hist-name { font-size: 14px; font-weight: 600; }
+    .hist-credits {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--cyan);
+      flex-shrink: 0;
+      margin-left: 8px;
+    }
+    .hist-bottom { display: flex; justify-content: space-between; }
+    .hist-service { font-size: 12px; color: var(--grey); }
+    .hist-date { font-size: 12px; color: var(--grey); }
+    .hist-stars { font-size: 11px; margin-top: 4px; }
+  </style>
 </head>
+
 <body>
+<div id="app">
 
-<!-- NAV -->
-<nav>
-  <div class="logo" onclick="showPage('landing')">
-    <div class="logo-icon">S</div>
-    <span class="logo-text">SplashPass</span>
-  </div>
-  <div class="nav-links" id="navLinks">
-    <button class="btn btn-outline btn-sm" onclick="showPage('login')">Log in</button>
-    <button class="btn btn-gold btn-sm" onclick="showPage('register')">Get Started</button>
-  </div>
-</nav>
-
-<!-- ═══════════════════════════════════════════
-     LANDING PAGE
-═══════════════════════════════════════════ -->
-<div id="page-landing" class="page active">
-  <div class="hero">
-    <div class="badge">✦ Now available in Mombasa</div>
-    <h1>Unlimited Car Washes.<br><span>One Simple Subscription.</span></h1>
-    <p>Weekly and monthly carwash subscriptions for Kenyan drivers.<br>Pay with M-Pesa. Skip the queue. Keep your car spotless.</p>
-    <div class="hero-btns">
-      <button class="btn btn-gold" onclick="showPage('register')">Start Your Free Week</button>
-      <button class="btn btn-outline" onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'})">View Pricing</button>
-    </div>
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <span>9:41</span>
+    <div class="icons"><span>●●●</span><span>WiFi</span><span>🔋</span></div>
   </div>
 
-  <div class="features">
-    <div class="feature-card">
-      <div class="feature-icon">💧</div>
-      <h3>Unlimited Washes</h3>
-      <p>Book as many washes as your plan allows. No hidden fees.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">📱</div>
-      <h3>M-Pesa Payments</h3>
-      <p>Pay via M-Pesa Paybill — fast, easy, Kenyan.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">🗓️</div>
-      <h3>Easy Booking</h3>
-      <p>Pick your time slot in seconds. Cancel or reschedule anytime.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">🚐</div>
-      <h3>Fleet Plans</h3>
-      <p>Manage 3+ vehicles with one corporate account and monthly reporting.</p>
-    </div>
-  </div>
+  <!-- ═══════════════════════════════════════════════════════ HOME -->
+  <div id="screen-home" class="screen">
 
-  <h2 class="section-title" id="pricing">Choose Your Plan</h2>
-  <p class="section-sub">All plans include free booking cancellation and rescheduling</p>
-
-  <div class="plans">
-    <div class="plan-card">
-      <div class="plan-name">Basic</div>
-      <div class="plan-price">KSh 500<span>/week</span></div>
-      <div class="plan-alt">or KSh 2,000/month</div>
-      <ul class="plan-features">
-        <li><span class="check">✓</span> 1 wash per week</li>
-        <li><span class="check">✓</span> Exterior wash</li>
-        <li><span class="check">✓</span> Wheel cleaning</li>
-        <li><span class="check">✓</span> Spot-free rinse</li>
-      </ul>
-      <button class="btn btn-outline btn-full" onclick="selectPlan('Basic', 500)">Get Started</button>
-    </div>
-    <div class="plan-card popular">
-      <div class="popular-badge">Most Popular</div>
-      <div class="plan-name">Premium</div>
-      <div class="plan-price">KSh 800<span>/week</span></div>
-      <div class="plan-alt">or KSh 3,000/month</div>
-      <ul class="plan-features">
-        <li><span class="check">✓</span> 2 washes per week</li>
-        <li><span class="check">✓</span> Full interior + exterior</li>
-        <li><span class="check">✓</span> Tyre shine</li>
-        <li><span class="check">✓</span> Dashboard wipe</li>
-        <li><span class="check">✓</span> Priority booking</li>
-      </ul>
-      <button class="btn btn-gold btn-full" onclick="selectPlan('Premium', 800)">Get Started</button>
-    </div>
-    <div class="plan-card">
-      <div class="plan-name">Fleet</div>
-      <div class="plan-price">KSh 2,000<span>/week</span></div>
-      <div class="plan-alt">or KSh 7,000/month</div>
-      <ul class="plan-features">
-        <li><span class="check">✓</span> Unlimited washes (3+ vehicles)</li>
-        <li><span class="check">✓</span> Full service</li>
-        <li><span class="check">✓</span> Priority booking</li>
-        <li><span class="check">✓</span> Dedicated account manager</li>
-        <li><span class="check">✓</span> Flexible scheduling</li>
-        <li><span class="check">✓</span> Monthly reporting</li>
-      </ul>
-      <button class="btn btn-outline btn-full" onclick="selectPlan('Fleet', 2000)">Get Started</button>
-    </div>
-  </div>
-
-  <footer>
-    <strong style="font-family:'Syne',sans-serif">SplashPass</strong> · Mombasa, Kenya · info@splashpass.co.ke<br>
-    <span style="margin-top:6px;display:block">© 2026 SplashPass. All rights reserved.</span>
-  </footer>
-</div>
-
-<!-- ═══════════════════════════════════════════
-     REGISTER
-═══════════════════════════════════════════ -->
-<div id="page-register" class="page">
-  <div class="auth-wrap">
-    <div class="auth-card">
-      <h2>Create your account</h2>
-      <p>Start your carwash subscription today</p>
-      <div class="form-group">
-        <label>Full name</label>
-        <input type="text" id="reg-name" placeholder="John Kamau">
-      </div>
-      <div class="form-group">
-        <label>Email address</label>
-        <input type="email" id="reg-email" placeholder="you@example.com">
-      </div>
-      <div class="form-group">
-        <label>Phone number (M-Pesa)</label>
-        <input type="tel" id="reg-phone" placeholder="+254 712 345 678">
-      </div>
-      <div class="form-group">
-        <label>Password</label>
-        <input type="password" id="reg-pass" placeholder="At least 6 characters">
-      </div>
-      <div class="form-group">
-        <label>Confirm password</label>
-        <input type="password" id="reg-pass2" placeholder="Repeat your password">
-      </div>
-      <div id="reg-error" class="form-error"></div>
-      <button class="btn btn-gold btn-full" id="reg-btn" onclick="register()">Create account</button>
-      <div class="auth-switch">Already have an account? <a onclick="showPage('login')">Log in</a></div>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════
-     LOGIN
-═══════════════════════════════════════════ -->
-<div id="page-login" class="page">
-  <div class="auth-wrap">
-    <div class="auth-card">
-      <h2>Welcome back</h2>
-      <p>Log in to manage your subscription</p>
-      <div class="form-group">
-        <label>Email address</label>
-        <input type="email" id="login-email" placeholder="you@example.com">
-      </div>
-      <div class="form-group">
-        <label>Password</label>
-        <input type="password" id="login-pass" placeholder="Your password">
-      </div>
-      <div id="login-error" class="form-error"></div>
-      <button class="btn btn-gold btn-full" id="login-btn" onclick="login()">Log in</button>
-      <div style="margin-top:12px">
-        <button class="btn btn-outline btn-full btn-sm" onclick="operatorLogin()">🔧 Operator Login</button>
-      </div>
-      <div class="auth-switch">No account? <a onclick="showPage('register')">Sign up</a></div>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════
-     CUSTOMER DASHBOARD
-═══════════════════════════════════════════ -->
-<div id="page-dashboard" class="page">
-  <div class="dashboard-wrap">
-    <div class="dash-header">
-      <h2>My Dashboard</h2>
-      <p id="dash-greeting">Welcome back!</p>
-    </div>
-
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-label">Plan</div>
-        <div class="stat-value" id="stat-plan" style="font-size:20px">—</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Total Bookings</div>
-        <div class="stat-value" id="stat-bookings">0</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Status</div>
-        <div class="stat-value" style="font-size:16px"><span class="status-badge status-active" id="stat-status">Active</span></div>
-      </div>
-    </div>
-
-    <!-- Subscription Info -->
-    <div class="card" id="sub-card">
-      <h3>My Subscription</h3>
-      <div id="no-sub">
-        <p style="color:var(--grey);margin-bottom:16px">You don't have an active subscription yet.</p>
-        <button class="btn btn-gold btn-sm" onclick="showPage('landing')">Choose a Plan</button>
-      </div>
-      <div id="has-sub" class="hidden">
-        <div class="sub-info">
-          <div class="sub-detail"><span>Plan</span><strong id="sub-plan-name">—</strong></div>
-          <div class="sub-detail"><span>Price</span><strong id="sub-price">—</strong></div>
-          <div class="sub-detail"><span>Started</span><strong id="sub-start">—</strong></div>
-          <div class="sub-detail"><span>Renews</span><strong id="sub-renew">—</strong></div>
+    <div class="home-header">
+      <!-- Topbar -->
+      <div class="topbar fade-up">
+        <div class="location-pill">
+          <div class="loc-dot"></div>
+          <span class="loc-label">Location</span>
+          <button class="loc-btn">Nairobi, KE <span class="loc-chevron">▾</span></button>
         </div>
-        <div style="margin-top:16px">
-          <button class="btn btn-gold btn-sm" onclick="showPage('mpesa')">Pay via M-Pesa</button>
+        <button class="notif-btn" aria-label="Notifications">
+          🔔<div class="notif-dot"></div>
+        </button>
+      </div>
+
+      <!-- Greeting -->
+      <div class="greeting fade-up" style="animation-delay:0.05s">
+        <p>Good morning,</p>
+        <h1>Alex ✦</h1>
+      </div>
+
+      <!-- Subscription Card -->
+      <div class="sub-card fade-up" style="animation-delay:0.1s">
+        <div class="sub-card-glow"></div>
+        <div class="sub-card-inner">
+          <div class="sub-info">
+            <div class="sub-badges">
+              <span class="plan-name">PLUS PLAN</span>
+              <span class="tag active">ACTIVE</span>
+            </div>
+            <div>
+              <span class="credit-amount">180</span>
+              <span class="credit-unit">credits</span>
+            </div>
+            <p class="renew-text">Renews in <span>12 days</span></p>
+            <div class="progress-bar">
+              <div class="progress-fill" style="width:75%"></div>
+            </div>
+            <p class="progress-meta">60 credits used this cycle</p>
+          </div>
+          <div class="credit-ring">
+            <svg width="100" height="100" viewBox="0 0 100 100">
+              <circle class="ring-track" cx="50" cy="50" r="44"/>
+              <circle class="ring-fill"  cx="50" cy="50" r="44"
+                stroke-dasharray="207 276"/>
+            </svg>
+            <div class="ring-label">75%</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- View Toggle -->
+      <div class="view-toggle fade-up" style="animation-delay:0.15s">
+        <button class="toggle-btn active" onclick="setView('list', this)">≡ List</button>
+        <button class="toggle-btn"        onclick="setView('map', this)">◎ Map</button>
+      </div>
+    </div>
+
+    <!-- Wash List -->
+    <div class="wash-list">
+      <div class="list-header">
+        <p class="section-label">NEARBY WASHES</p>
+        <span class="see-all">See all →</span>
+      </div>
+
+      <!-- Cards injected by JS -->
+      <div id="wash-cards"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ DETAIL -->
+  <div id="screen-detail" class="screen hidden">
+
+    <div class="detail-hero">
+      <div class="detail-hero-grid"></div>
+      <div class="detail-hero-glow"></div>
+      <div class="detail-hero-emoji">🚗</div>
+      <div class="detail-hero-bar">
+        <button class="back-btn" onclick="goBack()">← Back</button>
+        <div class="rating-chip" id="detail-rating">⭐ 4.6</div>
+      </div>
+    </div>
+
+    <div class="detail-body">
+      <div class="detail-title-row">
+        <h2 class="detail-name" id="detail-name">CleanWave Car Wash</h2>
+        <span class="tag open" id="detail-status">Open</span>
+      </div>
+      <p class="detail-sub" id="detail-sub">📍 2.1 km away · Open 8AM–9PM</p>
+
+      <div class="card queue-card">
+        <div class="queue-icon">⏱</div>
+        <div>
+          <p class="queue-label">Live Queue Status</p>
+          <p class="queue-count" id="detail-queue">2 cars <small>· ~8 min wait</small></p>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('services', this)">Services</button>
+        <button class="tab-btn"        onclick="switchTab('reviews', this)">Reviews</button>
+      </div>
+
+      <!-- Services Tab -->
+      <div id="tab-services">
+        <div class="service-row">
+          <div><p class="service-name">Express Wash</p><p class="service-desc">Exterior rinse + dry</p></div>
+          <span class="service-credits">35 cr</span>
+        </div>
+        <div class="service-row">
+          <div><p class="service-name">Full Clean</p><p class="service-desc">Interior + exterior</p></div>
+          <span class="service-credits">55 cr</span>
+        </div>
+        <div class="service-row">
+          <div><p class="service-name">Premium Detail</p><p class="service-desc">Full detail + wax</p></div>
+          <span class="service-credits">90 cr</span>
+        </div>
+        <div class="service-row">
+          <div><p class="service-name">Tire Shine</p><p class="service-desc">Add-on service</p></div>
+          <span class="service-credits">15 cr</span>
+        </div>
+      </div>
+
+      <!-- Reviews Tab -->
+      <div id="tab-reviews" class="hidden">
+        <div class="review-row">
+          <div class="review-top"><span class="review-name">Maria K.</span><span class="review-time">2d ago</span></div>
+          <div class="review-stars">⭐⭐⭐⭐⭐</div>
+          <p class="review-text">Super fast queue, spotless result. Best wash in the city.</p>
+        </div>
+        <div class="review-row">
+          <div class="review-top"><span class="review-name">James T.</span><span class="review-time">5d ago</span></div>
+          <div class="review-stars">⭐⭐⭐⭐</div>
+          <p class="review-text">Great value on the Plus plan. Will definitely be back.</p>
+        </div>
+        <div class="review-row">
+          <div class="review-top"><span class="review-name">Priya S.</span><span class="review-time">1w ago</span></div>
+          <div class="review-stars">⭐⭐⭐⭐⭐</div>
+          <p class="review-text">Staff is friendly and the premium detail is absolutely worth it.</p>
         </div>
       </div>
     </div>
 
-    <!-- Book a Wash -->
-    <div class="card">
-      <h3>Book a Wash</h3>
-      <div class="form-group">
-        <label>Select date</label>
-        <input type="date" id="book-date" onchange="renderSlots()">
-      </div>
-      <div class="form-group">
-        <label>Select time slot</label>
-        <div class="booking-slots" id="time-slots"></div>
-      </div>
-      <div class="form-group">
-        <label>Location / address</label>
-        <input type="text" id="book-location" placeholder="e.g. Nyali, Mombasa">
-      </div>
-      <button class="btn btn-gold" id="book-btn" onclick="bookWash()">Confirm Booking</button>
+    <div class="detail-ctas">
+      <button class="btn-nav">🗺 Navigate</button>
+      <button class="btn-start" onclick="goTo('qr')">▣ Start Wash (QR)</button>
     </div>
 
-    <!-- My Bookings -->
-    <div class="card">
-      <h3>My Bookings</h3>
-      <div id="bookings-list"><p style="color:var(--grey);font-size:14px">No bookings yet.</p></div>
-    </div>
-
-    <button class="btn btn-outline btn-sm" onclick="logout()">Log out</button>
   </div>
-</div>
 
-<!-- ═══════════════════════════════════════════
-     MPESA PAYMENT
-═══════════════════════════════════════════ -->
-<div id="page-mpesa" class="page">
-  <div class="dashboard-wrap">
-    <div class="dash-header">
-      <h2>Pay via M-Pesa</h2>
-      <p>Enter your M-Pesa number and click Pay — a prompt will appear on your phone</p>
+  <!-- ═══════════════════════════════════════════════════════ QR -->
+  <div id="screen-qr" class="screen hidden">
+
+    <!-- Scan state -->
+    <div id="qr-scan-view" class="qr-screen">
+      <h1>Scan to Wash</h1>
+      <p>Show this QR code at the counter</p>
+
+      <div class="qr-center">
+        <div class="qr-frame">
+          <div class="qr-grid" id="qr-grid"></div>
+          <div class="qr-scan-line"></div>
+          <div class="qr-corner tl"></div>
+          <div class="qr-corner tr"></div>
+          <div class="qr-corner bl"></div>
+          <div class="qr-corner br"></div>
+        </div>
+
+        <div class="card credit-deduct-card">
+          <p class="credit-deduct-label">Credits to be deducted</p>
+          <p class="credit-deduct-amount">40 <small>credits</small></p>
+          <p class="credit-deduct-sub">Full Clean · CleanWave Car Wash</p>
+        </div>
+
+        <div class="scan-status">
+          <div class="scan-dot"></div>
+          Waiting for scan…
+        </div>
+      </div>
+
+      <button class="btn-primary" style="margin-top:16px;margin-bottom:8px" onclick="simulateScan()">
+        Simulate Scan ↗
+      </button>
     </div>
-    <div class="card">
-      <div class="paybill-box">
-        <div class="label">Amount</div>
-        <div class="big" id="mpesa-amount">KSh —</div>
-        <div class="label" style="margin-top:8px" id="mpesa-plan-label">SplashPass Subscription</div>
+
+    <!-- Confirmed state -->
+    <div id="qr-confirm-view" class="hidden">
+      <div class="confirm-screen">
+        <div class="confirm-icon">✓</div>
+        <h2 class="confirm-title">Wash Confirmed!</h2>
+        <p class="confirm-sub">40 credits deducted</p>
+        <p class="confirm-credits">140 credits remaining</p>
+        <button class="btn-ghost" style="max-width:200px" onclick="resetQR()">Done</button>
       </div>
-      <div class="form-group" style="margin-top:20px">
-        <label>M-Pesa Phone Number</label>
-        <input type="tel" id="mpesa-phone" placeholder="07XX XXX XXX">
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ SUBSCRIPTION -->
+  <div id="screen-subscription" class="screen hidden">
+    <div class="sub-screen">
+
+      <h1>Your Plan</h1>
+      <p>Manage subscription &amp; credits</p>
+
+      <!-- Usage Chart -->
+      <div class="card usage-card">
+        <p class="section-label">CREDIT USAGE</p>
+        <div class="usage-bars" id="usage-bars"></div>
+        <div class="usage-months" id="usage-months"></div>
       </div>
-      <div id="mpesa-msg" style="font-size:14px;margin-bottom:16px"></div>
-      <div style="display:flex;gap:12px;flex-wrap:wrap">
-        <button class="btn btn-gold" id="pay-btn" onclick="confirmPayment()">Pay Now</button>
-        <button class="btn btn-outline" onclick="showPage('dashboard')">Back to Dashboard</button>
+
+      <!-- Plans -->
+      <p class="section-label">UPGRADE OPTIONS</p>
+      <div id="plan-cards"></div>
+
+      <!-- Top-up -->
+      <div class="card topup-card">
+        <p class="topup-title">Need more credits?</p>
+        <p class="topup-sub">Top up without changing your plan</p>
+        <div class="topup-btns">
+          <button class="topup-btn">+20 cr</button>
+          <button class="topup-btn">+50 cr</button>
+          <button class="topup-btn">+100 cr</button>
+        </div>
       </div>
+
     </div>
   </div>
-</div>
 
-<!-- ═══════════════════════════════════════════
-     OPERATOR DASHBOARD
-═══════════════════════════════════════════ -->
-<div age-operator" class="page">
-  <div class="dashboard-wrap">
-    <div class="dash-header">
-      <h2>Operator Dashboard</h2>
-      <p>Manage bookings and subscribers</p>
+  <!-- ═══════════════════════════════════════════════════════ HISTORY -->
+  <div id="screen-history" class="screen hidden">
+    <div class="hist-screen">
+
+      <h1>History</h1>
+      <p>Your past washes</p>
+
+      <div class="stats-grid">
+        <div class="card stat-card"><p class="stat-value">24</p><p class="stat-label">Washes</p></div>
+        <div class="card stat-card"><p class="stat-value">285</p><p class="stat-label">Credits</p></div>
+        <div class="card stat-card"><p class="stat-value">4.5★</p><p class="stat-label">Avg Rating</p></div>
+      </div>
+
+      <p class="section-label">RECENT</p>
+      <div id="history-list"></div>
+
     </div>
-
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-label">Total Subscribers</div>
-        <div class="stat-value" id="op-total-subs">0</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Today's Bookings</div>
-        <div class="stat-value" id="op-today">0</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Revenue (Month)</div>
-        <div class="stat-value" id="op-revenue" style="font-size:18px">KSh 0</div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="op-tabs">
-        <button class="op-tab active" onclick="opTab('bookings',this)">Bookings</button>
-        <button class="op-tab" onclick="opTab('subscribers',this)">Subscribers</button>
-      </div>
-
-      <div id="op-bookings">
-        <table class="op-table">
-          <thead>
-            <tr>
-              <th>Customer</th>
-              <th>Date</th>
-              <th>Time</th>
-              <th>Location</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody id="op-bookings-body">
-            <tr><td colspan="6" style="color:var(--grey);text-align:center;padding:20px">No bookings yet</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div id="op-subscribers" class="hidden">
-        <table class="op-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Phone</th>
-              <th>Plan</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody id="op-subs-body">
-            <tr><td colspan="4" style="color:var(--grey);text-align:center;padding:20px">No subscribers yet</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-    <button class="btn btn-outline btn-sm" onclick="logout()">Log out</button>
   </div>
-</div>
 
-<!-- TOAST -->
-<div id="toast"></div>
+  <!-- ═══════════════════════════════════════════════════════ BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-screen="home"         onclick="goTo('home')">
+      <div class="nav-pill">⬡</div><span class="nav-label">Home</span>
+    </button>
+    <button class="nav-item"        data-screen="detail"       onclick="goTo('detail')">
+      <div class="nav-pill">◎</div><span class="nav-label">Nearby</span>
+    </button>
+    <button class="nav-item"        data-screen="qr"           onclick="goTo('qr')">
+      <div class="nav-pill" style="font-size:22px">▣</div><span class="nav-label">Wash</span>
+    </button>
+    <button class="nav-item"        data-screen="subscription" onclick="goTo('subscription')">
+      <div class="nav-pill">◈</div><span class="nav-label">Plan</span>
+    </button>
+    <button class="nav-item"        data-screen="history"      onclick="goTo('history')">
+      <div class="nav-pill">≡</div><span class="nav-label">History</span>
+    </button>
+  </nav>
+
+</div>
 
 <script>
-const SUPABASE_URL = 'https://msdvyiqjoogafzyaoycg.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_N_g24aU7TLHLNeu72gnfeg_1d7OleFW';
-const OPERATOR = { email: 'operator@splashpass.co.ke', password: 'splash2026' };
-const SLOTS = ['7:00 AM','8:00 AM','9:00 AM','10:00 AM','11:00 AM','12:00 PM','1:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM'];
+  'use strict';
 
-let currentUser = null;
-let selectedSlot = null;
-let selectedPlanData = null;
+  /* ─── Data ─────────────────────────────────────────────────────── */
+  const WASHES = [
+    { id:1, name:'CleanWave Car Wash', dist:'2.1 km', rating:4.6, credits:40, status:'open',  queue:2,  color:'#00D68F' },
+    { id:2, name:'Sparkle Wash',       dist:'3.4 km', rating:4.3, credits:35, status:'busy',  queue:7,  color:'#FF8C42' },
+    { id:3, name:'AquaShield Pro',     dist:'5.0 km', rating:4.8, credits:55, status:'open',  queue:1,  color:'#00E5CC' },
+    { id:4, name:'Crystal Clean',      dist:'6.2 km', rating:4.1, credits:30, status:'full',  queue:12, color:'#FF4466' },
+  ];
 
-async function sbFetch(path, options = {}) {
-  const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
-    ...options,
-    headers: {
-      'apikey': SUPABASE_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_KEY,
-      'Content-Type': 'application/json',
-      'Prefer': options.prefer || 'return=representation',
-      ...(options.headers || {})
-    }
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || 'Request failed');
-  }
-  const text = await res.text();
-  return text ? JSON.parse(text) : null;
-}
+  const PLANS = [
+    { name:'Basic',  credits:80,  price:19, features:['2 washes/mo','Standard locations','Email support'], current:false },
+    { name:'Plus',   credits:240, price:49, features:['6 washes/mo','All locations','Priority queue','No booking fee'], current:true },
+    { name:'Pro',    credits:500, price:89, features:['Unlimited washes','Premium locations','Instant entry','24/7 support','Partner perks'], current:false },
+  ];
 
-async function getUserByEmail(email) {
-  const rows = await sbFetch('profiles?email=eq.' + encodeURIComponent(email) + '&select=*');
-  return rows && rows[0] ? rows[0] : null;
-}
-async function createUser(data) {
-  return await sbFetch('profiles', { method: 'POST', body: JSON.stringify(data), prefer: 'return=representation' });
-}
-async function updateUser(email, data) {
-  return await sbFetch('profiles?email=eq.' + encodeURIComponent(email), { method: 'PATCH', body: JSON.stringify(data), prefer: 'return=representation' });
-}
-async function getAllUsers() {
-  return await sbFetch('profiles?select=*&order=created_at.desc');
-}
-async function getBookingsByDate(date) {
-  return await sbFetch('bookings?date=eq.' + encodeURIComponent(date) + '&select=*');
-}
-async function getBookingsByEmail(email) {
-  return await sbFetch('bookings?user_email=eq.' + encodeURIComponent(email) + '&select=*&order=created_at.desc');
-}
-async function getAllBookings() {
-  return await sbFetch('bookings?select=*&order=created_at.desc');
-}
-async function createBooking(data) {
-  return await sbFetch('bookings', { method: 'POST', body: JSON.stringify(data), prefer: 'return=representation' });
-}
-async function updateBooking(id, data) {
-  return await sbFetch('bookings?id=eq.' + id, { method: 'PATCH', body: JSON.stringify(data), prefer: 'return=representation' });
-}
-async function deleteBooking(id) {
-  return await sbFetch('bookings?id=eq.' + id, { method: 'DELETE', prefer: 'return=minimal' });
-}
+  const USAGE = { values:[180,120,210,95,240,180], months:['Dec','Jan','Feb','Mar','Apr','May'] };
 
-function toast(msg, isError = false) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.style.borderLeftColor = isError ? 'var(--danger)' : 'var(--gold)';
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3500);
-}
+  const HISTORY = [
+    { wash:'CleanWave Car Wash', service:'Full Clean',     credits:55, date:'Today, 10:14 AM', rating:5 },
+    { wash:'Sparkle Wash',       service:'Express Wash',   credits:35, date:'May 10',          rating:4 },
+    { wash:'AquaShield Pro',     service:'Premium Detail', credits:90, date:'May 7',           rating:5 },
+    { wash:'CleanWave Car Wash', service:'Express Wash',   credits:35, date:'May 3',           rating:4 },
+    { wash:'Crystal Clean',      service:'Full Clean',     credits:55, date:'Apr 28',          rating:3 },
+    { wash:'AquaShield Pro',     service:'Tire Shine',     credits:15, date:'Apr 22',          rating:5 },
+  ];
 
-function setBtn(id, loading, label) {
-  const b = document.getElementById(id);
-  if (!b) return;
-  b.disabled = loading;
-  b.innerHTML = loading ? 'Please wait...' : label;
-}
+  /* QR pattern — 1 = dark, 0 = light */
+  const QR_PATTERN = [
+    [1,1,1,1,1,1,1,0,1,0,0,1,0,0,1,1,1,1,1,1,1],
+    [1,0,0,0,0,0,1,0,0,1,1,0,1,0,1,0,0,0,0,0,1],
+    [1,0,1,1,1,0,1,0,1,0,0,1,0,0,1,0,1,1,1,0,1],
+    [1,0,1,1,1,0,1,0,0,1,1,0,1,0,1,0,1,1,1,0,1],
+    [1,0,1,1,1,0,1,0,1,0,0,1,0,0,1,0,1,1,1,0,1],
+    [1,0,0,0,0,0,1,0,0,1,1,0,1,0,1,0,0,0,0,0,1],
+    [1,1,1,1,1,1,1,0,1,0,1,0,1,0,1,1,1,1,1,1,1],
+    [0,0,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0],
+    [1,0,1,1,0,1,1,1,0,0,1,0,0,1,1,0,1,1,1,0,1],
+    [0,1,0,0,1,0,0,0,1,0,1,0,1,0,0,1,0,0,1,0,0],
+    [1,0,1,0,1,1,1,0,0,1,0,1,0,0,1,0,1,0,1,1,1],
+    [0,1,0,1,0,0,0,1,0,0,1,0,1,1,0,1,0,1,0,0,0],
+    [1,0,0,0,1,0,1,0,1,0,0,1,0,0,1,0,1,0,0,1,0],
+    [0,0,0,0,0,0,0,0,1,1,0,0,1,0,0,0,1,1,0,0,1],
+    [1,1,1,1,1,1,1,0,0,0,1,0,0,1,1,0,0,1,1,0,0],
+    [1,0,0,0,0,0,1,0,1,0,0,1,0,0,0,1,0,0,0,1,0],
+    [1,0,1,1,1,0,1,0,0,1,1,0,1,0,1,0,1,1,0,0,1],
+    [1,0,1,1,1,0,1,1,0,0,0,1,0,1,0,1,0,0,1,0,0],
+    [1,0,1,1,1,0,1,0,1,0,1,0,0,0,1,0,1,0,1,1,0],
+    [1,0,0,0,0,0,1,0,0,1,0,1,0,1,0,1,0,1,0,0,1],
+    [1,1,1,1,1,1,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1],
+  ];
 
-function showPage(name) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById('page-' + name).classList.add('active');
-  window.scrollTo(0, 0);
-  const nav = document.getElementById('navLinks');
-  if (currentUser && currentUser.role === 'customer') {
-    nav.innerHTML = '<span style="color:var(--grey);font-size:14px">' + currentUser.name.split(' ')[0] + '</span>' +
-      '<button class="btn btn-gold btn-sm" onclick="showPage(&quot;dashboard&quot;)">Dashboard</button>';
-  } else if (currentUser && currentUser.role === 'operator') {
-    nav.innerHTML = '<span style="color:var(--grey);font-size:14px">Operator</span>' +
-      '<button class="btn btn-gold btn-sm" onclick="showPage(&quot;operator&quot;)">Dashboard</button>';
-  } else {
-    nav.innerHTML = '<button class="btn btn-outline btn-sm" onclick="showPage(&quot;login&quot;)">Log in</button>' +
-      '<button class="btn btn-gold btn-sm" onclick="showPage(&quot;register&quot;)">Get Started</button>';
-  }
-  if (name === 'dashboard') renderDashboard();
-  if (name === 'operator') renderOperator();
-  if (name === 'mpesa' && currentUser) {
-    var amountEl = document.getElementById('mpesa-amount');
-    var labelEl = document.getElementById('mpesa-plan-label');
-    var phoneEl = document.getElementById('mpesa-phone');
-    if (amountEl) amountEl.textContent = 'KSh ' + (currentUser.plan_price || '—');
-    if (labelEl) labelEl.textContent = (currentUser.plan || 'SplashPass') + ' Plan';
-    if (phoneEl && currentUser.phone) phoneEl.value = currentUser.phone;
-    var msgEl = document.getElementById('mpesa-msg');
-    if (msgEl) msgEl.textContent = '';
-  }
-}
+  /* ─── State ─────────────────────────────────────────────────────── */
+  let currentScreen = 'home';
+  let previousScreen = 'home';
+  let selectedWash = WASHES[0];
 
-async function register() {
-  const name = document.getElementById('reg-name').value.trim();
-  const email = document.getElementById('reg-email').value.trim().toLowerCase();
-  const phone = document.getElementById('reg-phone').value.trim();
-  const pass = document.getElementById('reg-pass').value;
-  const pass2 = document.getElementById('reg-pass2').value;
-  const err = document.getElementById('reg-error');
-  if (!name || !email || !phone || !pass) { err.textContent = 'Please fill in all fields.'; return; }
-  if (pass.length < 6) { err.textContent = 'Password must be at least 6 characters.'; return; }
-  if (pass !== pass2) { err.textContent = 'Passwords do not match.'; return; }
-  setBtn('reg-btn', true, 'Create account');
-  try {
-    const existing = await getUserByEmail(email);
-    if (existing) { err.textContent = 'An account with this email already exists.'; return; }
-    const result = await createUser({
-      name, email, phone, password: pass, role: 'customer',
-      plan: selectedPlanData ? selectedPlanData.name : null,
-      plan_price: selectedPlanData ? selectedPlanData.price : null,
-      sub_start: selectedPlanData ? new Date().toISOString() : null,
-      sub_status: 'pending'
+  /* ─── Navigation ─────────────────────────────────────────────────── */
+  function goTo(screenId) {
+    if (screenId === currentScreen) return;
+
+    document.getElementById('screen-' + currentScreen).classList.add('hidden');
+    document.getElementById('screen-' + screenId).classList.remove('hidden');
+
+    previousScreen = currentScreen;
+    currentScreen = screenId;
+
+    document.querySelectorAll('.nav-item').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.screen === screenId);
     });
-    currentUser = result[0];
-    err.textContent = '';
-    toast('Account created! Welcome to SplashPass.');
-    showPage('dashboard');
-    if (selectedPlanData) setTimeout(function() { showPage('mpesa'); }, 1000);
-  } catch(e) { err.textContent = 'Error: ' + e.message; }
-  finally { setBtn('reg-btn', false, 'Create account'); }
-}
-
-async function login() {
-  const email = document.getElementById('login-email').value.trim().toLowerCase();
-  const pass = document.getElementById('login-pass').value;
-  const err = document.getElementById('login-error');
-  setBtn('login-btn', true, 'Log in');
-  try {
-    const user = await getUserByEmail(email);
-    if (!user || user.password !== pass) { err.textContent = 'Invalid email or password.'; return; }
-    currentUser = user;
-    err.textContent = '';
-    toast('Welcome back, ' + user.name.split(' ')[0] + '!');
-    showPage('dashboard');
-  } catch(e) { err.textContent = 'Error: ' + e.message; }
-  finally { setBtn('login-btn', false, 'Log in'); }
-}
-
-function operatorLogin() {
-  const email = document.getElementById('login-email').value.trim().toLowerCase();
-  const pass = document.getElementById('login-pass').value;
-  const err = document.getElementById('login-error');
-  if (email === OPERATOR.email && pass === OPERATOR.password) {
-    currentUser = { name: 'Operator', role: 'operator' };
-    toast('Welcome, Operator!');
-    showPage('operator');
-  } else { err.textContent = 'Invalid operator credentials.'; }
-}
-
-function logout() {
-  currentUser = null; selectedPlanData = null;
-  toast('Logged out successfully.');
-  showPage('landing');
-}
-
-async function selectPlan(name, price) {
-  selectedPlanData = { name: name, price: price };
-  if (currentUser && currentUser.role === 'customer') {
-    try {
-      await updateUser(currentUser.email, {
-        plan: name,
-        plan_price: price,
-        sub_start: new Date().toISOString(),
-        sub_status: 'pending'
-      });
-      currentUser.plan = name;
-      currentUser.plan_price = price;
-      currentUser.sub_start = new Date().toISOString();
-      currentUser.sub_status = 'pending';
-      toast('Plan selected: ' + name + '. Complete payment to activate.');
-      showPage('mpesa');
-    } catch(e) {
-      toast('Error selecting plan: ' + e.message, true);
-    }
-  } else {
-    showPage('register');
   }
-}
 
-async function renderDashboard() {
-  if (!currentUser) return;
-  document.getElementById('dash-greeting').textContent = 'Welcome back, ' + currentUser.name + '!';
-  document.getElementById('stat-plan').textContent = currentUser.plan || 'None';
-  if (currentUser.plan) {
-    document.getElementById('no-sub').classList.add('hidden');
-    document.getElementById('has-sub').classList.remove('hidden');
-    document.getElementById('sub-plan-name').textContent = currentUser.plan;
-    document.getElementById('sub-price').textContent = 'KSh ' + currentUser.plan_price + '/week';
-    const start = new Date(currentUser.sub_start);
-    document.getElementById('sub-start').textContent = start.toLocaleDateString('en-KE');
-    const renew = new Date(start); renew.setDate(renew.getDate() + 7);
-    document.getElementById('sub-renew').textContent = renew.toLocaleDateString('en-KE');
-    document.getElementById('stat-status').textContent = currentUser.sub_status === 'active' ? 'Active' : 'Pending';
-    document.getElementById('stat-status').className = 'status-badge ' + (currentUser.sub_status === 'active' ? 'status-active' : 'status-pending');
+  function goBack() {
+    goTo(previousScreen === currentScreen ? 'home' : previousScreen);
   }
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById('book-date').min = today;
-  document.getElementById('book-date').value = today;
-  await renderSlots();
-  await renderMyBookings();
-}
 
-async function renderSlots() {
-  const date = document.getElementById('book-date').value;
-  const container = document.getElementById('time-slots');
-  container.innerHTML = '<p style="color:var(--grey);font-size:13px">Loading...</p>';
-  try {
-    const bookings = await getBookingsByDate(date);
-    const bookedSlots = bookings.map(function(b) { return b.time; });
-    container.innerHTML = SLOTS.map(function(s) {
-      const isBooked = bookedSlots.includes(s);
-      const isSel = selectedSlot === s;
-      const cls = 'slot' + (isBooked ? ' booked' : '') + (isSel ? ' selected' : '');
-      const click = isBooked ? '' : "selectSlot('" + s + "')";
-      return '<div class="' + cls + '" onclick="' + click + '">' + s + '</div>';
+  /* ─── Wash Cards ─────────────────────────────────────────────────── */
+  function renderWashCards() {
+    const container = document.getElementById('wash-cards');
+    container.innerHTML = WASHES.map((w, i) => `
+      <div class="wash-card" style="animation-delay:${0.15 + i * 0.07}s"
+           onclick="openWash(${w.id})">
+        <div class="wash-card-inner">
+          <div class="wash-icon"
+               style="background:${w.color}1A;border:1px solid ${w.color}40">🚿</div>
+          <div class="wash-body">
+            <div class="wash-top">
+              <span class="wash-name">${w.name}</span>
+              <span class="tag ${w.status}">${w.status.toUpperCase()}</span>
+            </div>
+            <div class="wash-meta">
+              <span>📍 ${w.dist}</span>
+              <span>⭐ ${w.rating}</span>
+              <span>👥 ${w.queue} in queue</span>
+            </div>
+            <div class="wash-bottom">
+              <span class="wash-credits">${w.credits}<small>credits</small></span>
+              <button class="nav-btn${w.status === 'full' ? ' disabled' : ''}"
+                      onclick="event.stopPropagation()" ${w.status === 'full' ? 'disabled' : ''}>
+                ${w.status === 'full' ? 'Full' : 'Navigate →'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function openWash(id) {
+    selectedWash = WASHES.find(w => w.id === id);
+
+    document.getElementById('detail-name').textContent   = selectedWash.name;
+    document.getElementById('detail-rating').textContent = `⭐ ${selectedWash.rating}`;
+    document.getElementById('detail-sub').textContent    = `📍 ${selectedWash.dist} away · Open 8AM–9PM`;
+    document.getElementById('detail-queue').innerHTML    =
+      `${selectedWash.queue} cars <small>· ~${selectedWash.queue * 4} min wait</small>`;
+
+    const statusEl = document.getElementById('detail-status');
+    statusEl.className = `tag ${selectedWash.status}`;
+    statusEl.textContent = selectedWash.status.charAt(0).toUpperCase() + selectedWash.status.slice(1);
+
+    goTo('detail');
+  }
+
+  /* ─── Detail Tabs ─────────────────────────────────────────────────── */
+  function switchTab(tab, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-services').classList.toggle('hidden', tab !== 'services');
+    document.getElementById('tab-reviews').classList.toggle('hidden',  tab !== 'reviews');
+  }
+
+  /* ─── View Toggle ────────────────────────────────────────────────── */
+  function setView(view, btn) {
+    document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    // Map integration placeholder — hook into your maps API here
+  }
+
+  /* ─── QR ─────────────────────────────────────────────────────────── */
+  function renderQR() {
+    const grid = document.getElementById('qr-grid');
+    grid.innerHTML = QR_PATTERN.flat().map(cell =>
+      `<div class="${cell ? 'qr-cell-on' : 'qr-cell-off'}"></div>`
+    ).join('');
+  }
+
+  function simulateScan() {
+    document.getElementById('qr-scan-view').classList.add('hidden');
+    document.getElementById('qr-confirm-view').classList.remove('hidden');
+  }
+
+  function resetQR() {
+    document.getElementById('qr-confirm-view').classList.add('hidden');
+    document.getElementById('qr-scan-view').classList.remove('hidden');
+    goTo('home');
+  }
+
+  /* ─── Usage Chart ────────────────────────────────────────────────── */
+  function renderUsageChart() {
+    const max   = Math.max(...USAGE.values);
+    const bars  = document.getElementById('usage-bars');
+    const months = document.getElementById('usage-months');
+
+    bars.innerHTML = USAGE.values.map((v, i) => {
+      const h   = Math.round((v / max) * 70);
+      const cur = i === USAGE.values.length - 1;
+      return `
+        <div class="usage-bar-wrap">
+          <div class="usage-bar${cur ? ' current' : ''}"
+               style="height:${h}px"></div>
+        </div>`;
     }).join('');
-  } catch(e) { container.innerHTML = '<p style="color:var(--danger);font-size:13px">Could not load slots.</p>'; }
-}
 
-function selectSlot(s) { selectedSlot = s; renderSlots(); }
-
-async function bookWash() {
-  if (!currentUser.plan) { toast('Please choose a plan first.', true); return; }
-  const date = document.getElementById('book-date').value;
-  const location = document.getElementById('book-location').value.trim();
-  if (!selectedSlot) { toast('Please select a time slot.', true); return; }
-  if (!location) { toast('Please enter your location.', true); return; }
-  setBtn('book-btn', true, 'Confirm Booking');
-  try {
-    const slot = selectedSlot;
-    await createBooking({ user_email: currentUser.email, user_name: currentUser.name, date: date, time: slot, location: location, status: 'confirmed', plan: currentUser.plan });
-    selectedSlot = null;
-    toast('Wash booked for ' + date + ' at ' + slot + '!');
-    await renderSlots();
-    await renderMyBookings();
-  } catch(e) { toast('Booking failed: ' + e.message, true); }
-  finally { setBtn('book-btn', false, 'Confirm Booking'); }
-}
-
-async function renderMyBookings() {
-  const container = document.getElementById('bookings-list');
-  try {
-    const myBookings = await getBookingsByEmail(currentUser.email);
-    document.getElementById('stat-bookings').textContent = myBookings.length;
-    if (!myBookings.length) { container.innerHTML = '<p style="color:var(--grey);font-size:14px">No bookings yet.</p>'; return; }
-    container.innerHTML = myBookings.map(function(b) {
-      return '<div class="booking-item"><div class="booking-info"><h4>' + b.date + ' · ' + b.time + '</h4><p>' + b.location + ' · ' + b.plan + ' plan</p></div>' +
-        '<span class="status-badge ' + (b.status === 'completed' ? 'status-active' : 'status-pending') + '">' + b.status + '</span></div>';
+    months.innerHTML = USAGE.months.map((m, i) => {
+      const cur = i === USAGE.months.length - 1;
+      return `<div class="usage-month${cur ? ' current' : ''}">${m}</div>`;
     }).join('');
-  } catch(e) { container.innerHTML = '<p style="color:var(--danger);font-size:14px">Could not load bookings.</p>'; }
-}
-
-async function confirmPayment() {
-  var phone = document.getElementById('mpesa-phone').value.trim();
-  var msgEl = document.getElementById('mpesa-msg');
-  if (!phone) { msgEl.style.color = 'var(--danger)'; msgEl.textContent = 'Please enter your M-Pesa phone number.'; return; }
-  if (!currentUser || !currentUser.plan_price) { msgEl.style.color = 'var(--danger)'; msgEl.textContent = 'No plan selected.'; return; }
-
-  setBtn('pay-btn', true, 'Pay Now');
-  msgEl.style.color = 'var(--grey)';
-  msgEl.textContent = 'Sending STK Push to your phone...';
-
-  try {
-    var res = await fetch('/api/mpesa-stk', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone: phone, amount: currentUser.plan_price })
-    });
-    var data = await res.json();
-
-    if (data.success) {
-      msgEl.style.color = 'var(--success)';
-      msgEl.textContent = 'Check your phone! Enter your M-Pesa PIN to complete payment.';
-      toast('M-Pesa prompt sent to ' + phone);
-      // Poll for payment confirmation every 5 seconds for up to 60 seconds
-      var attempts = 0;
-      var poll = setInterval(async function() {
-        attempts++;
-        var updated = await getUserByEmail(currentUser.email);
-        if (updated && updated.sub_status === 'active') {
-          clearInterval(poll);
-          currentUser.sub_status = 'active';
-          toast('Payment confirmed! Subscription is now active.');
-          showPage('dashboard');
-        }
-        if (attempts >= 12) {
-          clearInterval(poll);
-          msgEl.style.color = 'var(--grey)';
-          msgEl.textContent = 'Payment pending. Your dashboard will update once confirmed.';
-        }
-      }, 5000);
-    } else {
-      msgEl.style.color = 'var(--danger)';
-      msgEl.textContent = data.message || 'Payment failed. Try again.';
-    }
-  } catch(e) {
-    msgEl.style.color = 'var(--danger)';
-    msgEl.textContent = 'Error: ' + e.message;
-  } finally {
-    setBtn('pay-btn', false, 'Pay Now');
   }
-}
 
-async function renderOperator() {
-  try {
-    const users = await getAllUsers();
-    const bookings = await getAllBookings();
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('op-total-subs').textContent = users.length;
-    document.getElementById('op-today').textContent = bookings.filter(function(b) { return b.date === today; }).length;
-    const revenue = users.reduce(function(sum, u) { return sum + (u.plan_price ? parseInt(u.plan_price) * 4 : 0); }, 0);
-    document.getElementById('op-revenue').textContent = 'KSh ' + revenue.toLocaleString();
-    const tbody = document.getElementById('op-bookings-body');
-    if (!bookings.length) {
-      tbody.innerHTML = '<tr><td colspan="6" style="color:var(--grey);text-align:center;padding:20px">No bookings yet</td></tr>';
-    } else {
-      tbody.innerHTML = bookings.map(function(b) {
-        return '<tr><td>' + b.user_name + '</td><td>' + b.date + '</td><td>' + b.time + '</td><td>' + b.location + '</td>' +
-          '<td><span class="status-badge ' + (b.status === 'completed' ? 'status-active' : 'status-pending') + '">' + b.status + '</span></td>' +
-          '<td>' + (b.status !== 'completed' ? '<button class="btn btn-gold btn-sm" onclick="markComplete(' + b.id + ')">Done</button>' : '') +
-          '<button class="btn btn-danger btn-sm" onclick="cancelBooking(' + b.id + ')" style="margin-left:4px">Cancel</button></td></tr>';
-      }).join('');
-    }
-    const sBody = document.getElementById('op-subs-body');
-    if (!users.length) {
-      sBody.innerHTML = '<tr><td colspan="4" style="color:var(--grey);text-align:center;padding:20px">No subscribers yet</td></tr>';
-    } else {
-      sBody.innerHTML = users.map(function(u) {
-        return '<tr><td>' + u.name + '</td><td>' + (u.phone || '—') + '</td><td>' + (u.plan || '—') + '</td>' +
-          '<td><span class="status-badge ' + (u.sub_status === 'active' ? 'status-active' : 'status-pending') + '">' + (u.sub_status || 'pending') + '</span></td></tr>';
-      }).join('');
-    }
-  } catch(e) { toast('Error loading data: ' + e.message, true); }
-}
+  /* ─── Plan Cards ─────────────────────────────────────────────────── */
+  function renderPlans() {
+    document.getElementById('plan-cards').innerHTML = PLANS.map(p => `
+      <div class="plan-card ${p.current ? 'current' : 'other'}">
+        ${p.current ? '<div class="plan-current-badge">CURRENT</div>' : ''}
+        <div class="plan-header">
+          <div>
+            <p class="plan-name">${p.name}</p>
+            <p class="plan-credits">${p.credits} credits/mo</p>
+          </div>
+          <div class="plan-price">$${p.price}<small>/month</small></div>
+        </div>
+        <div class="plan-features">
+          ${p.features.map(f => `<span class="feature-pill">${f}</span>`).join('')}
+        </div>
+        ${!p.current ? `<button class="plan-action">${p.name === 'Basic' ? 'Downgrade' : 'Upgrade →'}</button>` : ''}
+      </div>
+    `).join('');
+  }
 
-async function markComplete(id) {
-  try { await updateBooking(id, { status: 'completed' }); toast('Marked complete.'); renderOperator(); }
-  catch(e) { toast('Error: ' + e.message, true); }
-}
+  /* ─── History ────────────────────────────────────────────────────── */
+  function renderHistory() {
+    document.getElementById('history-list').innerHTML = HISTORY.map((h, i) => `
+      <div class="card hist-entry" style="animation-delay:${i * 0.06}s">
+        <div class="hist-icon">🚗</div>
+        <div class="hist-body">
+          <div class="hist-top">
+            <span class="hist-name">${h.wash}</span>
+            <span class="hist-credits">−${h.credits} cr</span>
+          </div>
+          <div class="hist-bottom">
+            <span class="hist-service">${h.service}</span>
+            <span class="hist-date">${h.date}</span>
+          </div>
+          <div class="hist-stars">${'⭐'.repeat(h.rating)}</div>
+        </div>
+      </div>
+    `).join('');
+  }
 
-async function cancelBooking(id) {
-  try { await deleteBooking(id); toast('Booking cancelled.'); renderOperator(); }
-  catch(e) { toast('Error: ' + e.message, true); }
-}
+  /* ─── Init ───────────────────────────────────────────────────────── */
+  function init() {
+    renderWashCards();
+    renderQR();
+    renderUsageChart();
+    renderPlans();
+    renderHistory();
+  }
 
-function opTab(tab, el) {
-  document.querySelectorAll('.op-tab').forEach(function(t) { t.classList.remove('active'); });
-  el.classList.add('active');
-  document.getElementById('op-bookings').classList.toggle('hidden', tab !== 'bookings');
-  document.getElementById('op-subscribers').classList.toggle('hidden', tab !== 'subscribers');
-}
+  init();
 
-// ── SERVICE WORKER ───────────────────────────────
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', function() {
-    navigator.serviceWorker.register('/service-worker.js')
-      .then(function(reg) { console.log('SW registered'); })
-      .catch(function(err) { console.log('SW failed:', err); });
-  });
-}
+  /* ─── Service Worker ─────────────────────────────────────────────── */
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/service-worker.js').catch(() => {});
+  }
 </script>
 </body>
 </html>
