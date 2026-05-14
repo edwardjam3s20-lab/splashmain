@@ -188,6 +188,23 @@ input::placeholder { color: var(--grey); }
 
 /* LEAFLET overrides */
 .leaflet-container { background: var(--navy2); }
+@keyframes pulse {
+  0% { transform: scale(1); opacity: .8; }
+  70% { transform: scale(2.5); opacity: 0; }
+  100% { transform: scale(1); opacity: 0; }
+}
+
+/* BOTTOM SHEET */
+.sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 200; display: none; }
+.sheet-overlay.show { display: block; }
+.bottom-sheet { position: fixed; bottom: 0; left: 0; right: 0; background: var(--navy2); border-radius: 20px 20px 0 0; padding: 20px; z-index: 201; transform: translateY(100%); transition: transform .3s cubic-bezier(.4,0,.2,1); }
+.bottom-sheet.show { transform: translateY(0); }
+.sheet-handle { width: 40px; height: 4px; background: var(--navy3); border-radius: 2px; margin: 0 auto 16px; }
+.sheet-point-name { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+.sheet-point-area { font-size: 14px; color: var(--grey); margin-bottom: 4px; }
+.sheet-point-dist { font-size: 13px; color: var(--gold); font-weight: 600; margin-bottom: 20px; }
+.sheet-services { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+.sheet-service-tag { background: var(--navy3); border-radius: 100px; padding: 5px 12px; font-size: 12px; color: var(--grey); }
 </style>
 </head>
 <body>
@@ -282,6 +299,22 @@ input::placeholder { color: var(--grey); }
     </div>
     <button class="btn btn-gold" id="book-btn" onclick="confirmBooking()">Confirm Booking</button>
   </div>
+</div>
+
+<!-- BOOKING CONFIRMED -->
+<div id="screen-confirmed" class="screen" style="align-items:center;justify-content:center;padding:32px 24px;text-align:center">
+  <div style="font-size:72px;margin-bottom:20px">✅</div>
+  <h2 style="font-size:28px;font-weight:800;margin-bottom:8px">Booking Confirmed!</h2>
+  <p style="color:var(--grey);font-size:15px;margin-bottom:28px">Your wash has been booked. See you soon!</p>
+  <div style="background:var(--navy2);border-radius:16px;padding:20px;width:100%;text-align:left;margin-bottom:24px;border:1px solid var(--navy3)">
+    <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--navy3);font-size:14px"><span style="color:var(--grey)">Location</span><strong id="conf-location">—</strong></div>
+    <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--navy3);font-size:14px"><span style="color:var(--grey)">Date</span><strong id="conf-date">—</strong></div>
+    <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--navy3);font-size:14px"><span style="color:var(--grey)">Time</span><strong id="conf-time">—</strong></div>
+    <div style="display:flex;justify-content:space-between;padding:10px 0;font-size:14px"><span style="color:var(--grey)">Plan</span><strong id="conf-plan">—</strong></div>
+  </div>
+  <div style="color:var(--grey);font-size:13px;margin-bottom:24px" id="conf-sms-note">📱 Confirmation SMS sent to your phone</div>
+  <button class="btn btn-gold" onclick="showQRFromConfirm()" style="margin-bottom:12px">View Wash Pass (QR)</button>
+  <button class="btn btn-outline" onclick="showScreen('home')">Back to Home</button>
 </div>
 
 <!-- QR CODE -->
@@ -423,6 +456,22 @@ input::placeholder { color: var(--grey); }
     <div class="nav-icon">👤</div>
     <div>Account</div>
   </div>
+</div>
+
+<!-- BOTTOM SHEET -->
+<div class="sheet-overlay" id="sheet-overlay" onclick="closeSheet()"></div>
+<div class="bottom-sheet" id="bottom-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-point-name" id="sheet-name">—</div>
+  <div class="sheet-point-area" id="sheet-area">—</div>
+  <div class="sheet-point-dist" id="sheet-dist">—</div>
+  <div class="sheet-services">
+    <div class="sheet-service-tag">💧 Exterior Wash</div>
+    <div class="sheet-service-tag">✨ Interior</div>
+    <div class="sheet-service-tag">🔘 Tyre Shine</div>
+    <div class="sheet-service-tag">🕐 Open 7am–6pm</div>
+  </div>
+  <button class="btn btn-gold" id="sheet-book-btn" onclick="bookFromSheet()">Book This Wash Point</button>
 </div>
 
 <div id="toast"></div>
@@ -668,19 +717,35 @@ function sortAndRenderPoints() {
 // ── MAP ───────────────────────────────────────────
 function initMap() {
   if (mapInstance) { mapInstance.remove(); mapInstance = null; }
-  mapInstance = L.map('map', { zoomControl: false, attributionControl: false }).setView([userLat, userLng], 13);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapInstance);
+  mapInstance = L.map('map', { zoomControl: false, attributionControl: false }).setView([userLat, userLng], 14);
 
-  // User marker
-  var userIcon = L.divIcon({ html: '<div style="width:14px;height:14px;background:#f5a623;border:3px solid white;border-radius:50%;box-shadow:0 0 0 4px rgba(245,166,35,.3)"></div>', iconSize: [14,14], iconAnchor: [7,7], className: '' });
-  L.marker([userLat, userLng], { icon: userIcon }).addTo(mapInstance).bindPopup('You are here');
+  // Stadia Maps - Alidade Smooth Dark (Uber/Bolt style dark map)
+  L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
+    maxZoom: 20
+  }).addTo(mapInstance);
 
-  // Wash point markers
-  var washIcon = L.divIcon({ html: '<div style="width:28px;height:28px;background:#0d1b2a;border:2px solid #f5a623;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;color:white">💧</div>', iconSize: [28,28], iconAnchor: [14,14], className: '' });
+  // Pulsing user location dot (like Bolt/Uber)
+  var pulseHtml = '<div style="position:relative;width:20px;height:20px">' +
+    '<div style="position:absolute;inset:0;background:#f5a623;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.4);z-index:2"></div>' +
+    '<div style="position:absolute;inset:-6px;background:rgba(245,166,35,.25);border-radius:50%;animation:pulse 2s ease-out infinite;z-index:1"></div>' +
+    '</div>';
+  var userIcon = L.divIcon({ html: pulseHtml, iconSize: [20,20], iconAnchor: [10,10], className: '' });
+  L.marker([userLat, userLng], { icon: userIcon }).addTo(mapInstance);
+
+  // Wash point markers - pill style like Bolt
   WASH_POINTS.forEach(function(p) {
-    L.marker([p.lat, p.lng], { icon: washIcon }).addTo(mapInstance)
-      .bindPopup('<strong>' + p.name + '</strong><br>' + p.area)
-      .on('click', function() { bookPoint(p.id); });
+    var dist = distKm(userLat, userLng, p.lat, p.lng);
+    var distLabel = dist < 1 ? Math.round(dist*1000) + 'm' : dist.toFixed(1) + 'km';
+    var markerHtml = '<div onclick="showPointSheet(' + p.id + ')" style="' +
+      'background:#0d1b2a;border:2px solid #f5a623;border-radius:20px;' +
+      'padding:6px 10px;display:flex;align-items:center;gap:5px;' +
+      'box-shadow:0 4px 12px rgba(0,0,0,.5);cursor:pointer;white-space:nowrap;' +
+      'font-family:DM Sans,sans-serif;font-size:12px;font-weight:600;color:white">' +
+      '<span style="font-size:14px">💧</span>' +
+      '<span>' + distLabel + '</span>' +
+      '</div>';
+    var icon = L.divIcon({ html: markerHtml, iconAnchor: [40,20], className: '' });
+    L.marker([p.lat, p.lng], { icon: icon }).addTo(mapInstance);
   });
 }
 
@@ -754,8 +819,13 @@ async function confirmBooking() {
 }
 
 // ── QR CODE ───────────────────────────────────────
+var pendingQRData = null;
+
 function showQR(booking, code, date) {
   var qrData = JSON.stringify({ id: booking.id, user: currentUser.name, point: selectedPoint.name, date: date, time: selectedSlot, code: code });
+  pendingQRData = { qrData: qrData, code: code, date: date };
+
+  // Pre-render QR
   document.getElementById('qr-canvas').innerHTML = '';
   new QRCode(document.getElementById('qr-canvas'), { text: qrData, width: 200, height: 200, colorDark: '#0d1b2a', colorLight: '#ffffff' });
   document.getElementById('qr-code-display').textContent = code;
@@ -764,7 +834,49 @@ function showQR(booking, code, date) {
     '<div class="qr-info-row"><span>Date</span><strong>' + date + '</strong></div>' +
     '<div class="qr-info-row"><span>Time</span><strong>' + selectedSlot + '</strong></div>' +
     '<div class="qr-info-row"><span>Plan</span><strong>' + currentUser.plan + '</strong></div>';
+
+  // Show confirmation screen first
+  document.getElementById('conf-location').textContent = selectedPoint.name;
+  document.getElementById('conf-date').textContent = date;
+  document.getElementById('conf-time').textContent = selectedSlot;
+  document.getElementById('conf-plan').textContent = currentUser.plan + ' Plan';
+  document.getElementById('conf-sms-note').textContent = '📱 Sending confirmation SMS...';
+
+  showScreen('confirmed');
+
+  // Send SMS
+  sendBookingSMS(date);
+}
+
+function showQRFromConfirm() {
   showScreen('qr');
+}
+
+async function sendBookingSMS(date) {
+  if (!currentUser || !currentUser.phone) {
+    document.getElementById('conf-sms-note').textContent = 'No phone number on file';
+    return;
+  }
+  try {
+    var msg = 'SplashPass Booking Confirmed! ' +
+      'Location: ' + selectedPoint.name + ' | ' +
+      'Date: ' + date + ' | ' +
+      'Time: ' + selectedSlot + ' | ' +
+      'Plan: ' + currentUser.plan + '. Show QR code to attendant. Drive clean!';
+    var res = await fetch('/api/send-sms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: currentUser.phone, message: msg })
+    });
+    var data = await res.json();
+    if (data.success) {
+      document.getElementById('conf-sms-note').textContent = 'Confirmation SMS sent to ' + currentUser.phone;
+    } else {
+      document.getElementById('conf-sms-note').textContent = 'Booking saved. SMS unavailable.';
+    }
+  } catch(e) {
+    document.getElementById('conf-sms-note').textContent = 'Booking saved. SMS unavailable.';
+  }
 }
 
 // ── HOME RENDER ───────────────────────────────────
@@ -951,6 +1063,33 @@ async function markDone(id) {
     toast('Marked as complete.');
     renderOperator();
   } catch(e) { toast('Error: ' + e.message, true); }
+}
+
+// ── BOTTOM SHEET ─────────────────────────────────
+var sheetPoint = null;
+
+function showPointSheet(pointId) {
+  sheetPoint = WASH_POINTS.find(function(p) { return p.id === pointId; });
+  if (!sheetPoint) return;
+  var dist = distKm(userLat, userLng, sheetPoint.lat, sheetPoint.lng);
+  var distLabel = dist < 1 ? Math.round(dist*1000) + 'm away' : dist.toFixed(1) + 'km away';
+  document.getElementById('sheet-name').textContent = sheetPoint.name;
+  document.getElementById('sheet-area').textContent = sheetPoint.area;
+  document.getElementById('sheet-dist').textContent = '📍 ' + distLabel;
+  document.getElementById('sheet-overlay').classList.add('show');
+  document.getElementById('bottom-sheet').classList.add('show');
+}
+
+function closeSheet() {
+  document.getElementById('sheet-overlay').classList.remove('show');
+  document.getElementById('bottom-sheet').classList.remove('show');
+  sheetPoint = null;
+}
+
+function bookFromSheet() {
+  var point = sheetPoint;
+  closeSheet();
+  if (point) bookPoint(point.id);
 }
 
 // ── SERVICE WORKER ────────────────────────────────
