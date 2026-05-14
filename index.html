@@ -262,6 +262,16 @@ input::placeholder { color: var(--grey); }
       <span class="sub-badge badge-none" id="home-badge">Get Plan</span>
     </div>
   </div>
+  <div id="credits-bar" class="hidden" style="margin:12px 16px 0;background:var(--navy2);border-radius:14px;padding:14px 16px;border:1px solid var(--navy3);display:flex;align-items:center;justify-content:space-between">
+    <div>
+      <div style="font-size:12px;color:var(--grey);margin-bottom:2px;text-transform:uppercase;letter-spacing:.5px">Wash Credits</div>
+      <div style="font-size:22px;font-weight:800;font-family:Syne,sans-serif;color:var(--gold)" id="credits-display">0</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:12px;color:var(--grey)">Refreshes weekly</div>
+      <div style="font-size:13px;color:var(--white);margin-top:2px" id="credits-sub">—</div>
+    </div>
+  </div>
   <div id="next-booking-bar" class="hidden" onclick="openNextBookingQR()" style="margin:0 16px 0;background:var(--navy2);border-radius:14px;padding:14px 16px;border:1.5px solid var(--gold);display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:12px">
     <div style="font-size:28px">🚿</div>
     <div style="flex:1">
@@ -413,18 +423,68 @@ input::placeholder { color: var(--grey); }
     <div class="profile-card">
       <h3>Personal Info</h3>
       <div class="profile-row"><span>Name</span><strong id="prof-name">—</strong></div>
-      <div class="profile-row"><span>Email</span><strong id="prof-email" style="font-size:13px">—</strong></div>
+      <div class="profile-row"><span>Email</span><strong id="prof-email" style="font-size:12px">—</strong></div>
       <div class="profile-row"><span>Phone</span><strong id="prof-phone">—</strong></div>
+      <div class="profile-row"><span>Home</span><strong id="prof-home">—</strong></div>
+    </div>
+    <div class="profile-card">
+      <h3>My Car</h3>
+      <div class="profile-row"><span>Make & Model</span><strong id="prof-car">—</strong></div>
+      <div class="profile-row"><span>Colour</span><strong id="prof-colour">—</strong></div>
+      <div class="profile-row"><span>Number Plate</span><strong id="prof-plate" style="color:var(--gold)">—</strong></div>
+      <div class="profile-row"><span>Type</span><strong id="prof-cartype">—</strong></div>
+      <button class="btn btn-outline btn-sm" onclick="showScreen('edit-car')" style="margin-top:12px;width:100%">Edit Car Details</button>
     </div>
     <div class="profile-card">
       <h3>Subscription</h3>
       <div class="profile-row"><span>Plan</span><strong id="prof-plan">—</strong></div>
+      <div class="profile-row"><span>Credits</span><strong id="prof-credits" style="color:var(--gold)">—</strong></div>
       <div class="profile-row"><span>Status</span><strong id="prof-status">—</strong></div>
       <div class="profile-row"><span>Started</span><strong id="prof-start">—</strong></div>
       <div class="profile-row"><span>Renews</span><strong id="prof-renew">—</strong></div>
     </div>
     <button class="btn btn-outline" onclick="goToPlans()" style="margin-bottom:12px">Change Plan</button>
     <button class="btn btn-danger" onclick="logout()">Log Out</button>
+  </div>
+</div>
+
+<!-- EDIT CAR -->
+<div id="screen-edit-car" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" onclick="showScreen('profile')">←</button>
+    <h2>My Car Details</h2>
+  </div>
+  <div style="padding:20px;padding-bottom:100px">
+    <div class="form-group"><label>Car Make (e.g. Toyota)</label><input type="text" id="car-make" placeholder="Toyota"></div>
+    <div class="form-group"><label>Car Model (e.g. Vitz)</label><input type="text" id="car-model" placeholder="Vitz"></div>
+    <div class="form-group"><label>Car Colour</label><input type="text" id="car-colour" placeholder="Silver"></div>
+    <div class="form-group"><label>Number Plate</label><input type="text" id="car-plate" placeholder="KCA 123A" style="text-transform:uppercase"></div>
+    <div class="form-group">
+      <label>Car Type</label>
+      <select id="car-type">
+        <option value="">Select type</option>
+        <option value="Sedan">Sedan</option>
+        <option value="SUV">SUV</option>
+        <option value="Pickup">Pickup</option>
+        <option value="Van">Van</option>
+        <option value="Hatchback">Hatchback</option>
+        <option value="Coupe">Coupe</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Home Location</label><input type="text" id="home-loc" placeholder="e.g. Nyali, Mombasa"></div>
+    <div class="form-group"><label>Preferred Wash Point</label>
+      <select id="pref-point">
+        <option value="">Any wash point</option>
+        <option value="SplashPass Nyali">SplashPass Nyali</option>
+        <option value="SplashPass CBD">SplashPass CBD</option>
+        <option value="SplashPass Bamburi">SplashPass Bamburi</option>
+        <option value="SplashPass Likoni">SplashPass Likoni</option>
+        <option value="SplashPass Kisauni">SplashPass Kisauni</option>
+        <option value="SplashPass Diani">SplashPass Diani</option>
+      </select>
+    </div>
+    <div id="car-save-error" class="form-error"></div>
+    <button class="btn btn-gold" id="car-save-btn" onclick="saveCarDetails()">Save Details</button>
   </div>
 </div>
 
@@ -491,6 +551,9 @@ var SUPABASE_URL = 'https://msdvyiqjoogafzyaoycg.supabase.co';
 var SUPABASE_KEY = 'sb_publishable_N_g24aU7TLHLNeu72gnfeg_1d7OleFW';
 var OPERATOR = { email: 'operator@splashpass.co.ke', password: 'splash2026' };
 var SLOTS = ['7:00 AM','8:00 AM','9:00 AM','10:00 AM','11:00 AM','12:00 PM','1:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM'];
+
+// Plan credits per week
+var PLAN_CREDITS = { 'Basic': 4, 'Premium': 8, 'Fleet': 99 };
 
 // Dummy wash points around Mombasa
 var WASH_POINTS = [
@@ -582,7 +645,7 @@ function showScreen(name) {
   document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
   document.getElementById('screen-' + name).classList.add('active');
   var nav = document.getElementById('bottom-nav');
-  var noNav = ['splash','auth','book','qr','mpesa'];
+  var noNav = ['splash','auth','book','qr','mpesa','edit-car'];
   nav.style.display = noNav.indexOf(name) > -1 ? 'none' : 'flex';
   // Update nav active state
   ['home','plans','profile'].forEach(function(n) {
@@ -811,6 +874,11 @@ function selectSlot(s) {
 
 async function confirmBooking() {
   if (!selectedSlot) { toast('Please select a time slot.', true); return; }
+  if (currentUser.plan !== 'Fleet' && (!currentUser.credits || currentUser.credits < 1)) {
+    toast('No credits remaining. Please top up your plan.', true);
+    showScreen('plans');
+    return;
+  }
   var date = document.getElementById('book-date').value;
   setBtn('book-btn', true, 'Confirm Booking');
   try {
@@ -841,11 +909,15 @@ function showQR(booking, code, date) {
   document.getElementById('qr-canvas').innerHTML = '';
   new QRCode(document.getElementById('qr-canvas'), { text: qrData, width: 200, height: 200, colorDark: '#0d1b2a', colorLight: '#ffffff' });
   document.getElementById('qr-code-display').textContent = code;
+  var plateInfo = currentUser.plate ? currentUser.plate : '—';
+  var carInfo = (currentUser.car_colour || '') + ' ' + (currentUser.car_make || '') + ' ' + (currentUser.car_model || '');
   document.getElementById('qr-info').innerHTML =
     '<div class="qr-info-row"><span>Location</span><strong>' + selectedPoint.name + '</strong></div>' +
     '<div class="qr-info-row"><span>Date</span><strong>' + date + '</strong></div>' +
     '<div class="qr-info-row"><span>Time</span><strong>' + selectedSlot + '</strong></div>' +
-    '<div class="qr-info-row"><span>Plan</span><strong>' + currentUser.plan + '</strong></div>';
+    '<div class="qr-info-row"><span>Plan</span><strong>' + currentUser.plan + '</strong></div>' +
+    '<div class="qr-info-row"><span>Plate</span><strong style="color:var(--gold)">' + plateInfo + '</strong></div>' +
+    '<div class="qr-info-row"><span>Car</span><strong>' + carInfo.trim() + '</strong></div>';
 
   // Show confirmation screen first
   document.getElementById('conf-location').textContent = selectedPoint.name;
@@ -920,6 +992,19 @@ function renderHome() {
     badgeEl.textContent = 'Get Plan';
     badgeEl.className = 'sub-badge badge-none';
   }
+
+  // Credits bar
+  var creditsBar = document.getElementById('credits-bar');
+  var creditsDisplay = document.getElementById('credits-display');
+  var creditsSub = document.getElementById('credits-sub');
+  if (currentUser.plan && currentUser.sub_status === 'active') {
+    creditsBar.classList.remove('hidden');
+    var c = currentUser.plan === 'Fleet' ? '∞' : (currentUser.credits || 0);
+    creditsDisplay.textContent = c;
+    creditsSub.textContent = currentUser.plan === 'Fleet' ? 'Unlimited' : (currentUser.credits === 1 ? '1 wash left' : c + ' washes left');
+  } else {
+    creditsBar.classList.add('hidden');
+  }
 }
 
 // ── PROFILE ───────────────────────────────────────
@@ -928,7 +1013,13 @@ function renderProfile() {
   document.getElementById('prof-name').textContent = currentUser.name || '—';
   document.getElementById('prof-email').textContent = currentUser.email || '—';
   document.getElementById('prof-phone').textContent = currentUser.phone || '—';
+  document.getElementById('prof-home').textContent = currentUser.home_location || 'Not set';
+  document.getElementById('prof-car').textContent = (currentUser.car_make || '') + ' ' + (currentUser.car_model || '') || 'Not set';
+  document.getElementById('prof-colour').textContent = currentUser.car_colour || 'Not set';
+  document.getElementById('prof-plate').textContent = currentUser.plate || 'Not set';
+  document.getElementById('prof-cartype').textContent = currentUser.car_type || 'Not set';
   document.getElementById('prof-plan').textContent = currentUser.plan || 'None';
+  document.getElementById('prof-credits').textContent = currentUser.plan === 'Fleet' ? 'Unlimited' : (currentUser.credits || 0) + ' washes';
   document.getElementById('prof-status').textContent = currentUser.sub_status || 'pending';
   if (currentUser.sub_start) {
     var start = new Date(currentUser.sub_start);
@@ -939,6 +1030,16 @@ function renderProfile() {
     document.getElementById('prof-start').textContent = '—';
     document.getElementById('prof-renew').textContent = '—';
   }
+  // Pre-fill edit car form
+  if (document.getElementById('car-make')) {
+    document.getElementById('car-make').value = currentUser.car_make || '';
+    document.getElementById('car-model').value = currentUser.car_model || '';
+    document.getElementById('car-colour').value = currentUser.car_colour || '';
+    document.getElementById('car-plate').value = currentUser.plate || '';
+    document.getElementById('car-type').value = currentUser.car_type || '';
+    document.getElementById('home-loc').value = currentUser.home_location || '';
+    document.getElementById('pref-point').value = currentUser.preferred_point || '';
+  }
 }
 
 // ── PLANS ─────────────────────────────────────────
@@ -946,11 +1047,13 @@ async function selectPlan(name, price) {
   selectedPlan = { name: name, price: price };
   if (currentUser && currentUser.role === 'customer') {
     try {
-      await updateUser(currentUser.email, { plan: name, plan_price: price, sub_start: new Date().toISOString(), sub_status: 'pending' });
+      var credits = PLAN_CREDITS[name] || 0;
+      await updateUser(currentUser.email, { plan: name, plan_price: price, sub_start: new Date().toISOString(), sub_status: 'pending', credits: credits });
       currentUser.plan = name;
       currentUser.plan_price = price;
       currentUser.sub_start = new Date().toISOString();
       currentUser.sub_status = 'pending';
+      currentUser.credits = credits;
     } catch(e) { toast('Error saving plan: ' + e.message, true); return; }
   }
   document.getElementById('mpesa-amount').textContent = 'KSh ' + price;
@@ -1073,7 +1176,16 @@ function opTab(tab, el) {
 async function markDone(id) {
   try {
     await updateBookingRow(id, { status: 'completed' });
-    toast('Marked as complete.');
+    // Deduct 1 credit from the user
+    var bookings = await getAllBookings();
+    var b = bookings.find(function(x) { return x.id === id; });
+    if (b && b.user_email) {
+      var user = await getUserByEmail(b.user_email);
+      if (user && user.plan !== 'Fleet' && user.credits > 0) {
+        await updateUser(b.user_email, { credits: user.credits - 1 });
+      }
+    }
+    toast('Wash completed. Credit deducted.');
     renderOperator();
   } catch(e) { toast('Error: ' + e.message, true); }
 }
@@ -1103,6 +1215,39 @@ function bookFromSheet() {
   var point = sheetPoint;
   closeSheet();
   if (point) bookPoint(point.id);
+}
+
+// ── CAR DETAILS ──────────────────────────────────
+async function saveCarDetails() {
+  var make = document.getElementById('car-make').value.trim();
+  var model = document.getElementById('car-model').value.trim();
+  var colour = document.getElementById('car-colour').value.trim();
+  var plate = document.getElementById('car-plate').value.trim().toUpperCase();
+  var type = document.getElementById('car-type').value;
+  var home = document.getElementById('home-loc').value.trim();
+  var pref = document.getElementById('pref-point').value;
+  var err = document.getElementById('car-save-error');
+
+  if (!make || !model || !plate) { err.textContent = 'Make, model and plate are required.'; return; }
+
+  setBtn('car-save-btn', true, 'Save Details');
+  try {
+    await updateUser(currentUser.email, {
+      car_make: make, car_model: model, car_colour: colour,
+      plate: plate, car_type: type, home_location: home, preferred_point: pref
+    });
+    currentUser.car_make = make;
+    currentUser.car_model = model;
+    currentUser.car_colour = colour;
+    currentUser.plate = plate;
+    currentUser.car_type = type;
+    currentUser.home_location = home;
+    currentUser.preferred_point = pref;
+    err.textContent = '';
+    toast('Car details saved!');
+    showScreen('profile');
+  } catch(e) { err.textContent = 'Error: ' + e.message; }
+  finally { setBtn('car-save-btn', false, 'Save Details'); }
 }
 
 // ── NEXT BOOKING ─────────────────────────────────
