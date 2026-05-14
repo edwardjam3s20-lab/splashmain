@@ -262,6 +262,15 @@ input::placeholder { color: var(--grey); }
       <span class="sub-badge badge-none" id="home-badge">Get Plan</span>
     </div>
   </div>
+  <div id="next-booking-bar" class="hidden" onclick="openNextBookingQR()" style="margin:0 16px 0;background:var(--navy2);border-radius:14px;padding:14px 16px;border:1.5px solid var(--gold);display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:12px">
+    <div style="font-size:28px">🚿</div>
+    <div style="flex:1">
+      <div style="font-size:13px;color:var(--gold);font-weight:700;margin-bottom:2px">UPCOMING WASH</div>
+      <div style="font-size:15px;font-weight:700" id="next-booking-text">—</div>
+      <div style="font-size:12px;color:var(--grey)" id="next-booking-sub">—</div>
+    </div>
+    <div style="color:var(--gold);font-size:20px">›</div>
+  </div>
   <div class="map-section">
     <div id="map"></div>
     <div class="map-label" id="map-label">📍 Locating you...</div>
@@ -499,6 +508,8 @@ var selectedPlan = null;
 var selectedPoint = null;
 var selectedSlot = null;
 var mapInstance = null;
+var nextBooking = null;
+var nextBookingCode = null;
 var userMarker = null;
 var userLat = -4.0435;
 var userLng = 39.7173;
@@ -720,8 +731,9 @@ function initMap() {
   mapInstance = L.map('map', { zoomControl: false, attributionControl: false }).setView([userLat, userLng], 14);
 
   // Stadia Maps - Alidade Smooth Dark (Uber/Bolt style dark map)
-  L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
-    maxZoom: 20
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    maxZoom: 20,
+    subdomains: 'abcd'
   }).addTo(mapInstance);
 
   // Pulsing user location dot (like Bolt/Uber)
@@ -882,6 +894,7 @@ async function sendBookingSMS(date) {
 // ── HOME RENDER ───────────────────────────────────
 function renderHome() {
   if (!currentUser) return;
+  loadNextBooking();
   var hour = new Date().getHours();
   var greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   document.querySelector('.home-greeting').textContent = greet + ' 👋';
@@ -1090,6 +1103,57 @@ function bookFromSheet() {
   var point = sheetPoint;
   closeSheet();
   if (point) bookPoint(point.id);
+}
+
+// ── NEXT BOOKING ─────────────────────────────────
+async function loadNextBooking() {
+  try {
+    var bookings = await getBookingsByEmail(currentUser.email);
+    var today = new Date().toISOString().split('T')[0];
+    var upcoming = bookings.filter(function(b) {
+      return b.date >= today && b.status !== 'completed';
+    }).sort(function(a,b) {
+      return (a.date + a.time) > (b.date + b.time) ? 1 : -1;
+    });
+    var bar = document.getElementById('next-booking-bar');
+    if (upcoming.length) {
+      nextBooking = upcoming[0];
+      nextBookingCode = 'SP' + nextBooking.id.toString().slice(-6).toUpperCase();
+      document.getElementById('next-booking-text').textContent = nextBooking.location + ' · ' + nextBooking.time;
+      document.getElementById('next-booking-sub').textContent = formatBookingDate(nextBooking.date) + ' · Tap to view pass';
+      bar.classList.remove('hidden');
+    } else {
+      bar.classList.add('hidden');
+      nextBooking = null;
+    }
+  } catch(e) {
+    document.getElementById('next-booking-bar').classList.add('hidden');
+  }
+}
+
+function formatBookingDate(dateStr) {
+  var d = new Date(dateStr + 'T00:00:00');
+  var today = new Date(); today.setHours(0,0,0,0);
+  var tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate()+1);
+  if (d.getTime() === today.getTime()) return 'Today';
+  if (d.getTime() === tomorrow.getTime()) return 'Tomorrow';
+  return d.toLocaleDateString('en-KE', { weekday:'short', month:'short', day:'numeric' });
+}
+
+function openNextBookingQR() {
+  if (!nextBooking) return;
+  var point = WASH_POINTS.find(function(p) { return p.name === nextBooking.location; });
+  if (!point) point = { name: nextBooking.location, area: '' };
+  var qrData = JSON.stringify({ id: nextBooking.id, user: currentUser.name, point: nextBooking.location, date: nextBooking.date, time: nextBooking.time, code: nextBookingCode });
+  document.getElementById('qr-canvas').innerHTML = '';
+  new QRCode(document.getElementById('qr-canvas'), { text: qrData, width: 200, height: 200, colorDark: '#0d1b2a', colorLight: '#ffffff' });
+  document.getElementById('qr-code-display').textContent = nextBookingCode;
+  document.getElementById('qr-info').innerHTML =
+    '<div class="qr-info-row"><span>Location</span><strong>' + nextBooking.location + '</strong></div>' +
+    '<div class="qr-info-row"><span>Date</span><strong>' + nextBooking.date + '</strong></div>' +
+    '<div class="qr-info-row"><span>Time</span><strong>' + nextBooking.time + '</strong></div>' +
+    '<div class="qr-info-row"><span>Plan</span><strong>' + (nextBooking.plan || currentUser.plan) + '</strong></div>';
+  showScreen('qr');
 }
 
 // ── SERVICE WORKER ────────────────────────────────
