@@ -158,31 +158,10 @@ input::placeholder { color: var(--grey); }
     <div class="form-group"><label>Password</label><input type="password" id="login-pass" placeholder="Your password"></div>
     <div id="login-error" class="form-error"></div>
     <button class="btn btn-gold" id="login-btn" onclick="login()" style="margin-bottom:12px">Sign In</button>
-    <div class="auth-switch">New operator? <a onclick="showAuth('register')">Register here</a></div>
+    <div class="auth-switch" style="color:var(--grey);font-size:13px">Contact admin for access</div>
   </div>
 
-  <div id="auth-register" class="hidden">
-    <div class="auth-title">Register as Operator</div>
-    <div class="auth-sub">Create your wash point account</div>
-    <div class="form-group"><label>Full Name</label><input type="text" id="reg-name" placeholder="John Kamau"></div>
-    <div class="form-group"><label>Email</label><input type="email" id="reg-email" placeholder="you@example.com"></div>
-    <div class="form-group"><label>Password</label><input type="password" id="reg-pass" placeholder="At least 6 characters"></div>
-    <div class="form-group">
-      <label>Your Wash Point</label>
-      <select id="reg-point">
-        <option value="">Select your wash point</option>
-        <option value="SplashPass Nyali">SplashPass Nyali</option>
-        <option value="SplashPass CBD">SplashPass CBD</option>
-        <option value="SplashPass Bamburi">SplashPass Bamburi</option>
-        <option value="SplashPass Likoni">SplashPass Likoni</option>
-        <option value="SplashPass Kisauni">SplashPass Kisauni</option>
-        <option value="SplashPass Diani">SplashPass Diani</option>
-      </select>
-    </div>
-    <div id="reg-error" class="form-error"></div>
-    <button class="btn btn-gold" id="reg-btn" onclick="register()" style="margin-bottom:12px">Create Account</button>
-    <div class="auth-switch">Already registered? <a onclick="showAuth('login')">Sign in</a></div>
-  </div>
+  <div id="auth-register" class="hidden"></div>
 </div>
 
 <!-- HOME / QUEUE -->
