@@ -292,6 +292,12 @@ async function createOperator() {
   if (!name || !email || !pass || !point) { err.textContent = 'Please fill in all fields.'; return; }
   setBtn('create-btn', true, 'Create Operator');
   try {
+    // Block if email already exists as a customer
+    var custCheck = await sbFetch('profiles?email=eq.' + encodeURIComponent(email) + '&select=email');
+    if (custCheck && custCheck.length) { err.textContent = 'This email is already registered as a customer account.'; return; }
+    // Block if email already exists as an operator
+    var opCheck = await sbFetch('operators?email=eq.' + encodeURIComponent(email) + '&select=email');
+    if (opCheck && opCheck.length) { err.textContent = 'An operator with this email already exists.'; return; }
     await sbFetch('operators', { method: 'POST', body: JSON.stringify({ name: name, email: email, password: pass, wash_point: point }), prefer: 'return=representation' });
     toast('Operator created successfully!');
     hideCreateModal();
