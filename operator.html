@@ -358,6 +358,9 @@ async function login() {
   try {
     var op = await getOperatorByEmail(email);
     if (!op || op.password !== pass) { err.textContent = 'Invalid email or password.'; return; }
+    // Check if this is actually a customer account
+    var custCheck = await sbFetch('profiles?email=eq.' + encodeURIComponent(email) + '&select=email');
+    if (custCheck && custCheck.length && !op) { err.textContent = 'This is a customer account. Use the SplashPass customer app.'; return; }
     currentOperator = op;
     err.textContent = '';
     showScreen('home');

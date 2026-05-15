@@ -680,6 +680,7 @@ async function login() {
   try {
     var user = await getUserByEmail(email);
     if (!user || user.password !== pass) { err.textContent = 'Invalid email or password.'; return; }
+    if (user.role === 'operator') { err.textContent = 'This is an operator account. Use the operator app.'; return; }
     currentUser = user;
     err.textContent = '';
     initApp();
@@ -712,6 +713,9 @@ async function register() {
   try {
     var existing = await getUserByEmail(email);
     if (existing) { err.textContent = 'Account already exists.'; return; }
+    // Check if email is registered as an operator
+    var opCheck = await sbFetch('operators?email=eq.' + encodeURIComponent(email) + '&select=email');
+    if (opCheck && opCheck.length) { err.textContent = 'This email is registered as an operator account.'; return; }
     var result = await createUser({ name: name, email: email, phone: phone, password: pass, role: 'customer', sub_status: 'pending' });
     currentUser = result[0];
     err.textContent = '';
