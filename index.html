@@ -262,6 +262,21 @@ input::placeholder { color: var(--grey); }
       <span class="sub-badge badge-none" id="home-badge">Get Plan</span>
     </div>
   </div>
+  <div id="loyalty-bar" class="hidden" style="margin:12px 16px 0;background:var(--navy2);border-radius:14px;padding:14px 16px;border:1px solid var(--navy3);display:flex;align-items:center;justify-content:space-between">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="font-size:28px" id="loyalty-icon">🥉</div>
+      <div>
+        <div style="font-size:13px;font-weight:700" id="loyalty-tier-name">Bronze</div>
+        <div style="font-size:12px;color:var(--grey)" id="loyalty-points-text">0 points</div>
+      </div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:12px;color:var(--grey)" id="loyalty-next">100 to Silver</div>
+      <div style="width:80px;height:4px;background:var(--navy3);border-radius:2px;margin-top:4px;overflow:hidden">
+        <div style="height:100%;background:var(--gold);border-radius:2px;transition:width .3s" id="loyalty-progress"></div>
+      </div>
+    </div>
+  </div>
   <div id="credits-bar" class="hidden" style="margin:12px 16px 0;background:var(--navy2);border-radius:14px;padding:14px 16px;border:1px solid var(--navy3);display:flex;align-items:center;justify-content:space-between">
     <div>
       <div style="font-size:12px;color:var(--grey);margin-bottom:2px;text-transform:uppercase;letter-spacing:.5px">Wash Credits</div>
@@ -316,6 +331,12 @@ input::placeholder { color: var(--grey); }
     <div class="time-slots" id="time-slots">
       <div style="color:var(--grey);font-size:13px;grid-column:span 3">Select a date first</div>
     </div>
+    <div class="section-label" style="margin-top:8px">Add Extras (optional)</div>
+    <div id="extras-list" style="margin-bottom:16px"></div>
+    <div style="background:var(--navy2);border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:13px;color:var(--grey)">Total Credits</div>
+      <div style="font-size:18px;font-weight:800;color:var(--gold);font-family:Syne,sans-serif" id="booking-total">1 credit</div>
+    </div>
     <button class="btn btn-gold" id="book-btn" onclick="confirmBooking()">Confirm Booking</button>
   </div>
 </div>
@@ -354,41 +375,8 @@ input::placeholder { color: var(--grey); }
     <button class="back-btn" onclick="showScreen('home')">←</button>
     <h2>Choose a Plan</h2>
   </div>
-  <div class="plans-content">
-    <div class="plan-card">
-      <div class="plan-name">Basic</div>
-      <div class="plan-price">KSh 500<span>/week</span></div>
-      <ul class="plan-features">
-        <li>1 wash per week</li>
-        <li>Exterior wash</li>
-        <li>Wheel cleaning</li>
-        <li>Spot-free rinse</li>
-      </ul>
-      <button class="btn btn-outline" onclick="selectPlan('Basic',500)">Choose Basic</button>
-    </div>
-    <div class="plan-card popular">
-      <div class="popular-tag">Most Popular</div>
-      <div class="plan-name">Premium</div>
-      <div class="plan-price">KSh 800<span>/week</span></div>
-      <ul class="plan-features">
-        <li>2 washes per week</li>
-        <li>Full interior + exterior</li>
-        <li>Tyre shine + dashboard wipe</li>
-        <li>Priority booking</li>
-      </ul>
-      <button class="btn btn-gold" onclick="selectPlan('Premium',800)">Choose Premium</button>
-    </div>
-    <div class="plan-card">
-      <div class="plan-name">Fleet</div>
-      <div class="plan-price">KSh 2,000<span>/week</span></div>
-      <ul class="plan-features">
-        <li>Unlimited washes (3+ vehicles)</li>
-        <li>Full service all vehicles</li>
-        <li>Priority + flexible scheduling</li>
-        <li>Monthly reporting</li>
-      </ul>
-      <button class="btn btn-outline" onclick="selectPlan('Fleet',2000)">Choose Fleet</button>
-    </div>
+  <div class="plans-content" id="plans-content">
+    <!-- Rendered dynamically -->
   </div>
 </div>
 
@@ -552,8 +540,37 @@ var SUPABASE_KEY = 'sb_publishable_N_g24aU7TLHLNeu72gnfeg_1d7OleFW';
 var OPERATOR = { email: 'operator@splashpass.co.ke', password: 'splash2026' };
 var SLOTS = ['7:00 AM','8:00 AM','9:00 AM','10:00 AM','11:00 AM','12:00 PM','1:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM'];
 
-// Plan credits per week
-var PLAN_CREDITS = { 'Basic': 4, 'Premium': 8, 'Fleet': 99 };
+// Plans definition
+var PLANS = [
+  { id: 'saloon-light', name: 'Saloon Light', price: 540, credits: 2, car: 'Saloon', washes: '2 washes/week', color: '#f5a623' },
+  { id: 'saloon-standard', name: 'Saloon Standard', price: 720, credits: 4, car: 'Saloon', washes: '4 washes/week', color: '#f5a623' },
+  { id: 'suv-light', name: 'SUV Light', price: 720, credits: 2, car: 'SUV', washes: '2 washes/week', color: '#4a9eff' },
+  { id: 'suv-standard', name: 'SUV Standard', price: 1080, credits: 4, car: 'SUV', washes: '4 washes/week', color: '#4a9eff' }
+];
+
+// Extras menu
+var EXTRAS = [
+  { id: 'engine-wash', name: 'Engine Wash', credits: 1, price: 300 },
+  { id: 'vacuum', name: 'Vacuum Only', credits: 1, price: 200 },
+  { id: 'roof-cleaning', name: 'Roof Cleaning', credits: 1, price: 250 },
+  { id: 'polish-outside', name: 'Polish Outside', credits: 1, price: 100 },
+  { id: 'underwash', name: 'Underwash', credits: 1, price: 300 },
+  { id: 'detailing', name: 'Full Detailing', credits: 5, price: 2500 },
+  { id: 'buffing', name: 'Buffing', credits: 4, price: 2000 },
+  { id: 'outwash-wipe', name: 'Outwash Full Body Wipe', credits: 1, price: 200 }
+];
+
+// Loyalty tiers
+var LOYALTY_TIERS = [
+  { name: 'Bronze', min: 0, max: 99, icon: '🥉', benefit: 'Access & booking' },
+  { name: 'Silver', min: 100, max: 299, icon: '🥈', benefit: 'Free wash every 10th' },
+  { name: 'Gold', min: 300, max: 599, icon: '🥇', benefit: 'Free wash every 8th + priority' },
+  { name: 'Platinum', min: 600, max: 999999, icon: '💎', benefit: 'Free wash every 6th + exclusive offers' }
+];
+
+function getTier(points) {
+  return LOYALTY_TIERS.find(function(t) { return points >= t.min && points <= t.max; }) || LOYALTY_TIERS[0];
+}
 
 // Dummy wash points around Mombasa
 var WASH_POINTS = [
@@ -845,6 +862,8 @@ function bookPoint(pointId) {
   document.getElementById('book-date').value = today;
   selectedSlot = null;
   loadSlots();
+  selectedExtras = [];
+  renderExtras();
   showScreen('book');
 }
 
@@ -876,10 +895,53 @@ function selectSlot(s) {
   loadSlots();
 }
 
+var selectedExtras = [];
+
+function renderExtras() {
+  var container = document.getElementById('extras-list');
+  if (!container) return;
+  var html = '';
+  EXTRAS.forEach(function(e) {
+    var sel = selectedExtras.indexOf(e.id) > -1;
+    var bg = sel ? 'rgba(245,166,35,.1)' : 'var(--navy2)';
+    var bc = sel ? 'var(--gold)' : 'var(--navy3)';
+    html += '<div data-extra="' + e.id + '" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:' + bg + ';border-radius:10px;margin-bottom:6px;border:1.5px solid ' + bc + ';cursor:pointer">';
+    html += '<div><div style="font-size:14px;font-weight:600">' + e.name + '</div>';
+    html += '<div style="font-size:12px;color:var(--grey)">KSh ' + e.price + '</div></div>';
+    html += '<div style="font-size:18px;color:var(--gold)">' + (sel ? '&#10003;' : '+') + '</div></div>';
+  });
+  container.innerHTML = html;
+  container.querySelectorAll('[data-extra]').forEach(function(el) {
+    el.addEventListener('click', function() { toggleExtra(el.getAttribute('data-extra')); });
+  });
+  updateBookingTotal();
+}
+
+function toggleExtra(id) {
+  var idx = selectedExtras.indexOf(id);
+  if (idx > -1) { selectedExtras.splice(idx, 1); }
+  else { selectedExtras.push(id); }
+  renderExtras();
+}
+
+function updateBookingTotal() {
+  var total = 1; // base wash = 1 credit
+  selectedExtras.forEach(function(id) {
+    var ex = EXTRAS.find(function(e) { return e.id === id; });
+    if (ex) total += ex.credits;
+  });
+  var el = document.getElementById('booking-total');
+  if (el) el.textContent = total + ' credit' + (total !== 1 ? 's' : '');
+}
+
 async function confirmBooking() {
   if (!selectedSlot) { toast('Please select a time slot.', true); return; }
-  if (currentUser.plan !== 'Fleet' && (!currentUser.credits || currentUser.credits < 1)) {
-    toast('No credits remaining. Please top up your plan.', true);
+  var totalCredits = 1 + selectedExtras.reduce(function(s, id) {
+    var ex = EXTRAS.find(function(e) { return e.id === id; });
+    return s + (ex ? ex.credits : 0);
+  }, 0);
+  if (!currentUser.credits || currentUser.credits < totalCredits) {
+    toast('Not enough credits. Need ' + totalCredits + ', have ' + (currentUser.credits || 0) + '.', true);
     showScreen('plans');
     return;
   }
@@ -887,6 +949,9 @@ async function confirmBooking() {
   setBtn('book-btn', true, 'Confirm Booking');
   try {
     var code = 'SP' + Math.random().toString(36).substring(2,8).toUpperCase();
+    var extrasData = selectedExtras.map(function(id) {
+      return EXTRAS.find(function(e) { return e.id === id; });
+    }).filter(Boolean);
     var booking = await createBooking({
       user_email: currentUser.email,
       user_name: currentUser.name,
@@ -894,10 +959,22 @@ async function confirmBooking() {
       time: selectedSlot,
       location: selectedPoint.name,
       status: 'confirmed',
-      plan: currentUser.plan
+      plan: currentUser.plan,
+      extras: extrasData
     });
     var b = booking[0];
-    showQR(b, code, date);
+    // Deduct credits
+    var newCredits = currentUser.credits - totalCredits;
+    // Add loyalty points — 10 per wash + 5 per extra
+    var pointsEarned = 10 + (selectedExtras.length * 5);
+    var newPoints = (currentUser.loyalty_points || 0) + pointsEarned;
+    var newTier = getTier(newPoints).name;
+    await updateUser(currentUser.email, { credits: newCredits, loyalty_points: newPoints, loyalty_tier: newTier });
+    currentUser.credits = newCredits;
+    currentUser.loyalty_points = newPoints;
+    currentUser.loyalty_tier = newTier;
+    selectedExtras = [];
+    showQR(b, code, date, extrasData, pointsEarned);
   } catch(e) { toast('Booking failed: ' + e.message, true); }
   finally { setBtn('book-btn', false, 'Confirm Booking'); }
 }
@@ -905,7 +982,9 @@ async function confirmBooking() {
 // ── QR CODE ───────────────────────────────────────
 var pendingQRData = null;
 
-function showQR(booking, code, date) {
+function showQR(booking, code, date, extras, pointsEarned) {
+  extras = extras || [];
+  pointsEarned = pointsEarned || 10;
   var qrData = JSON.stringify({ id: booking.id, user: currentUser.name, point: selectedPoint.name, date: date, time: selectedSlot, code: code });
   pendingQRData = { qrData: qrData, code: code, date: date };
 
@@ -1003,11 +1082,30 @@ function renderHome() {
   var creditsSub = document.getElementById('credits-sub');
   if (currentUser.plan && currentUser.sub_status === 'active') {
     creditsBar.classList.remove('hidden');
-    var c = currentUser.plan === 'Fleet' ? '∞' : (currentUser.credits || 0);
+    var c = currentUser.credits || 0;
     creditsDisplay.textContent = c;
-    creditsSub.textContent = currentUser.plan === 'Fleet' ? 'Unlimited' : (currentUser.credits === 1 ? '1 wash left' : c + ' washes left');
+    creditsSub.textContent = c === 1 ? '1 wash left' : c + ' washes left';
   } else {
     creditsBar.classList.add('hidden');
+  }
+
+  // Loyalty bar
+  var loyaltyBar = document.getElementById('loyalty-bar');
+  var points = currentUser.loyalty_points || 0;
+  var tier = getTier(points);
+  var nextTier = LOYALTY_TIERS.find(function(t) { return t.min > points; });
+  loyaltyBar.classList.remove('hidden');
+  document.getElementById('loyalty-icon').textContent = tier.icon;
+  document.getElementById('loyalty-tier-name').textContent = tier.name + ' Member';
+  document.getElementById('loyalty-points-text').textContent = points + ' points';
+  if (nextTier) {
+    var toNext = nextTier.min - points;
+    document.getElementById('loyalty-next').textContent = toNext + ' to ' + nextTier.name;
+    var progress = ((points - tier.min) / (nextTier.min - tier.min)) * 100;
+    document.getElementById('loyalty-progress').style.width = Math.min(progress, 100) + '%';
+  } else {
+    document.getElementById('loyalty-next').textContent = 'Max tier reached!';
+    document.getElementById('loyalty-progress').style.width = '100%';
   }
 }
 
@@ -1047,21 +1145,54 @@ function renderProfile() {
 }
 
 // ── PLANS ─────────────────────────────────────────
-async function selectPlan(name, price) {
-  selectedPlan = { name: name, price: price };
+function renderPlans() {
+  var container = document.getElementById('plans-content');
+  if (!container) return;
+  var html = '';
+  PLANS.forEach(function(p) {
+    var isPopular = p.id === 'saloon-standard';
+    html += '<div class="plan-card' + (isPopular ? ' popular' : '') + '">';
+    if (isPopular) html += '<div class="popular-tag">Most Popular</div>';
+    html += '<div class="plan-name">' + p.name + '</div>';
+    html += '<div class="plan-price">KSh ' + p.price.toLocaleString() + '<span>/week</span></div>';
+    html += '<ul class="plan-features">';
+    html += '<li>' + p.washes + '</li>';
+    html += '<li>' + p.car + ' body wash included</li>';
+    html += '<li>Guaranteed slot booking</li>';
+    html += '<li>Digital wash pass + QR</li>';
+    html += '<li>10 loyalty points per wash</li>';
+    html += '</ul>';
+    html += '<button class="btn ' + (isPopular ? 'btn-gold' : 'btn-outline') + '" data-plan="' + p.id + '" data-price="' + p.price + '" data-credits="' + p.credits + '">Choose ' + p.name + '</button>';
+    html += '</div>';
+  });
+  container.innerHTML = html;
+  container.querySelectorAll('[data-plan]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      selectPlan(btn.getAttribute('data-plan'), parseInt(btn.getAttribute('data-price')), parseInt(btn.getAttribute('data-credits')));
+    });
+  });
+}
+
+async function selectPlan(planId, price, credits) {
+  var plan = PLANS.find(function(p) { return p.id === planId; });
+  if (!plan) return;
+  selectedPlanData = { id: planId, name: plan.name, price: price, credits: credits };
   if (currentUser && currentUser.role === 'customer') {
     try {
-      var credits = PLAN_CREDITS[name] || 0;
-      await updateUser(currentUser.email, { plan: name, plan_price: price, sub_start: new Date().toISOString(), sub_status: 'pending', credits: credits });
-      currentUser.plan = name;
+      await updateUser(currentUser.email, {
+        plan: plan.name, plan_price: price,
+        sub_start: new Date().toISOString(),
+        sub_status: 'pending', credits: credits
+      });
+      currentUser.plan = plan.name;
       currentUser.plan_price = price;
       currentUser.sub_start = new Date().toISOString();
       currentUser.sub_status = 'pending';
       currentUser.credits = credits;
     } catch(e) { toast('Error saving plan: ' + e.message, true); return; }
   }
-  document.getElementById('mpesa-amount').textContent = 'KSh ' + price;
-  document.getElementById('mpesa-plan-name').textContent = name + ' Plan · Weekly';
+  document.getElementById('mpesa-amount').textContent = 'KSh ' + price.toLocaleString();
+  document.getElementById('mpesa-plan-name').textContent = plan.name + ' · ' + plan.washes;
   if (currentUser && currentUser.phone) document.getElementById('mpesa-phone').value = currentUser.phone;
   document.getElementById('mpesa-status').className = 'mpesa-status hidden';
   document.getElementById('mpesa-status').textContent = '';
