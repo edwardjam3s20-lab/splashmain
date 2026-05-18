@@ -1205,7 +1205,8 @@ async function triggerSTK() {
   var phone = document.getElementById('mpesa-phone').value.trim();
   var statusEl = document.getElementById('mpesa-status');
   if (!phone) { statusEl.className = 'mpesa-status error'; statusEl.textContent = 'Please enter your M-Pesa number.'; return; }
-  if (!selectedPlan) { statusEl.className = 'mpesa-status error'; statusEl.textContent = 'No plan selected.'; return; }
+  var activePlan = selectedPlanData || selectedPlan;
+  if (!activePlan) { statusEl.className = 'mpesa-status error'; statusEl.textContent = 'No plan selected.'; return; }
 
   setBtn('pay-btn', true, 'Pay Now');
   statusEl.className = 'mpesa-status pending';
@@ -1215,7 +1216,7 @@ async function triggerSTK() {
     var res = await fetch('/api/mpesa-stk', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone: phone, amount: selectedPlan.price })
+      body: JSON.stringify({ phone: phone, amount: activePlan.price })
     });
     var data = await res.json();
 
