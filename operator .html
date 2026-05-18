@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0d1b2a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="SplashPass Ops">
+<title>SplashPass Ops</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #0d1b2a;
+  --navy2: #152236;
+  --navy3: #1e3050;
+  --gold: #f5a623;
+  --gold2: #ffc04d;
+  --white: #f0f4f8;
+  --grey: #8a9bb0;
+  --success: #2ecc71;
+  --danger: #e74c3c;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow: hidden; background: var(--navy); color: var(--white); font-family: 'DM Sans', sans-serif; }
+h1,h2,h3,h4 { font-family: 'Syne', sans-serif; }
+.hidden { display: none !important; }
+
+.screen { position: fixed; inset: 0; background: var(--navy); overflow-y: auto; display: none; flex-direction: column; }
+.screen.active { display: flex; }
+
+/* BUTTONS */
+.btn { display: block; width: 100%; padding: 16px; border-radius: 14px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; cursor: pointer; border: none; transition: all .2s; text-align: center; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn-gold { background: var(--gold); color: var(--navy); }
+.btn-gold:active { background: var(--gold2); transform: scale(.98); }
+.btn-outline { background: transparent; color: var(--white); border: 1.5px solid var(--navy3); }
+.btn-danger { background: var(--danger); color: white; }
+.btn-success { background: var(--success); color: var(--navy); }
+.btn-sm { width: auto; display: inline-block; padding: 10px 20px; font-size: 14px; border-radius: 10px; }
+
+/* FORMS */
+.form-group { margin-bottom: 16px; }
+label { display: block; font-size: 12px; color: var(--grey); margin-bottom: 6px; font-weight: 500; text-transform: uppercase; letter-spacing: .5px; }
+input, select { width: 100%; padding: 14px 16px; background: var(--navy2); border: 1.5px solid var(--navy3); border-radius: 12px; color: var(--white); font-family: 'DM Sans', sans-serif; font-size: 15px; outline: none; transition: border .2s; }
+input:focus, select:focus { border-color: var(--gold); }
+input::placeholder { color: var(--grey); }
+.form-error { color: var(--danger); font-size: 13px; margin-top: -8px; margin-bottom: 8px; }
+
+/* SPLASH */
+#screen-splash { align-items: center; justify-content: center; }
+.splash-icon { width: 80px; height: 80px; background: var(--gold); border-radius: 20px; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 36px; color: var(--navy); margin: 0 auto 16px; }
+.splash-title { text-align: center; font-size: 26px; font-weight: 800; }
+.splash-sub { text-align: center; color: var(--gold); font-size: 14px; margin-top: 4px; }
+.splash-spinner { width: 32px; height: 32px; border: 3px solid rgba(245,166,35,.2); border-top-color: var(--gold); border-radius: 50%; animation: spin .7s linear infinite; margin: 32px auto 0; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* AUTH */
+#screen-auth { padding: 40px 24px; justify-content: center; }
+.auth-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.auth-logo-icon { width: 36px; height: 36px; background: var(--gold); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 16px; color: var(--navy); }
+.auth-logo-text { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; }
+.auth-tag { color: var(--gold); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 28px; }
+.auth-title { font-size: 24px; font-weight: 800; margin-bottom: 6px; }
+.auth-sub { color: var(--grey); font-size: 14px; margin-bottom: 24px; }
+.auth-switch { text-align: center; margin-top: 20px; font-size: 14px; color: var(--grey); }
+.auth-switch a { color: var(--gold); cursor: pointer; }
+
+/* HOME */
+#screen-home { padding: 0; }
+.home-header { padding: 56px 20px 20px; background: var(--navy2); border-bottom: 1px solid var(--navy3); }
+.home-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.home-name { font-size: 20px; font-weight: 800; }
+.home-point { font-size: 13px; color: var(--gold); font-weight: 600; }
+.home-date { font-size: 13px; color: var(--grey); }
+.stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; padding: 16px; }
+.stat-card { background: var(--navy2); border-radius: 12px; padding: 14px; border: 1px solid var(--navy3); text-align: center; }
+.stat-num { font-size: 28px; font-weight: 800; color: var(--gold); font-family: 'Syne', sans-serif; }
+.stat-label { font-size: 11px; color: var(--grey); margin-top: 2px; text-transform: uppercase; letter-spacing: .5px; }
+
+/* ACTION BUTTONS */
+.action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 16px 16px; }
+.action-card { background: var(--navy2); border-radius: 14px; padding: 18px; border: 1.5px solid var(--navy3); text-align: center; cursor: pointer; transition: all .15s; }
+.action-card:active { transform: scale(.97); border-color: var(--gold); }
+.action-icon { font-size: 32px; margin-bottom: 8px; }
+.action-label { font-size: 14px; font-weight: 700; font-family: 'Syne', sans-serif; }
+.action-sub { font-size: 12px; color: var(--grey); margin-top: 2px; }
+
+/* QUEUE */
+.queue-header { display: flex; align-items: center; justify-content: space-between; padding: 0 16px 10px; }
+.queue-title { font-size: 14px; font-weight: 700; color: var(--grey); text-transform: uppercase; letter-spacing: .5px; }
+.queue-count { font-size: 12px; color: var(--gold); font-weight: 600; }
+.booking-card { background: var(--navy2); border-radius: 14px; padding: 16px; margin: 0 16px 10px; border: 1px solid var(--navy3); }
+.booking-card.priority { border-color: var(--gold); }
+.booking-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.booking-name { font-size: 16px; font-weight: 700; }
+.booking-time { font-size: 13px; color: var(--gold); font-weight: 600; }
+.booking-plate { display: inline-block; background: var(--navy3); border-radius: 6px; padding: 3px 10px; font-size: 13px; font-weight: 700; color: var(--white); margin-bottom: 6px; letter-spacing: 1px; }
+.booking-car { font-size: 13px; color: var(--grey); margin-bottom: 10px; }
+.booking-actions { display: flex; gap: 8px; }
+.status-badge { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 100px; }
+.badge-confirmed { background: rgba(245,166,35,.15); color: var(--gold); }
+.badge-completed { background: rgba(46,204,113,.15); color: var(--success); }
+.badge-redeemed { background: rgba(46,204,113,.15); color: var(--success); }
+
+/* SCAN SCREEN */
+#screen-scan { padding: 0; }
+.scan-header { display: flex; align-items: center; gap: 12px; padding: 56px 20px 20px; background: var(--navy2); }
+.back-btn { width: 36px; height: 36px; background: var(--navy3); border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; flex-shrink: 0; border: none; color: var(--white); }
+.scan-content { padding: 20px; }
+.scan-box { background: var(--navy2); border-radius: 16px; padding: 24px; margin-bottom: 16px; border: 1.5px dashed var(--navy3); text-align: center; }
+.scan-icon { font-size: 48px; margin-bottom: 12px; }
+.scan-box h3 { font-size: 18px; margin-bottom: 8px; }
+.scan-box p { font-size: 14px; color: var(--grey); }
+#qr-video-container { position: relative; border-radius: 16px; overflow: hidden; margin-bottom: 16px; display: none; }
+#qr-video { width: 100%; border-radius: 16px; }
+.scan-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+.scan-frame { width: 200px; height: 200px; border: 3px solid var(--gold); border-radius: 12px; }
+.divider { display: flex; align-items: center; gap: 12px; margin: 16px 0; }
+.divider-line { flex: 1; height: 1px; background: var(--navy3); }
+.divider-text { font-size: 12px; color: var(--grey); }
+
+/* LOOKUP RESULT */
+.result-card { background: var(--navy2); border-radius: 16px; padding: 20px; border: 1.5px solid var(--gold); margin-bottom: 16px; display: none; }
+.result-name { font-size: 20px; font-weight: 800; margin-bottom: 4px; }
+.result-plate { display: inline-block; background: var(--gold); color: var(--navy); border-radius: 6px; padding: 4px 12px; font-size: 14px; font-weight: 800; letter-spacing: 2px; margin-bottom: 12px; }
+.result-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--navy3); font-size: 14px; }
+.result-row:last-child { border-bottom: none; }
+.result-row span { color: var(--grey); }
+
+/* TOAST */
+#toast { position: fixed; top: 60px; left: 50%; transform: translateX(-50%) translateY(-80px); background: var(--navy2); border: 1px solid var(--navy3); border-left: 4px solid var(--gold); padding: 12px 20px; border-radius: 10px; font-size: 14px; z-index: 999; opacity: 0; transition: all .3s; white-space: nowrap; max-width: 90vw; }
+#toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="screen-splash" class="screen active">
+  <div class="splash-icon">S</div>
+  <div class="splash-title">SplashPass</div>
+  <div class="splash-sub">Operator Console</div>
+  <div class="splash-spinner"></div>
+</div>
+
+<!-- AUTH -->
+<div id="screen-auth" class="screen">
+  <div class="auth-logo">
+    <div class="auth-logo-icon">S</div>
+    <div class="auth-logo-text">SplashPass</div>
+  </div>
+  <div class="auth-tag">Operator Console</div>
+
+  <div id="auth-login">
+    <div class="auth-title">Operator Login</div>
+    <div class="auth-sub">Sign in to your wash point</div>
+    <div class="form-group"><label>Email</label><input type="email" id="login-email" placeholder="you@example.com"></div>
+    <div class="form-group"><label>Password</label><input type="password" id="login-pass" placeholder="Your password"></div>
+    <div id="login-error" class="form-error"></div>
+    <button class="btn btn-gold" id="login-btn" onclick="login()" style="margin-bottom:12px">Sign In</button>
+    <div class="auth-switch">New operator? <a onclick="showAuth('register')">Register here</a></div>
+  </div>
+
+  <div id="auth-register" class="hidden">
+    <div class="auth-title">Register as Operator</div>
+    <div class="auth-sub">Create your wash point account</div>
+    <div class="form-group"><label>Full Name</label><input type="text" id="reg-name" placeholder="John Kamau"></div>
+    <div class="form-group"><label>Email</label><input type="email" id="reg-email" placeholder="you@example.com"></div>
+    <div class="form-group"><label>Password</label><input type="password" id="reg-pass" placeholder="At least 6 characters"></div>
+    <div class="form-group">
+      <label>Your Wash Point</label>
+      <select id="reg-point">
+        <option value="">Select your wash point</option>
+        <option value="SplashPass Nyali">SplashPass Nyali</option>
+        <option value="SplashPass CBD">SplashPass CBD</option>
+        <option value="SplashPass Bamburi">SplashPass Bamburi</option>
+        <option value="SplashPass Likoni">SplashPass Likoni</option>
+        <option value="SplashPass Kisauni">SplashPass Kisauni</option>
+        <option value="SplashPass Diani">SplashPass Diani</option>
+      </select>
+    </div>
+    <div id="reg-error" class="form-error"></div>
+    <button class="btn btn-gold" id="reg-btn" onclick="register()" style="margin-bottom:12px">Create Account</button>
+    <div class="auth-switch">Already registered? <a onclick="showAuth('login')">Sign in</a></div>
+  </div>
+</div>
+
+<!-- HOME / QUEUE -->
+<div id="screen-home" class="screen">
+  <div class="home-header">
+    <div class="home-top">
+      <div class="home-name" id="home-name">—</div>
+      <button class="btn-sm btn-outline btn" onclick="logout()" style="width:auto;padding:8px 14px;font-size:12px">Out</button>
+    </div>
+    <div class="home-point" id="home-point">—</div>
+    <div class="home-date" id="home-date">—</div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-num" id="stat-today">0</div><div class="stat-label">Today</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-done">0</div><div class="stat-label">Done</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-pending">0</div><div class="stat-label">Pending</div></div>
+  </div>
+
+  <div class="action-row">
+    <div class="action-card" onclick="showScreen('scan')">
+      <div class="action-icon">📷</div>
+      <div class="action-label">Scan QR</div>
+      <div class="action-sub">Scan customer pass</div>
+    </div>
+    <div class="action-card" onclick="showScreen('lookup')">
+      <div class="action-icon">🔍</div>
+      <div class="action-label">Plate Lookup</div>
+      <div class="action-sub">Search by plate</div>
+    </div>
+  </div>
+
+  <div class="queue-header">
+    <div class="queue-title">Today's Queue</div>
+    <div class="queue-count" id="queue-count">0 bookings</div>
+  </div>
+  <div id="queue-list">
+    <div style="text-align:center;padding:32px;color:var(--grey);font-size:14px">No bookings yet today</div>
+  </div>
+  <div style="height:20px"></div>
+</div>
+
+<!-- SCAN -->
+<div id="screen-scan" class="screen">
+  <div class="scan-header">
+    <button class="back-btn" onclick="stopCamera();showScreen('home')">←</button>
+    <h2>Scan Customer QR</h2>
+  </div>
+  <div class="scan-content">
+    <div id="qr-video-container">
+      <video id="qr-video" playsinline autoplay muted></video>
+      <div class="scan-overlay"><div class="scan-frame"></div></div>
+    </div>
+    <div class="scan-box" id="scan-prompt">
+      <div class="scan-icon">📷</div>
+      <h3>Ready to Scan</h3>
+      <p>Point camera at customer's QR code</p>
+      <button class="btn btn-gold" onclick="startCamera()" style="margin-top:16px">Open Camera</button>
+    </div>
+    <div id="scan-result" class="result-card"></div>
+    <div id="scan-actions" class="hidden">
+      <button class="btn btn-success" id="redeem-btn" onclick="redeemBooking()" style="margin-bottom:10px">Redeem Wash ✓</button>
+      <button class="btn btn-outline" onclick="resetScan()">Scan Another</button>
+    </div>
+  </div>
+</div>
+
+<!-- PLATE LOOKUP -->
+<div id="screen-lookup" class="screen">
+  <div class="scan-header">
+    <button class="back-btn" onclick="showScreen('home')">←</button>
+    <h2>Plate Lookup</h2>
+  </div>
+  <div class="scan-content">
+    <div class="form-group">
+      <label>Enter Number Plate</label>
+      <input type="text" id="plate-input" placeholder="KCA 123A" style="text-transform:uppercase;font-size:20px;font-weight:700;letter-spacing:2px" oninput="this.value=this.value.toUpperCase()">
+    </div>
+    <button class="btn btn-gold" id="lookup-btn" onclick="lookupPlate()" style="margin-bottom:16px">Search</button>
+    <div id="lookup-result" class="result-card"></div>
+    <div id="lookup-actions" class="hidden">
+      <button class="btn btn-success" id="lookup-redeem-btn" onclick="redeemFromLookup()" style="margin-bottom:10px">Redeem Wash ✓</button>
+      <button class="btn btn-outline" onclick="resetLookup()">Search Another</button>
+    </div>
+    <div id="lookup-error" style="text-align:center;padding:20px;color:var(--danger);font-size:14px;display:none"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+var SUPABASE_URL = 'https://msdvyiqjoogafzyaoycg.supabase.co';
+var SUPABASE_KEY = 'sb_publishable_N_g24aU7TLHLNeu72gnfeg_1d7OleFW';
+
+var currentOperator = null;
+var foundBooking = null;
+var cameraStream = null;
+var scanInterval = null;
+
+// ── SUPABASE ──────────────────────────────────────
+async function sbFetch(path, options) {
+  options = options || {};
+  var res = await fetch(SUPABASE_URL + '/rest/v1/' + path, Object.assign({}, options, {
+    headers: Object.assign({
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': options.prefer || 'return=representation'
+    }, options.headers || {})
+  }));
+  if (!res.ok) {
+    var err = await res.json().catch(function() { return {}; });
+    throw new Error(err.message || 'Request failed');
+  }
+  var text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+
+async function getOperatorByEmail(email) {
+  var rows = await sbFetch('operators?email=eq.' + encodeURIComponent(email) + '&select=*');
+  return rows && rows[0] ? rows[0] : null;
+}
+async function createOperator(data) {
+  return await sbFetch('operators', { method: 'POST', body: JSON.stringify(data), prefer: 'return=representation' });
+}
+async function getTodayBookings(washPoint) {
+  var today = new Date().toISOString().split('T')[0];
+  return await sbFetch('bookings?date=eq.' + today + '&location=eq.' + encodeURIComponent(washPoint) + '&select=*&order=time.asc');
+}
+async function getAllTodayBookings(washPoint) {
+  return await getTodayBookings(washPoint);
+}
+async function getBookingsByPlate(plate) {
+  var today = new Date().toISOString().split('T')[0];
+  var users = await sbFetch('profiles?plate=ilike.' + encodeURIComponent(plate.trim()) + '&select=*');
+  if (!users || !users.length) return null;
+  var user = users[0];
+  var bookings = await sbFetch('bookings?user_email=eq.' + encodeURIComponent(user.email) + '&date=eq.' + today + '&status=eq.confirmed&select=*');
+  return { user: user, booking: bookings && bookings[0] ? bookings[0] : null };
+}
+async function redeemBookingById(bookingId, userEmail) {
+  // Mark booking completed
+  await sbFetch('bookings?id=eq.' + bookingId, {
+    method: 'PATCH',
+    body: JSON.stringify({ status: 'completed' }),
+    prefer: 'return=representation'
+  });
+  // Deduct credit
+  var users = await sbFetch('profiles?email=eq.' + encodeURIComponent(userEmail) + '&select=*');
+  if (users && users[0] && users[0].plan !== 'Fleet' && users[0].credits > 0) {
+    await sbFetch('profiles?email=eq.' + encodeURIComponent(userEmail), {
+      method: 'PATCH',
+      body: JSON.stringify({ credits: users[0].credits - 1 }),
+      prefer: 'return=representation'
+    });
+  }
+}
+
+// ── UI ────────────────────────────────────────────
+function toast(msg, isError) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.borderLeftColor = isError ? 'var(--danger)' : 'var(--gold)';
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 3000);
+}
+function setBtn(id, loading, label) {
+  var b = document.getElementById(id);
+  if (!b) return;
+  b.disabled = loading;
+  b.textContent = loading ? 'Please wait...' : label;
+}
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+  document.getElementById('screen-' + name).classList.add('active');
+  if (name === 'home') renderHome();
+}
+function showAuth(mode) {
+  document.getElementById('auth-login').classList.toggle('hidden', mode !== 'login');
+  document.getElementById('auth-register').classList.toggle('hidden', mode !== 'register');
+}
+
+// ── BOOT ─────────────────────────────────────────
+window.onload = function() {
+  setTimeout(function() { showScreen('auth'); }, 1500);
+};
+
+// ── AUTH ─────────────────────────────────────────
+async function login() {
+  var email = document.getElementById('login-email').value.trim().toLowerCase();
+  var pass = document.getElementById('login-pass').value;
+  var err = document.getElementById('login-error');
+  setBtn('login-btn', true, 'Sign In');
+  try {
+    var op = await getOperatorByEmail(email);
+    if (!op || op.password !== pass) { err.textContent = 'Invalid email or password.'; return; }
+    currentOpe
