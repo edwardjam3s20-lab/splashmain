@@ -357,10 +357,10 @@ async function login() {
   setBtn('login-btn', true, 'Sign In');
   try {
     var op = await getOperatorByEmail(email);
-    if (!op || op.password !== pass) { err.textContent = 'Invalid email or password.'; return; }
-    // Check if this is actually a customer account
+    if (!op) { err.textContent = 'No operator account found with this email.'; return; }
+    if (op.password !== pass) { err.textContent = 'Wrong password. Check and try again.'; return; }
     var custCheck = await sbFetch('profiles?email=eq.' + encodeURIComponent(email) + '&select=email');
-    if (custCheck && custCheck.length && !op) { err.textContent = 'This is a customer account. Use the SplashPass customer app.'; return; }
+    if (custCheck && custCheck.length) { err.textContent = 'This is a customer account. Use the SplashPass customer app.'; return; }
     currentOperator = op;
     err.textContent = '';
     showScreen('home');
