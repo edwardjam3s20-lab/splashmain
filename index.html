@@ -164,23 +164,6 @@ input::placeholder { color: var(--grey); }
 .mpesa-status.success { background: rgba(46,204,113,.1); color: var(--success); }
 .mpesa-status.error { background: rgba(231,76,60,.1); color: var(--danger); }
 
-/* OPERATOR SCREEN */
-#screen-operator { padding: 0; }
-.op-content { padding: 20px; padding-bottom: 100px; }
-.stat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-.stat-card { background: var(--navy2); border-radius: 14px; padding: 16px; border: 1px solid var(--navy3); }
-.stat-label { font-size: 11px; color: var(--grey); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
-.stat-value { font-size: 28px; font-weight: 800; color: var(--gold); font-family: 'Syne', sans-serif; }
-.booking-item { background: var(--navy2); border-radius: 12px; padding: 14px; margin-bottom: 8px; border: 1px solid var(--navy3); }
-.booking-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-.booking-item-name { font-size: 15px; font-weight: 700; }
-.booking-item-meta { font-size: 13px; color: var(--grey); }
-.status-badge { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 100px; }
-.status-confirmed { background: rgba(245,166,35,.15); color: var(--gold); }
-.status-completed { background: rgba(46,204,113,.15); color: var(--success); }
-.op-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
-.op-tab { flex: 1; padding: 10px; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; border: none; background: var(--navy3); color: var(--grey); font-family: 'Syne', sans-serif; transition: all .15s; }
-.op-tab.active { background: var(--gold); color: var(--navy); }
 
 /* TOAST */
 #toast { position: fixed; top: 60px; left: 50%; transform: translateX(-50%) translateY(-80px); background: var(--navy2); border: 1px solid var(--navy3); border-left: 4px solid var(--gold); padding: 12px 20px; border-radius: 10px; font-size: 14px; z-index: 999; opacity: 0; transition: all .3s; white-space: nowrap; max-width: 90vw; overflow: hidden; text-overflow: ellipsis; }
@@ -232,7 +215,6 @@ input::placeholder { color: var(--grey); }
     <div class="form-group"><label>Password</label><input type="password" id="login-pass" placeholder="Your password"></div>
     <div id="login-error" class="form-error"></div>
     <button class="btn btn-gold" id="login-btn" onclick="login()" style="margin-bottom:12px">Log in</button>
-    <button class="btn btn-outline" onclick="operatorLogin()">Operator Login</button>
     <div class="auth-switch">No account? <a onclick="showAuth('register')">Sign up</a></div>
   </div>
   <div id="auth-register" class="hidden">
@@ -476,28 +458,6 @@ input::placeholder { color: var(--grey); }
   </div>
 </div>
 
-<!-- OPERATOR -->
-<div id="screen-operator" class="screen">
-  <div class="screen-header" style="border-bottom:1px solid var(--navy3)">
-    <div style="width:36px"></div>
-    <h2>Operator Dashboard</h2>
-  </div>
-  <div class="op-content">
-    <div class="stat-row">
-      <div class="stat-card"><div class="stat-label">Subscribers</div><div class="stat-value" id="op-subs">0</div></div>
-      <div class="stat-card"><div class="stat-label">Today</div><div class="stat-value" id="op-today">0</div></div>
-      <div class="stat-card"><div class="stat-label">Monthly Rev</div><div class="stat-value" id="op-rev" style="font-size:16px">0</div></div>
-      <div class="stat-card"><div class="stat-label">Total Washes</div><div class="stat-value" id="op-total">0</div></div>
-    </div>
-    <div class="op-tabs">
-      <button class="op-tab active" onclick="opTab('bookings',this)">Bookings</button>
-      <button class="op-tab" onclick="opTab('subscribers',this)">Subscribers</button>
-    </div>
-    <div id="op-bookings-list"></div>
-    <div id="op-subs-list" class="hidden"></div>
-    <button class="btn btn-danger" onclick="logout()" style="margin-top:16px">Log Out</button>
-  </div>
-</div>
 
 <!-- BOTTOM NAV -->
 <div class="bottom-nav" id="bottom-nav" style="display:none">
@@ -537,7 +497,6 @@ input::placeholder { color: var(--grey); }
 // ── CONFIG ────────────────────────────────────────
 var SUPABASE_URL = 'https://msdvyiqjoogafzyaoycg.supabase.co';
 var SUPABASE_KEY = 'sb_publishable_N_g24aU7TLHLNeu72gnfeg_1d7OleFW';
-var OPERATOR = { email: 'operator@splashpass.co.ke', password: 'splash2026' };
 var SLOTS = ['7:00 AM','8:00 AM','9:00 AM','10:00 AM','11:00 AM','12:00 PM','1:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM'];
 
 // Plans definition
@@ -671,7 +630,6 @@ function showScreen(name) {
   });
   if (name === 'home') renderHome();
   if (name === 'profile') renderProfile();
-  if (name === 'operator') renderOperator();
   if (name === 'plans') renderPlans();
 }
 function navTo(name) { showScreen(name); }
@@ -706,16 +664,6 @@ async function login() {
   finally { setBtn('login-btn', false, 'Log in'); }
 }
 
-function operatorLogin() {
-  var email = document.getElementById('login-email').value.trim().toLowerCase();
-  var pass = document.getElementById('login-pass').value;
-  var err = document.getElementById('login-error');
-  if (email === OPERATOR.email && pass === OPERATOR.password) {
-    currentUser = { name: 'Operator', role: 'operator' };
-    document.getElementById('bottom-nav').style.display = 'none';
-    showScreen('operator');
-  } else { err.textContent = 'Invalid operator credentials.'; }
-}
 
 async function register() {
   var name = document.getElementById('reg-name').value.trim();
@@ -1254,77 +1202,6 @@ async function triggerSTK() {
   } finally {
     setBtn('pay-btn', false, 'Pay Now');
   }
-}
-
-// ── OPERATOR ─────────────────────────────────────
-async function renderOperator() {
-  try {
-    var users = await getAllUsers();
-    var bookings = await getAllBookings();
-    var today = new Date().toISOString().split('T')[0];
-    document.getElementById('op-subs').textContent = users.length;
-    document.getElementById('op-today').textContent = bookings.filter(function(b) { return b.date === today; }).length;
-    document.getElementById('op-total').textContent = bookings.length;
-    var rev = users.reduce(function(s,u) { return s + (u.plan_price ? parseInt(u.plan_price)*4 : 0); }, 0);
-    document.getElementById('op-rev').textContent = 'KSh ' + rev.toLocaleString();
-    renderOpBookings(bookings);
-    renderOpSubs(users);
-  } catch(e) { toast('Error: ' + e.message, true); }
-}
-
-function renderOpBookings(bookings) {
-  var el = document.getElementById('op-bookings-list');
-  if (!bookings.length) { el.innerHTML = '<p style="color:var(--grey);font-size:14px;text-align:center;padding:20px">No bookings yet</p>'; return; }
-  el.innerHTML = bookings.map(function(b) {
-    var cls = b.status === 'completed' ? 'status-completed' : 'status-confirmed';
-    return '<div class="booking-item">' +
-      '<div class="booking-item-header">' +
-        '<div class="booking-item-name">' + b.user_name + '</div>' +
-        '<span class="status-badge ' + cls + '">' + b.status + '</span>' +
-      '</div>' +
-      '<div class="booking-item-meta">' + b.location + ' · ' + b.date + ' · ' + b.time + '</div>' +
-      (b.status !== 'completed' ? '<button class="btn btn-gold btn-sm" style="margin-top:8px" onclick="markDone(' + b.id + ')">Mark Complete</button>' : '') +
-      '</div>';
-  }).join('');
-}
-
-function renderOpSubs(users) {
-  var el = document.getElementById('op-subs-list');
-  if (!users.length) { el.innerHTML = '<p style="color:var(--grey);font-size:14px;text-align:center;padding:20px">No subscribers yet</p>'; return; }
-  el.innerHTML = users.map(function(u) {
-    var cls = u.sub_status === 'active' ? 'status-completed' : 'status-confirmed';
-    return '<div class="booking-item">' +
-      '<div class="booking-item-header">' +
-        '<div class="booking-item-name">' + u.name + '</div>' +
-        '<span class="status-badge ' + cls + '">' + (u.sub_status || 'pending') + '</span>' +
-      '</div>' +
-      '<div class="booking-item-meta">' + (u.phone || '—') + ' · ' + (u.plan || 'No plan') + '</div>' +
-    '</div>';
-  }).join('');
-}
-
-function opTab(tab, el) {
-  document.querySelectorAll('.op-tab').forEach(function(t) { t.classList.remove('active'); });
-  el.classList.add('active');
-  document.getElementById('op-bookings-list').classList.toggle('hidden', tab !== 'bookings');
-  document.getElementById('op-subs-list').classList.toggle('hidden', tab !== 'subscribers');
-}
-
-async function markDone(id) {
-  try {
-    await updateBookingRow(id, { status: 'completed' });
-    // Deduct 1 credit from the user
-    var bookings = await getAllBookings();
-    var b = bookings.find(function(x) { return x.id === id; });
-    if (b && b.user_email) {
-      var user = await getUserByEmail(b.user_email);
-      if (user && user.plan !== 'Fleet' && user.credits > 0) {
-        await updateUser(b.user_email, { credits: user.credits - 1 });
-      }
-    }
-    toast('Wash completed. Credit deducted.');
-    renderOperator();
-  } catch(e) { toast('Error: ' + e.message, true); }
 }
 
 // ── BOTTOM SHEET ─────────────────────────────────
