@@ -3,144 +3,369 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#0d1b2a">
+<meta name="theme-color" content="#07111f">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="SplashPass Ops">
 <title>SplashPass Ops</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
 <style>
 :root {
-  --navy: #0d1b2a;
-  --navy2: #152236;
-  --navy3: #1e3050;
-  --gold: #f5a623;
-  --gold2: #ffc04d;
-  --white: #f0f4f8;
-  --grey: #8a9bb0;
-  --success: #2ecc71;
-  --danger: #e74c3c;
+  --bg:      #07111f;
+  --s1:      #0f1d30;
+  --s2:      #162338;
+  --s3:      #1d2d45;
+  --gold:    #ffb020;
+  --gold2:   #ffd166;
+  --text:    #f0f4f8;
+  --muted:   #7a90a8;
+  --success: #22c55e;
+  --danger:  #ef4444;
+  --radius:  20px;
+  --radius-lg: 28px;
 }
-* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-html, body { height: 100%; overflow: hidden; background: var(--navy); color: var(--white); font-family: 'DM Sans', sans-serif; }
-h1,h2,h3,h4 { font-family: 'Syne', sans-serif; }
-.hidden { display: none !important; }
 
-.screen { position: fixed; inset: 0; background: var(--navy); overflow-y: auto; display: none; flex-direction: column; }
-.screen.active { display: flex; }
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 
-/* BUTTONS */
-.btn { display: block; width: 100%; padding: 16px; border-radius: 14px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; cursor: pointer; border: none; transition: all .2s; text-align: center; }
-.btn:disabled { opacity: .5; cursor: not-allowed; }
-.btn-gold { background: var(--gold); color: var(--navy); }
-.btn-gold:active { background: var(--gold2); transform: scale(.98); }
-.btn-outline { background: transparent; color: var(--white); border: 1.5px solid var(--navy3); }
-.btn-danger { background: var(--danger); color: white; }
-.btn-success { background: var(--success); color: var(--navy); }
-.btn-sm { width: auto; display: inline-block; padding: 10px 20px; font-size: 14px; border-radius: 10px; }
+html, body {
+  height:100%; overflow:hidden;
+  background: radial-gradient(ellipse at 80% 0%, rgba(255,176,32,.12) 0%, transparent 50%),
+              radial-gradient(ellipse at 10% 90%, rgba(255,176,32,.05) 0%, transparent 40%),
+              var(--bg);
+  color:var(--text);
+  font-family:'DM Sans', sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
 
-/* FORMS */
-.form-group { margin-bottom: 16px; }
-label { display: block; font-size: 12px; color: var(--grey); margin-bottom: 6px; font-weight: 500; text-transform: uppercase; letter-spacing: .5px; }
-input, select { width: 100%; padding: 14px 16px; background: var(--navy2); border: 1.5px solid var(--navy3); border-radius: 12px; color: var(--white); font-family: 'DM Sans', sans-serif; font-size: 15px; outline: none; transition: border .2s; }
-input:focus, select:focus { border-color: var(--gold); }
-input::placeholder { color: var(--grey); }
-.form-error { color: var(--danger); font-size: 13px; margin-top: -8px; margin-bottom: 8px; }
+h1,h2,h3,h4 { font-family:'Syne', sans-serif; }
+.hidden { display:none !important; }
 
-/* SPLASH */
-#screen-splash { align-items: center; justify-content: center; }
-.splash-icon { width: 80px; height: 80px; background: var(--gold); border-radius: 20px; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 36px; color: var(--navy); margin: 0 auto 16px; }
-.splash-title { text-align: center; font-size: 26px; font-weight: 800; }
-.splash-sub { text-align: center; color: var(--gold); font-size: 14px; margin-top: 4px; }
-.splash-spinner { width: 32px; height: 32px; border: 3px solid rgba(245,166,35,.2); border-top-color: var(--gold); border-radius: 50%; animation: spin .7s linear infinite; margin: 32px auto 0; }
-@keyframes spin { to { transform: rotate(360deg); } }
+.screen { position:fixed; inset:0; overflow-y:auto; display:none; flex-direction:column; }
+.screen.active { display:flex; }
 
-/* AUTH */
-#screen-auth { padding: 40px 24px; justify-content: center; }
-.auth-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-.auth-logo-icon { width: 36px; height: 36px; background: var(--gold); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 16px; color: var(--navy); }
-.auth-logo-text { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; }
-.auth-tag { color: var(--gold); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 28px; }
-.auth-title { font-size: 24px; font-weight: 800; margin-bottom: 6px; }
-.auth-sub { color: var(--grey); font-size: 14px; margin-bottom: 24px; }
-.auth-switch { text-align: center; margin-top: 20px; font-size: 14px; color: var(--grey); }
-.auth-switch a { color: var(--gold); cursor: pointer; }
+/* ── SPLASH ── */
+#screen-splash {
+  align-items:center; justify-content:center;
+  background: radial-gradient(ellipse at 60% 30%, rgba(255,176,32,.16) 0%, transparent 55%), var(--bg);
+}
+.splash-logo { text-align:center; }
+.splash-icon {
+  width:88px; height:88px;
+  background:linear-gradient(145deg, var(--gold2), var(--gold));
+  border-radius:26px;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Syne',sans-serif; font-weight:800; font-size:40px; color:#07111f;
+  margin:0 auto 20px;
+  box-shadow:0 20px 50px rgba(255,176,32,.35);
+}
+.splash-title { font-size:30px; font-weight:800; }
+.splash-title span { color:var(--gold); }
+.splash-sub { color:var(--muted); font-size:13px; margin-top:6px; text-transform:uppercase; letter-spacing:1.5px; font-weight:600; }
+.splash-spinner {
+  width:36px; height:36px;
+  border:3px solid rgba(255,176,32,.15);
+  border-top-color:var(--gold);
+  border-radius:50%;
+  animation:spin .75s linear infinite;
+  margin:36px auto 0;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
 
-/* HOME */
-#screen-home { padding: 0; }
-.home-header { padding: 56px 20px 20px; background: var(--navy2); border-bottom: 1px solid var(--navy3); }
-.home-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
-.home-name { font-size: 20px; font-weight: 800; }
-.home-point { font-size: 13px; color: var(--gold); font-weight: 600; }
-.home-date { font-size: 13px; color: var(--grey); }
-.stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; padding: 16px; }
-.stat-card { background: var(--navy2); border-radius: 12px; padding: 14px; border: 1px solid var(--navy3); text-align: center; }
-.stat-num { font-size: 28px; font-weight: 800; color: var(--gold); font-family: 'Syne', sans-serif; }
-.stat-label { font-size: 11px; color: var(--grey); margin-top: 2px; text-transform: uppercase; letter-spacing: .5px; }
+/* ── AUTH ── */
+#screen-auth { padding:0 28px; justify-content:center; }
+.auth-logo { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
+.auth-logo-icon {
+  width:44px; height:44px;
+  background:linear-gradient(145deg, var(--gold2), var(--gold));
+  border-radius:14px;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Syne',sans-serif; font-weight:800; font-size:20px; color:#07111f;
+}
+.auth-logo-text { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; }
+.auth-tag { color:var(--gold); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:32px; }
+.auth-title { font-size:26px; font-weight:800; margin-bottom:6px; }
+.auth-sub { color:var(--muted); font-size:14px; margin-bottom:28px; }
 
-/* ACTION BUTTONS */
-.action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 16px 16px; }
-.action-card { background: var(--navy2); border-radius: 14px; padding: 18px; border: 1.5px solid var(--navy3); text-align: center; cursor: pointer; transition: all .15s; }
-.action-card:active { transform: scale(.97); border-color: var(--gold); }
-.action-icon { font-size: 32px; margin-bottom: 8px; }
-.action-label { font-size: 14px; font-weight: 700; font-family: 'Syne', sans-serif; }
-.action-sub { font-size: 12px; color: var(--grey); margin-top: 2px; }
+/* ── FORMS ── */
+.form-group { margin-bottom:16px; }
+label { display:block; font-size:11px; color:var(--muted); margin-bottom:8px; font-weight:600; text-transform:uppercase; letter-spacing:.7px; }
+input, select {
+  width:100%; padding:16px 18px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:16px;
+  color:var(--text);
+  font-family:'DM Sans',sans-serif; font-size:15px;
+  outline:none;
+  transition:border .2s, box-shadow .2s;
+}
+input:focus { border-color:rgba(255,176,32,.5); box-shadow:0 0 0 4px rgba(255,176,32,.08); }
+input::placeholder { color:var(--muted); }
+select option { background:var(--s1); }
+.form-error { color:var(--danger); font-size:13px; margin-bottom:10px; }
 
-/* QUEUE */
-.queue-header { display: flex; align-items: center; justify-content: space-between; padding: 0 16px 10px; }
-.queue-title { font-size: 14px; font-weight: 700; color: var(--grey); text-transform: uppercase; letter-spacing: .5px; }
-.queue-count { font-size: 12px; color: var(--gold); font-weight: 600; }
-.booking-card { background: var(--navy2); border-radius: 14px; padding: 16px; margin: 0 16px 10px; border: 1px solid var(--navy3); }
-.booking-card.priority { border-color: var(--gold); }
-.booking-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-.booking-name { font-size: 16px; font-weight: 700; }
-.booking-time { font-size: 13px; color: var(--gold); font-weight: 600; }
-.booking-plate { display: inline-block; background: var(--navy3); border-radius: 6px; padding: 3px 10px; font-size: 13px; font-weight: 700; color: var(--white); margin-bottom: 6px; letter-spacing: 1px; }
-.booking-car { font-size: 13px; color: var(--grey); margin-bottom: 10px; }
-.booking-actions { display: flex; gap: 8px; }
-.status-badge { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 100px; }
-.badge-confirmed { background: rgba(245,166,35,.15); color: var(--gold); }
-.badge-completed { background: rgba(46,204,113,.15); color: var(--success); }
-.badge-redeemed { background: rgba(46,204,113,.15); color: var(--success); }
+/* ── BUTTONS ── */
+.btn {
+  display:block; width:100%; padding:17px;
+  border-radius:18px;
+  font-family:'Syne',sans-serif; font-weight:700; font-size:15px;
+  cursor:pointer; border:none;
+  transition:transform .15s, box-shadow .15s;
+  text-align:center;
+}
+.btn:disabled { opacity:.45; cursor:not-allowed; }
+.btn-gold {
+  background:linear-gradient(180deg, var(--gold2) 0%, var(--gold) 100%);
+  color:#07111f;
+  box-shadow:0 12px 28px rgba(255,176,32,.28);
+}
+.btn-gold:active { transform:scale(.97); }
+.btn-success {
+  background:linear-gradient(180deg, #4ade80, var(--success));
+  color:#07111f;
+  box-shadow:0 10px 24px rgba(34,197,94,.25);
+}
+.btn-success:active { transform:scale(.97); }
+.btn-outline {
+  background:rgba(255,255,255,.05);
+  color:var(--text);
+  border:1px solid rgba(255,255,255,.1);
+}
+.btn-outline:active { transform:scale(.97); }
+.btn-danger { background:var(--danger); color:white; }
+.btn-sm { width:auto; display:inline-block; padding:10px 20px; font-size:13px; border-radius:12px; }
 
-/* SCAN SCREEN */
-#screen-scan { padding: 0; }
-.scan-header { display: flex; align-items: center; gap: 12px; padding: 56px 20px 20px; background: var(--navy2); }
-.back-btn { width: 36px; height: 36px; background: var(--navy3); border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; flex-shrink: 0; border: none; color: var(--white); }
-.scan-content { padding: 20px; }
-.scan-box { background: var(--navy2); border-radius: 16px; padding: 24px; margin-bottom: 16px; border: 1.5px dashed var(--navy3); text-align: center; }
-.scan-icon { font-size: 48px; margin-bottom: 12px; }
-.scan-box h3 { font-size: 18px; margin-bottom: 8px; }
-.scan-box p { font-size: 14px; color: var(--grey); }
-#qr-video-container { position: relative; border-radius: 16px; overflow: hidden; margin-bottom: 16px; display: none; }
-#qr-video { width: 100%; border-radius: 16px; }
-.scan-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
-.scan-frame { width: 200px; height: 200px; border: 3px solid var(--gold); border-radius: 12px; }
-.divider { display: flex; align-items: center; gap: 12px; margin: 16px 0; }
-.divider-line { flex: 1; height: 1px; background: var(--navy3); }
-.divider-text { font-size: 12px; color: var(--grey); }
+/* ── SCREEN HEADER ── */
+.screen-header {
+  display:flex; align-items:center; gap:14px;
+  padding:54px 20px 18px;
+  background:rgba(7,17,31,.9);
+  position:sticky; top:0; z-index:50;
+  border-bottom:1px solid rgba(255,255,255,.05);
+  backdrop-filter:blur(12px);
+}
+.back-btn {
+  width:38px; height:38px;
+  background:rgba(255,255,255,.07);
+  border-radius:12px;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; font-size:20px; flex-shrink:0;
+  border:none; color:var(--text);
+  transition:background .15s;
+}
+.back-btn:active { background:rgba(255,255,255,.12); }
+.screen-header h2 { font-size:20px; font-weight:800; flex:1; }
 
-/* LOOKUP RESULT */
-.result-card { background: var(--navy2); border-radius: 16px; padding: 20px; border: 1.5px solid var(--gold); margin-bottom: 16px; display: none; }
-.result-name { font-size: 20px; font-weight: 800; margin-bottom: 4px; }
-.result-plate { display: inline-block; background: var(--gold); color: var(--navy); border-radius: 6px; padding: 4px 12px; font-size: 14px; font-weight: 800; letter-spacing: 2px; margin-bottom: 12px; }
-.result-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--navy3); font-size: 14px; }
-.result-row:last-child { border-bottom: none; }
-.result-row span { color: var(--grey); }
+/* ── HOME ── */
+#screen-home { padding:0; }
 
-/* TOAST */
-#toast { position: fixed; top: 60px; left: 50%; transform: translateX(-50%) translateY(-80px); background: var(--navy2); border: 1px solid var(--navy3); border-left: 4px solid var(--gold); padding: 12px 20px; border-radius: 10px; font-size: 14px; z-index: 999; opacity: 0; transition: all .3s; white-space: nowrap; max-width: 90vw; }
-#toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+.home-header {
+  padding:54px 20px 20px;
+  background:rgba(7,17,31,.85);
+  border-bottom:1px solid rgba(255,255,255,.05);
+  backdrop-filter:blur(12px);
+}
+.home-top { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:6px; }
+.home-name { font-size:24px; font-weight:800; }
+.logout-btn {
+  background:rgba(239,68,68,.12);
+  border:1px solid rgba(239,68,68,.2);
+  color:var(--danger);
+  font-size:12px; font-weight:700;
+  padding:8px 14px; border-radius:12px;
+  cursor:pointer; border:1px solid rgba(239,68,68,.2);
+  font-family:'Syne',sans-serif;
+  transition:background .15s;
+}
+.logout-btn:active { background:rgba(239,68,68,.2); }
+.home-point { font-size:13px; color:var(--gold); font-weight:600; margin-bottom:3px; }
+.home-date { font-size:12px; color:var(--muted); }
+
+/* Stats */
+.stats-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; padding:16px; }
+.stat-card {
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:20px;
+  padding:16px 12px;
+  text-align:center;
+  transition:transform .15s;
+}
+.stat-card:active { transform:scale(.97); }
+.stat-num { font-size:30px; font-weight:800; color:var(--gold); font-family:'Syne',sans-serif; line-height:1; }
+.stat-label { font-size:10px; color:var(--muted); margin-top:6px; text-transform:uppercase; letter-spacing:.6px; font-weight:600; }
+
+/* Action cards */
+.action-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:0 16px 16px; }
+.action-card {
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:22px;
+  padding:20px 16px;
+  text-align:center;
+  cursor:pointer;
+  transition:transform .15s, background .15s, border-color .15s;
+}
+.action-card:active { transform:scale(.97); background:rgba(255,255,255,.07); border-color:rgba(255,176,32,.3); }
+.action-card.primary { border-color:rgba(255,176,32,.25); background:rgba(255,176,32,.06); }
+.action-icon { font-size:34px; margin-bottom:10px; }
+.action-label { font-size:14px; font-weight:700; font-family:'Syne',sans-serif; color:var(--text); }
+.action-sub { font-size:11px; color:var(--muted); margin-top:4px; }
+
+/* Queue */
+.queue-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:4px 16px 12px;
+}
+.queue-title { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.7px; font-weight:600; }
+.queue-count { font-size:12px; color:var(--gold); font-weight:700; }
+
+/* Booking cards */
+.booking-card {
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:20px;
+  padding:18px;
+  margin:0 16px 10px;
+  transition:transform .15s;
+}
+.booking-card.pending { border-color:rgba(255,176,32,.2); background:rgba(255,176,32,.04); }
+.booking-card.done { opacity:.6; }
+.booking-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+.booking-name { font-size:16px; font-weight:700; }
+.booking-time { font-size:13px; color:var(--gold); font-weight:700; font-family:'Syne',sans-serif; }
+.booking-meta { display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
+.booking-plate {
+  background:rgba(255,176,32,.12);
+  border:1px solid rgba(255,176,32,.25);
+  border-radius:8px;
+  padding:4px 12px;
+  font-size:13px; font-weight:800; color:var(--gold);
+  letter-spacing:1.5px; font-family:'Syne',sans-serif;
+}
+.booking-plan { font-size:12px; color:var(--muted); }
+.status-badge { font-size:11px; font-weight:700; padding:4px 10px; border-radius:100px; }
+.badge-confirmed { background:rgba(255,176,32,.12); color:var(--gold); }
+.badge-completed { background:rgba(34,197,94,.12); color:var(--success); }
+
+/* ── SCAN ── */
+#screen-scan { padding:0; }
+.scan-content { padding:20px; padding-bottom:40px; }
+
+.scan-zone {
+  background:rgba(255,255,255,.03);
+  border:1.5px dashed rgba(255,176,32,.25);
+  border-radius:var(--radius-lg);
+  padding:36px 24px;
+  text-align:center;
+  margin-bottom:16px;
+}
+.scan-zone-icon { font-size:52px; margin-bottom:14px; }
+.scan-zone h3 { font-size:18px; font-weight:800; margin-bottom:8px; }
+.scan-zone p { font-size:14px; color:var(--muted); line-height:1.5; }
+
+#qr-video-container {
+  position:relative; border-radius:24px;
+  overflow:hidden; margin-bottom:16px; display:none;
+  border:2px solid rgba(255,176,32,.3);
+}
+#qr-video { width:100%; border-radius:22px; display:block; }
+.scan-overlay { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; }
+.scan-frame {
+  width:190px; height:190px;
+  border:3px solid var(--gold);
+  border-radius:16px;
+  box-shadow:0 0 0 2000px rgba(0,0,0,.45);
+}
+
+.divider { display:flex; align-items:center; gap:12px; margin:20px 0; }
+.divider-line { flex:1; height:1px; background:rgba(255,255,255,.07); }
+.divider-text { font-size:12px; color:var(--muted); font-weight:600; }
+
+/* Result card */
+.result-card {
+  background:rgba(255,176,32,.06);
+  border:1.5px solid rgba(255,176,32,.25);
+  border-radius:var(--radius-lg);
+  padding:22px;
+  margin-bottom:16px;
+  display:none;
+}
+.result-name { font-size:22px; font-weight:800; margin-bottom:6px; }
+.result-plate {
+  display:inline-block;
+  background:var(--gold);
+  color:#07111f;
+  border-radius:8px;
+  padding:5px 14px;
+  font-size:15px; font-weight:800;
+  letter-spacing:2px;
+  margin-bottom:16px;
+  font-family:'Syne',sans-serif;
+}
+.result-row {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:10px 0;
+  border-bottom:1px solid rgba(255,255,255,.06);
+  font-size:14px;
+}
+.result-row:last-child { border-bottom:none; }
+.result-row span { color:var(--muted); font-size:13px; }
+
+/* ── LOOKUP ── */
+#screen-lookup { padding:0; }
+.lookup-content { padding:20px; padding-bottom:40px; }
+.plate-input-wrapper { position:relative; margin-bottom:16px; }
+.plate-input-big {
+  width:100%;
+  padding:20px 18px;
+  background:rgba(255,255,255,.05);
+  border:1.5px solid rgba(255,255,255,.08);
+  border-radius:18px;
+  color:var(--text);
+  font-family:'Syne',sans-serif;
+  font-size:24px; font-weight:800;
+  letter-spacing:4px;
+  text-transform:uppercase;
+  text-align:center;
+  outline:none;
+  transition:border .2s, box-shadow .2s;
+}
+.plate-input-big:focus {
+  border-color:rgba(255,176,32,.5);
+  box-shadow:0 0 0 4px rgba(255,176,32,.08);
+}
+.plate-input-big::placeholder { color:rgba(122,144,168,.4); letter-spacing:2px; font-size:18px; }
+
+/* ── TOAST ── */
+#toast {
+  position:fixed; top:64px; left:50%;
+  transform:translateX(-50%) translateY(-90px);
+  background:var(--s2);
+  border:1px solid rgba(255,255,255,.08);
+  border-left:4px solid var(--gold);
+  padding:13px 22px;
+  border-radius:14px;
+  font-size:14px; z-index:999;
+  opacity:0; transition:all .3s;
+  white-space:nowrap; max-width:90vw;
+  overflow:hidden; text-overflow:ellipsis;
+  box-shadow:0 8px 24px rgba(0,0,0,.4);
+}
+#toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
 </style>
 </head>
 <body>
 
 <!-- SPLASH -->
 <div id="screen-splash" class="screen active">
-  <div class="splash-icon">S</div>
-  <div class="splash-title">SplashPass</div>
-  <div class="splash-sub">Operator Console</div>
-  <div class="splash-spinner"></div>
+  <div class="splash-logo">
+    <div class="splash-icon">S</div>
+    <div class="splash-title">Splash<span>Pass</span></div>
+    <div class="splash-sub">Operator Console</div>
+    <div class="splash-spinner"></div>
+  </div>
 </div>
 
 <!-- AUTH -->
@@ -153,36 +378,49 @@ input::placeholder { color: var(--grey); }
 
   <div id="auth-login">
     <div class="auth-title">Operator Login</div>
-    <div class="auth-sub">Sign in to your wash point</div>
+    <div class="auth-sub">Sign in to your wash point dashboard</div>
     <div class="form-group"><label>Email</label><input type="email" id="login-email" placeholder="you@example.com"></div>
     <div class="form-group"><label>Password</label><input type="password" id="login-pass" placeholder="Your password"></div>
     <div id="login-error" class="form-error"></div>
-    <button class="btn btn-gold" id="login-btn" onclick="login()" style="margin-bottom:12px">Sign In</button>
-    <div class="auth-switch" style="color:var(--grey);font-size:13px">Contact admin for access</div>
+    <button class="btn btn-gold" id="login-btn" onclick="login()" style="margin-bottom:16px">Sign In</button>
+    <div style="text-align:center;font-size:13px;color:var(--muted)">Contact admin to get access</div>
   </div>
 
   <div id="auth-register" class="hidden"></div>
 </div>
 
-<!-- HOME / QUEUE -->
+<!-- HOME -->
 <div id="screen-home" class="screen">
   <div class="home-header">
     <div class="home-top">
-      <div class="home-name" id="home-name">—</div>
-      <button class="btn-sm btn-outline btn" onclick="logout()" style="width:auto;padding:8px 14px;font-size:12px">Out</button>
+      <div>
+        <div class="home-name" id="home-name">—</div>
+        <div class="home-point" id="home-point">—</div>
+        <div class="home-date" id="home-date">—</div>
+      </div>
+      <button class="logout-btn" onclick="logout()">Log Out</button>
     </div>
-    <div class="home-point" id="home-point">—</div>
-    <div class="home-date" id="home-date">—</div>
   </div>
 
+  <!-- Stats -->
   <div class="stats-row">
-    <div class="stat-card"><div class="stat-num" id="stat-today">0</div><div class="stat-label">Today</div></div>
-    <div class="stat-card"><div class="stat-num" id="stat-done">0</div><div class="stat-label">Done</div></div>
-    <div class="stat-card"><div class="stat-num" id="stat-pending">0</div><div class="stat-label">Pending</div></div>
+    <div class="stat-card">
+      <div class="stat-num" id="stat-today">0</div>
+      <div class="stat-label">Today</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="stat-done">0</div>
+      <div class="stat-label">Done</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="stat-pending">0</div>
+      <div class="stat-label">Pending</div>
+    </div>
   </div>
 
+  <!-- Actions -->
   <div class="action-row">
-    <div class="action-card" onclick="showScreen('scan')">
+    <div class="action-card primary" onclick="showScreen('scan')">
       <div class="action-icon">📷</div>
       <div class="action-label">Scan QR</div>
       <div class="action-sub">Scan customer pass</div>
@@ -190,23 +428,24 @@ input::placeholder { color: var(--grey); }
     <div class="action-card" onclick="showScreen('lookup')">
       <div class="action-icon">🔍</div>
       <div class="action-label">Plate Lookup</div>
-      <div class="action-sub">Search by plate</div>
+      <div class="action-sub">Search by plate no.</div>
     </div>
   </div>
 
+  <!-- Queue -->
   <div class="queue-header">
     <div class="queue-title">Today's Queue</div>
     <div class="queue-count" id="queue-count">0 bookings</div>
   </div>
   <div id="queue-list">
-    <div style="text-align:center;padding:32px;color:var(--grey);font-size:14px">No bookings yet today</div>
+    <div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:14px">No bookings today at this wash point</div>
   </div>
-  <div style="height:20px"></div>
+  <div style="height:30px"></div>
 </div>
 
 <!-- SCAN -->
 <div id="screen-scan" class="screen">
-  <div class="scan-header">
+  <div class="screen-header">
     <button class="back-btn" onclick="stopCamera();showScreen('home')">←</button>
     <h2>Scan Customer QR</h2>
   </div>
@@ -215,15 +454,15 @@ input::placeholder { color: var(--grey); }
       <video id="qr-video" playsinline autoplay muted></video>
       <div class="scan-overlay"><div class="scan-frame"></div></div>
     </div>
-    <div class="scan-box" id="scan-prompt">
-      <div class="scan-icon">📷</div>
+    <div class="scan-zone" id="scan-prompt">
+      <div class="scan-zone-icon">📷</div>
       <h3>Ready to Scan</h3>
-      <p>Point camera at customer's QR code</p>
-      <button class="btn btn-gold" onclick="startCamera()" style="margin-top:16px">Open Camera</button>
+      <p>Point camera at the customer's QR wash pass to verify and redeem</p>
+      <button class="btn btn-gold" onclick="startCamera()" style="margin-top:20px;width:auto;padding:14px 32px">Open Camera</button>
     </div>
     <div id="scan-result" class="result-card"></div>
     <div id="scan-actions" class="hidden">
-      <button class="btn btn-success" id="redeem-btn" onclick="redeemBooking()" style="margin-bottom:10px">Redeem Wash ✓</button>
+      <button class="btn btn-success" id="redeem-btn" onclick="redeemBooking()" style="margin-bottom:10px">✓ Redeem Wash</button>
       <button class="btn btn-outline" onclick="resetScan()">Scan Another</button>
     </div>
   </div>
@@ -231,22 +470,22 @@ input::placeholder { color: var(--grey); }
 
 <!-- PLATE LOOKUP -->
 <div id="screen-lookup" class="screen">
-  <div class="scan-header">
+  <div class="screen-header">
     <button class="back-btn" onclick="showScreen('home')">←</button>
     <h2>Plate Lookup</h2>
   </div>
-  <div class="scan-content">
+  <div class="lookup-content">
     <div class="form-group">
-      <label>Enter Number Plate</label>
-      <input type="text" id="plate-input" placeholder="KCA 123A" style="text-transform:uppercase;font-size:20px;font-weight:700;letter-spacing:2px" oninput="this.value=this.value.toUpperCase()">
+      <label>Number Plate</label>
+      <input class="plate-input-big" type="text" id="plate-input" placeholder="KCA 123A" oninput="this.value=this.value.toUpperCase()">
     </div>
-    <button class="btn btn-gold" id="lookup-btn" onclick="lookupPlate()" style="margin-bottom:16px">Search</button>
+    <button class="btn btn-gold" id="lookup-btn" onclick="lookupPlate()" style="margin-bottom:20px">Search</button>
     <div id="lookup-result" class="result-card"></div>
     <div id="lookup-actions" class="hidden">
-      <button class="btn btn-success" id="lookup-redeem-btn" onclick="redeemFromLookup()" style="margin-bottom:10px">Redeem Wash ✓</button>
+      <button class="btn btn-success" id="lookup-redeem-btn" onclick="redeemFromLookup()" style="margin-bottom:10px">✓ Redeem Wash</button>
       <button class="btn btn-outline" onclick="resetLookup()">Search Another</button>
     </div>
-    <div id="lookup-error" style="text-align:center;padding:20px;color:var(--danger);font-size:14px;display:none"></div>
+    <div id="lookup-error" style="text-align:center;padding:20px;color:var(--danger);font-size:14px;display:none;background:rgba(239,68,68,.08);border-radius:16px;border:1px solid rgba(239,68,68,.15)"></div>
   </div>
 </div>
 
@@ -257,9 +496,10 @@ var SUPABASE_URL = 'https://msdvyiqjoogafzyaoycg.supabase.co';
 var SUPABASE_KEY = 'sb_publishable_N_g24aU7TLHLNeu72gnfeg_1d7OleFW';
 
 var currentOperator = null;
-var foundBooking = null;
-var cameraStream = null;
-var scanInterval = null;
+var foundBooking    = null;
+var lookupData      = null;
+var cameraStream    = null;
+var scanInterval    = null;
 
 // ── SUPABASE ──────────────────────────────────────
 async function sbFetch(path, options) {
@@ -284,15 +524,9 @@ async function getOperatorByEmail(email) {
   var rows = await sbFetch('operators?email=eq.' + encodeURIComponent(email) + '&select=*');
   return rows && rows[0] ? rows[0] : null;
 }
-async function createOperator(data) {
-  return await sbFetch('operators', { method: 'POST', body: JSON.stringify(data), prefer: 'return=representation' });
-}
 async function getTodayBookings(washPoint) {
   var today = new Date().toISOString().split('T')[0];
   return await sbFetch('bookings?date=eq.' + today + '&location=eq.' + encodeURIComponent(washPoint) + '&select=*&order=time.asc');
-}
-async function getAllTodayBookings(washPoint) {
-  return await getTodayBookings(washPoint);
 }
 async function getBookingsByPlate(plate) {
   var today = new Date().toISOString().split('T')[0];
@@ -303,28 +537,22 @@ async function getBookingsByPlate(plate) {
   return { user: user, booking: bookings && bookings[0] ? bookings[0] : null };
 }
 async function redeemBookingById(bookingId, userEmail) {
-  // Mark booking completed
   await sbFetch('bookings?id=eq.' + bookingId, {
-    method: 'PATCH',
-    body: JSON.stringify({ status: 'completed' }),
-    prefer: 'return=representation'
+    method: 'PATCH', body: JSON.stringify({ status: 'completed' }), prefer: 'return=representation'
   });
-  // Deduct credit
   var users = await sbFetch('profiles?email=eq.' + encodeURIComponent(userEmail) + '&select=*');
   if (users && users[0] && users[0].plan !== 'Fleet' && users[0].credits > 0) {
     await sbFetch('profiles?email=eq.' + encodeURIComponent(userEmail), {
-      method: 'PATCH',
-      body: JSON.stringify({ credits: users[0].credits - 1 }),
-      prefer: 'return=representation'
+      method: 'PATCH', body: JSON.stringify({ credits: users[0].credits - 1 }), prefer: 'return=representation'
     });
   }
 }
 
-// ── UI ────────────────────────────────────────────
+// ── UI HELPERS ────────────────────────────────────
 function toast(msg, isError) {
   var t = document.getElementById('toast');
   t.textContent = msg;
-  t.style.borderLeftColor = isError ? 'var(--danger)' : 'var(--gold)';
+  t.style.borderLeftColor = isError ? 'var(--danger)' : 'var(--success)';
   t.classList.add('show');
   setTimeout(function() { t.classList.remove('show'); }, 3000);
 }
@@ -339,112 +567,96 @@ function showScreen(name) {
   document.getElementById('screen-' + name).classList.add('active');
   if (name === 'home') renderHome();
 }
-function showAuth(mode) {
-  document.getElementById('auth-login').classList.toggle('hidden', mode !== 'login');
-  document.getElementById('auth-register').classList.toggle('hidden', mode !== 'register');
-}
 
 // ── BOOT ─────────────────────────────────────────
 window.onload = function() {
-  setTimeout(function() { showScreen('auth'); }, 1500);
+  setTimeout(function() {
+    var saved = localStorage.getItem('splashpass_operator');
+    if (saved) {
+      try {
+        currentOperator = JSON.parse(saved);
+        showScreen('home');
+        return;
+      } catch(e) { localStorage.removeItem('splashpass_operator'); }
+    }
+    showScreen('auth');
+  }, 1600);
 };
 
 // ── AUTH ─────────────────────────────────────────
 async function login() {
   var email = document.getElementById('login-email').value.trim().toLowerCase();
-  var pass = document.getElementById('login-pass').value;
-  var err = document.getElementById('login-error');
+  var pass  = document.getElementById('login-pass').value;
+  var err   = document.getElementById('login-error');
   setBtn('login-btn', true, 'Sign In');
   try {
     var op = await getOperatorByEmail(email);
-    if (!op) { err.textContent = 'No operator account found with this email.'; return; }
-    if (op.password !== pass) { err.textContent = 'Wrong password. Check and try again.'; return; }
+    if (!op)               { err.textContent = 'No operator account found.'; return; }
+    if (op.password !== pass) { err.textContent = 'Wrong password.'; return; }
     var custCheck = await sbFetch('profiles?email=eq.' + encodeURIComponent(email) + '&select=email');
-    if (custCheck && custCheck.length) { err.textContent = 'This is a customer account. Use the SplashPass customer app.'; return; }
+    if (custCheck && custCheck.length) { err.textContent = 'This is a customer account. Use the customer app.'; return; }
     currentOperator = op;
+    localStorage.setItem('splashpass_operator', JSON.stringify(op));
     err.textContent = '';
     showScreen('home');
   } catch(e) { err.textContent = 'Error: ' + e.message; }
   finally { setBtn('login-btn', false, 'Sign In'); }
 }
 
-async function register() {
-  var name = document.getElementById('reg-name').value.trim();
-  var email = document.getElementById('reg-email').value.trim().toLowerCase();
-  var pass = document.getElementById('reg-pass').value;
-  var point = document.getElementById('reg-point').value;
-  var err = document.getElementById('reg-error');
-  if (!name || !email || !pass || !point) { err.textContent = 'Please fill in all fields.'; return; }
-  if (pass.length < 6) { err.textContent = 'Password must be at least 6 characters.'; return; }
-  setBtn('reg-btn', true, 'Create Account');
-  try {
-    var existing = await getOperatorByEmail(email);
-    if (existing) { err.textContent = 'Account already exists.'; return; }
-    var result = await createOperator({ name: name, email: email, password: pass, wash_point: point });
-    currentOperator = result[0];
-    currentOperator.full_name = name;
-    err.textContent = '';
-    toast('Account created! Welcome.');
-    showScreen('home');
-  } catch(e) { err.textContent = 'Error: ' + e.message; }
-  finally { setBtn('reg-btn', false, 'Create Account'); }
-}
-
 function logout() {
   currentOperator = null;
+  localStorage.removeItem('splashpass_operator');
   stopCamera();
   showScreen('auth');
-  showAuth('login');
 }
 
 // ── HOME ─────────────────────────────────────────
 async function renderHome() {
   if (!currentOperator) return;
-  var opName = currentOperator.full_name || currentOperator.name || 'Operator';
-  document.getElementById('home-name').textContent = opName.split(' ')[0];
+  var name = currentOperator.name || 'Operator';
+  document.getElementById('home-name').textContent = name.split(' ')[0];
   document.getElementById('home-point').textContent = '📍 ' + currentOperator.wash_point;
   var now = new Date();
   document.getElementById('home-date').textContent = now.toLocaleDateString('en-KE', { weekday:'long', day:'numeric', month:'long' });
 
   try {
     var bookings = await getTodayBookings(currentOperator.wash_point);
-    var done = bookings.filter(function(b) { return b.status === 'completed'; });
-    var pending = bookings.filter(function(b) { return b.status === 'confirmed'; });
+    var done     = bookings.filter(function(b) { return b.status === 'completed'; });
+    var pending  = bookings.filter(function(b) { return b.status === 'confirmed'; });
 
-    document.getElementById('stat-today').textContent = bookings.length;
-    document.getElementById('stat-done').textContent = done.length;
+    document.getElementById('stat-today').textContent   = bookings.length;
+    document.getElementById('stat-done').textContent    = done.length;
     document.getElementById('stat-pending').textContent = pending.length;
-    document.getElementById('queue-count').textContent = bookings.length + ' booking' + (bookings.length !== 1 ? 's' : '');
+    document.getElementById('queue-count').textContent  = bookings.length + ' booking' + (bookings.length !== 1 ? 's' : '');
 
     renderQueue(bookings);
-  } catch(e) {
-    toast('Error loading queue: ' + e.message, true);
-  }
+  } catch(e) { toast('Error loading queue: ' + e.message, true); }
 }
 
 function renderQueue(bookings) {
   var container = document.getElementById('queue-list');
   if (!bookings.length) {
-    container.innerHTML = '<div style="text-align:center;padding:32px;color:var(--grey);font-size:14px">No bookings today at this wash point</div>';
+    container.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:14px">No bookings today at this wash point</div>';
     return;
   }
   container.innerHTML = bookings.map(function(b) {
-    var isDone = b.status === 'completed';
+    var isDone   = b.status === 'completed';
+    var cardCls  = isDone ? 'done' : 'pending';
     var badgeCls = isDone ? 'badge-completed' : 'badge-confirmed';
-    var badgeText = isDone ? 'Done' : 'Pending';
-    return '<div class="booking-card ' + (isDone ? '' : 'priority') + '">' +
+    var badgeTxt = isDone ? '✓ Done' : 'Pending';
+    return '<div class="booking-card ' + cardCls + '">' +
       '<div class="booking-top">' +
         '<div class="booking-name">' + b.user_name + '</div>' +
         '<div class="booking-time">' + b.time + '</div>' +
       '</div>' +
-      '<div>' +
-        '<span class="booking-plate">' + (b.plate || 'No plate') + '</span>' +
-        '<span class="status-badge ' + badgeCls + '" style="margin-left:8px">' + badgeText + '</span>' +
+      '<div class="booking-meta">' +
+        '<span class="booking-plate">' + (b.plate || 'NO PLATE') + '</span>' +
+        '<span class="status-badge ' + badgeCls + '">' + badgeTxt + '</span>' +
+        '<span class="booking-plan">' + (b.plan || '—') + ' Plan</span>' +
       '</div>' +
-      '<div class="booking-car">' + (b.plan || '—') + ' Plan</div>' +
-      (!isDone ? '<div class="booking-actions">' +
-        '<button class="btn btn-success btn-sm" onclick="quickRedeem(' + b.id + ',\'' + b.user_email + '\')">Redeem ✓</button>' +
-        '</div>' : '') +
+      (!isDone ?
+        '<button class="btn btn-success btn-sm" onclick="quickRedeem(' + b.id + ',\'' + b.user_email + '\')">✓ Redeem</button>'
+      : '') +
     '</div>';
   }).join('');
 }
@@ -452,7 +664,7 @@ function renderQueue(bookings) {
 async function quickRedeem(bookingId, userEmail) {
   try {
     await redeemBookingById(bookingId, userEmail);
-    toast('Wash redeemed successfully!');
+    toast('Wash redeemed!');
     renderHome();
   } catch(e) { toast('Error: ' + e.message, true); }
 }
@@ -467,8 +679,6 @@ async function startCamera() {
     document.getElementById('qr-video-container').style.display = 'block';
     document.getElementById('scan-prompt').style.display = 'none';
     toast('Camera active — point at QR code');
-
-    // Poll for QR using canvas
     scanInterval = setInterval(function() { captureFrame(video); }, 500);
   } catch(e) {
     toast('Camera access denied. Use plate lookup instead.', true);
@@ -476,28 +686,21 @@ async function startCamera() {
 }
 
 function stopCamera() {
-  if (cameraStream) {
-    cameraStream.getTracks().forEach(function(t) { t.stop(); });
-    cameraStream = null;
-  }
+  if (cameraStream) { cameraStream.getTracks().forEach(function(t) { t.stop(); }); cameraStream = null; }
   if (scanInterval) { clearInterval(scanInterval); scanInterval = null; }
 }
 
 function captureFrame(video) {
-  if (!video.readyState === 4) return;
+  if (video.readyState !== 4) return;
   var canvas = document.createElement('canvas');
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
   var ctx = canvas.getContext('2d');
   ctx.drawImage(video, 0, 0);
-  // BarcodeDetector API (supported on Chrome Android)
   if ('BarcodeDetector' in window) {
     var detector = new BarcodeDetector({ formats: ['qr_code'] });
     detector.detect(canvas).then(function(codes) {
-      if (codes.length > 0) {
-        stopCamera();
-        processQRCode(codes[0].rawValue);
-      }
+      if (codes.length > 0) { stopCamera(); processQRCode(codes[0].rawValue); }
     }).catch(function(){});
   }
 }
@@ -506,33 +709,23 @@ async function processQRCode(raw) {
   try {
     var data = JSON.parse(raw);
     if (!data.id || !data.user) { toast('Invalid QR code.', true); return; }
-
-    // Fetch the booking
     var bookings = await sbFetch('bookings?id=eq.' + data.id + '&select=*');
     if (!bookings || !bookings.length) { toast('Booking not found.', true); return; }
     var b = bookings[0];
-
-    // Fetch user profile for car details
     var users = await sbFetch('profiles?email=eq.' + encodeURIComponent(b.user_email) + '&select=*');
-    var user = users && users[0] ? users[0] : {};
-
-    if (b.status === 'completed') {
-      toast('This wash has already been redeemed.', true);
-      return;
-    }
-
+    var user  = users && users[0] ? users[0] : {};
+    if (b.status === 'completed') { toast('Already redeemed.', true); return; }
     foundBooking = { booking: b, user: user };
     showScanResult(b, user);
-  } catch(e) {
-    toast('Could not read QR code.', true);
-  }
+  } catch(e) { toast('Could not read QR code.', true); }
 }
 
 function showScanResult(b, user) {
-  var carInfo = [user.car_colour, user.car_make, user.car_model].filter(Boolean).join(' ') || 'Not specified';
+  var carInfo = [user.car_colour, user.car_make, user.car_model].filter(Boolean).join(' ') || 'Not on file';
   var credits = user.plan === 'Fleet' ? 'Unlimited' : (user.credits || 0) + ' remaining';
-  document.getElementById('scan-result').style.display = 'block';
-  document.getElementById('scan-result').innerHTML =
+  var el = document.getElementById('scan-result');
+  el.style.display = 'block';
+  el.innerHTML =
     '<div class="result-name">' + b.user_name + '</div>' +
     '<div class="result-plate">' + (user.plate || 'NO PLATE') + '</div>' +
     '<div class="result-row"><span>Car</span><strong>' + carInfo + '</strong></div>' +
@@ -546,14 +739,14 @@ function showScanResult(b, user) {
 
 async function redeemBooking() {
   if (!foundBooking) return;
-  setBtn('redeem-btn', true, 'Redeem Wash ✓');
+  setBtn('redeem-btn', true, '✓ Redeem Wash');
   try {
     await redeemBookingById(foundBooking.booking.id, foundBooking.booking.user_email);
     toast('Wash redeemed! Credits updated.');
     resetScan();
     renderHome();
   } catch(e) { toast('Error: ' + e.message, true); }
-  finally { setBtn('redeem-btn', false, 'Redeem Wash ✓'); }
+  finally { setBtn('redeem-btn', false, '✓ Redeem Wash'); }
 }
 
 function resetScan() {
@@ -566,39 +759,29 @@ function resetScan() {
 }
 
 // ── PLATE LOOKUP ──────────────────────────────────
-var lookupData = null;
-
 async function lookupPlate() {
   var plate = document.getElementById('plate-input').value.trim();
   var errEl = document.getElementById('lookup-error');
   if (!plate) { errEl.style.display = 'block'; errEl.textContent = 'Please enter a plate number.'; return; }
-
   setBtn('lookup-btn', true, 'Search');
   errEl.style.display = 'none';
   document.getElementById('lookup-result').style.display = 'none';
   document.getElementById('lookup-actions').classList.add('hidden');
-
   try {
     var result = await getBookingsByPlate(plate);
     if (!result || !result.user) {
-      errEl.style.display = 'block';
-      errEl.textContent = 'No customer found with plate ' + plate;
-      return;
+      errEl.style.display = 'block'; errEl.textContent = 'No customer found with plate ' + plate; return;
     }
     if (!result.booking) {
-      errEl.style.display = 'block';
-      errEl.textContent = 'No booking today for plate ' + plate + '. Customer: ' + result.user.name;
-      return;
+      errEl.style.display = 'block'; errEl.textContent = 'No booking today for ' + plate + '. Customer: ' + result.user.name; return;
     }
-
     lookupData = result;
-    var u = result.user;
-    var b = result.booking;
-    var carInfo = [u.car_colour, u.car_make, u.car_model].filter(Boolean).join(' ') || 'Not specified';
+    var u = result.user, b = result.booking;
+    var carInfo = [u.car_colour, u.car_make, u.car_model].filter(Boolean).join(' ') || 'Not on file';
     var credits = u.plan === 'Fleet' ? 'Unlimited' : (u.credits || 0) + ' remaining';
-
-    document.getElementById('lookup-result').style.display = 'block';
-    document.getElementById('lookup-result').innerHTML =
+    var el = document.getElementById('lookup-result');
+    el.style.display = 'block';
+    el.innerHTML =
       '<div class="result-name">' + u.name + '</div>' +
       '<div class="result-plate">' + (u.plate || plate) + '</div>' +
       '<div class="result-row"><span>Car</span><strong>' + carInfo + '</strong></div>' +
@@ -606,25 +789,21 @@ async function lookupPlate() {
       '<div class="result-row"><span>Plan</span><strong>' + (b.plan || '—') + '</strong></div>' +
       '<div class="result-row"><span>Credits</span><strong style="color:var(--gold)">' + credits + '</strong></div>';
     document.getElementById('lookup-actions').classList.remove('hidden');
-
   } catch(e) {
-    errEl.style.display = 'block';
-    errEl.textContent = 'Error: ' + e.message;
-  } finally {
-    setBtn('lookup-btn', false, 'Search');
-  }
+    errEl.style.display = 'block'; errEl.textContent = 'Error: ' + e.message;
+  } finally { setBtn('lookup-btn', false, 'Search'); }
 }
 
 async function redeemFromLookup() {
   if (!lookupData) return;
-  setBtn('lookup-redeem-btn', true, 'Redeem Wash ✓');
+  setBtn('lookup-redeem-btn', true, '✓ Redeem Wash');
   try {
     await redeemBookingById(lookupData.booking.id, lookupData.booking.user_email);
     toast('Wash redeemed! Credits updated.');
     resetLookup();
     renderHome();
   } catch(e) { toast('Error: ' + e.message, true); }
-  finally { setBtn('lookup-redeem-btn', false, 'Redeem Wash ✓'); }
+  finally { setBtn('lookup-redeem-btn', false, '✓ Redeem Wash'); }
 }
 
 function resetLookup() {
