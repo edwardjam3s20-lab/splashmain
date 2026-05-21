@@ -1990,6 +1990,155 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/service-worker.js').catch(function(){});
   });
 }
+
+// ── ONBOARDING ────────────────────────────────────
+var obAnswers = { carType: null, frequency: null, profile: null, location: null };
+
+function startOnboarding() {
+  obAnswers = { carType: null, frequency: null, profile: null, location: null };
+  document.querySelectorAll('.onboard-option').forEach(function(o) {
+    o.classList.remove('selected');
+    var chk = o.querySelector('.onboard-option-check');
+    if (chk) chk.textContent = '';
+  });
+  obGoTo(1);
+  showScreen('onboarding');
+}
+
+function obGoTo(step) {
+  for (var i = 1; i <= 5; i++) {
+    var el = document.getElementById('ob-step-' + i);
+    if (el) el.classList.toggle('hidden', i !== step);
+  }
+  for (var j = 1; j <= 4; j++) {
+    var bar = document.getElementById('ob-bar-' + j);
+    if (!bar) continue;
+    bar.classList.remove('active', 'done');
+    if (j < step)       bar.classList.add('done');
+    else if (j === step) bar.classList.add('active');
+  }
+  var wrap = document.getElementById('onboard-wrap');
+  if (wrap) wrap.scrollTop = 0;
+}
+
+function selectOption(el) {
+  var step = el.getAttribute('data-step');
+  document.querySelectorAll('[data-step="' + step + '"]').forEach(function(o) {
+    o.classList.remove('selected');
+    var chk = o.querySelector('.onboard-option-check');
+    if (chk) chk.textContent = '';
+  });
+  el.classList.add('selected');
+  var chk = el.querySelector('.onboard-option-check');
+  if (chk) chk.textContent = '✓';
+}
+
+function getSelectedValue(step) {
+  var sel = document.querySelector('[data-step="' + step + '"].selected');
+  return sel ? sel.getAttribute('data-value') : null;
+}
+
+function obNext(step) {
+  var val = getSelectedValue(step);
+  if (!val) { toast('Please make a selection to continue.', true); return; }
+  if (step === 1) obAnswers.carType   = val;
+  if (step === 2) obAnswers.frequency = val;
+  if (step === 3) obAnswers.profile   = val;
+  if (step === 4) {
+    obAnswers.location = val;
+    buildRecommendation();
+    obGoTo(5);
+    return;
+  }
+  obGoTo(step + 1);
+}
+
+function obBack(step) { obGoTo(step - 1); }
+
+function buildRecommendation() {
+  var carType   = obAnswers.carType;
+  var frequency = parseInt(obAnswers.frequency);
+  var profile   = obAnswers.profile;
+
+  var isHeavyUser = frequency >= 2 || profile === 'Ride-hailing' || profile === 'Company';
+  var isSUV = carType === 'SUV' || carType === 'Pickup';
+
+  var planId;
+  if (isSUV && isHeavyUser)  planId = 'suv-standard';
+  else if (isSUV)            planId = 'suv-light';
+  else if (isHeavyUser)      planId = 'saloon-standard';
+  else                       planId = 'saloon-light';
+
+  var plan = PLANS.find(function(p) { return p.id === planId; });
+
+  var profileLabel = profile === 'Ride-hailing' ? 'ride-hailing drivers' :
+                     profile === 'Company'       ? 'company vehicles' :
+                     profile === 'Family'        ? 'family cars' : 'personal drivers';
+
+  var whyText = 'Based on your ' + carType + ' and ' + (isHeavyUser ? 'frequent' : 'light') +
+                ' wash routine, this plan gives you the best value. Ideal for ' + profileLabel + '.';
+
+  document.getElementById('ob-reco-name').textContent  = plan.name;
+  document.getElementById('ob-reco-price').innerHTML   = 'KSh ' + plan.price.toLocaleString() + '<span>/week</span>';
+  document.getElementById('ob-reco-why').textContent   = whyText;
+  document.getElementById('ob-reco-features').innerHTML =
+    '<li>' + plan.washes + '</li>' +
+    '<li>' + plan.car + ' body wash included</li>' +
+    '<li>' + plan.credits + ' wash credits per week</li>' +
+    '<li>Digital wash pass + QR code</li>' +
+    '<li>10 loyalty points per wash</li>';
+
+  var firstName = currentUser && currentUser.name ? currentUser.name.split(' ')[0] : 'you';
+  document.getElementById('ob-reco-title').textContent = 'Perfect for your ' + carType.toLowerCase() + ', ' + firstName + '!';
+
+  obAnswers.recommendedPlan = plan;
+  saveOnboardingProfile();
+}
+
+async function saveOnboardingProfile() {
+  if (!currentUser) return;
+  try {
+    var updates = {
+      car_type: obAnswers.carType,
+      preferred_point: obAnswers.location,
+      home_location: obAnswers.location
+    };
+    await updateUser(currentUser.email, updates);
+    currentUser.car_type        = obAnswers.carType;
+    currentUser.preferred_point = obAnswers.location;
+    currentUser.home_location   = obAnswers.location;
+    localStorage.setItem('splashpass_user', JSON.stringify(currentUser));
+  } catch(e) { /* silent */ }
+}
+
+async function acceptRecommendation() {
+  var plan = obAnswers.recommendedPlan;
+  if (!plan) { goToPlans(); return; }
+  try {
+    await updateUser(currentUser.email, {
+      plan: plan.name, plan_price: plan.price,
+      sub_start: new Date().toISOString(),
+      sub_status: 'pending', credits: plan.credits
+    });
+    currentUser.plan       = plan.name;
+    currentUser.plan_price = plan.price;
+    currentUser.sub_start  = new Date().toISOString();
+    currentUser.sub_status = 'pending';
+    currentUser.credits    = plan.credits;
+    localStorage.setItem('splashpass_user', JSON.stringify(currentUser));
+    document.getElementById('mpesa-amount').textContent    = 'KSh ' + plan.price.toLocaleString();
+    document.getElementById('mpesa-plan-name').textContent = plan.name + ' · ' + plan.washes;
+    if (currentUser.phone) document.getElementById('mpesa-phone').value = currentUser.phone;
+    document.getElementById('mpesa-status').className  = 'mpesa-status hidden';
+    document.getElementById('mpesa-status').textContent = '';
+    selectedPlanData = plan;
+    showScreen('mpesa');
+  } catch(e) {
+    toast('Error: ' + e.message, true);
+    initApp();
+  }
+}
+
 </script>
 </body>
 </html>
