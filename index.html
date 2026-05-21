@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#f5a623">
+<meta name="theme-color" content="#ffb020">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -11,183 +11,570 @@
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icon.svg">
 <title>SplashPass</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 :root {
-  --navy: #0d1b2a;
-  --navy2: #152236;
-  --navy3: #1e3050;
-  --gold: #f5a623;
-  --gold2: #ffc04d;
-  --white: #f0f4f8;
-  --grey: #8a9bb0;
-  --success: #2ecc71;
-  --danger: #e74c3c;
+  --bg:      #07111f;
+  --s1:      #0f1d30;
+  --s2:      #162338;
+  --s3:      #1d2d45;
+  --gold:    #ffb020;
+  --gold2:   #ffd166;
+  --text:    #f0f4f8;
+  --muted:   #7a90a8;
+  --success: #22c55e;
+  --danger:  #ef4444;
+  --radius:  20px;
+  --radius-lg: 28px;
 }
-* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-html, body { height: 100%; overflow: hidden; background: var(--navy); color: var(--white); font-family: 'DM Sans', sans-serif; }
-h1,h2,h3,h4 { font-family: 'Syne', sans-serif; }
-.hidden { display: none !important; }
 
-/* SCREENS */
-.screen { position: fixed; inset: 0; background: var(--navy); overflow-y: auto; display: none; flex-direction: column; }
-.screen.active { display: flex; }
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 
-/* SPLASH */
-#screen-splash { align-items: center; justify-content: center; background: var(--navy); }
-.splash-logo { text-align: center; }
-.splash-icon { width: 80px; height: 80px; background: var(--gold); border-radius: 20px; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 36px; color: var(--navy); margin: 0 auto 16px; }
-.splash-title { font-size: 28px; font-weight: 800; color: var(--white); }
-.splash-sub { color: var(--grey); font-size: 14px; margin-top: 6px; }
-.splash-spinner { width: 32px; height: 32px; border: 3px solid rgba(245,166,35,0.2); border-top-color: var(--gold); border-radius: 50%; animation: spin .7s linear infinite; margin: 32px auto 0; }
-@keyframes spin { to { transform: rotate(360deg); } }
+html, body {
+  height:100%; overflow:hidden;
+  background: radial-gradient(ellipse at 80% 0%, rgba(255,176,32,.13) 0%, transparent 55%),
+              radial-gradient(ellipse at 10% 90%, rgba(255,176,32,.06) 0%, transparent 45%),
+              var(--bg);
+  color:var(--text);
+  font-family:'DM Sans', sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
 
-/* AUTH */
-#screen-auth { padding: 40px 24px; justify-content: center; }
-.auth-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 36px; }
-.auth-logo-icon { width: 40px; height: 40px; background: var(--gold); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; color: var(--navy); }
-.auth-logo-text { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; }
-.auth-title { font-size: 26px; font-weight: 800; margin-bottom: 6px; }
-.auth-sub { color: var(--grey); font-size: 14px; margin-bottom: 28px; }
-.form-group { margin-bottom: 16px; }
-label { display: block; font-size: 12px; color: var(--grey); margin-bottom: 6px; font-weight: 500; text-transform: uppercase; letter-spacing: .5px; }
-input, select { width: 100%; padding: 14px 16px; background: var(--navy2); border: 1.5px solid var(--navy3); border-radius: 12px; color: var(--white); font-family: 'DM Sans', sans-serif; font-size: 15px; outline: none; transition: border .2s; }
-input:focus { border-color: var(--gold); }
-input::placeholder { color: var(--grey); }
-.form-error { color: var(--danger); font-size: 13px; margin-top: -8px; margin-bottom: 8px; }
-.auth-switch { text-align: center; margin-top: 20px; font-size: 14px; color: var(--grey); }
-.auth-switch a { color: var(--gold); cursor: pointer; }
+h1,h2,h3,h4 { font-family:'Syne', sans-serif; }
+.hidden { display:none !important; }
 
-/* BUTTONS */
-.btn { display: block; width: 100%; padding: 16px; border-radius: 14px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; cursor: pointer; border: none; transition: all .2s; text-align: center; }
-.btn:disabled { opacity: .5; cursor: not-allowed; }
-.btn-gold { background: var(--gold); color: var(--navy); }
-.btn-gold:active { background: var(--gold2); transform: scale(.98); }
-.btn-outline { background: transparent; color: var(--white); border: 1.5px solid var(--navy3); }
-.btn-outline:active { border-color: var(--gold); }
-.btn-danger { background: var(--danger); color: white; }
-.btn-sm { width: auto; display: inline-block; padding: 10px 20px; font-size: 14px; border-radius: 10px; }
+/* ── SCREENS ── */
+.screen { position:fixed; inset:0; overflow-y:auto; display:none; flex-direction:column; background:transparent; }
+.screen.active { display:flex; }
 
-/* HOME */
-#screen-home { padding: 0; }
-.home-header { padding: 56px 20px 20px; background: var(--navy2); }
-.home-greeting { font-size: 13px; color: var(--grey); margin-bottom: 4px; }
-.home-name { font-size: 22px; font-weight: 800; }
-.sub-status-bar { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; background: var(--navy3); border-radius: 12px; padding: 14px 16px; }
-.sub-plan { font-size: 14px; font-weight: 600; }
-.sub-badge { font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 100px; }
-.badge-active { background: rgba(46,204,113,.15); color: var(--success); }
-.badge-pending { background: rgba(245,166,35,.15); color: var(--gold); }
-.badge-none { background: rgba(138,155,176,.15); color: var(--grey); }
+/* ── SPLASH ── */
+#screen-splash {
+  align-items:center; justify-content:center;
+  background: radial-gradient(ellipse at 60% 20%, rgba(255,176,32,.18) 0%, transparent 60%), var(--bg);
+}
+.splash-logo { text-align:center; }
+.splash-icon {
+  width:88px; height:88px;
+  background: linear-gradient(145deg, var(--gold2), var(--gold));
+  border-radius:26px;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Syne',sans-serif; font-weight:800; font-size:40px; color:#07111f;
+  margin:0 auto 20px;
+  box-shadow: 0 20px 50px rgba(255,176,32,.35);
+}
+.splash-title { font-size:32px; font-weight:800; color:var(--text); }
+.splash-brand span { color:var(--gold); }
+.splash-sub { color:var(--muted); font-size:14px; margin-top:8px; letter-spacing:.3px; }
+.splash-spinner {
+  width:36px; height:36px;
+  border:3px solid rgba(255,176,32,.15);
+  border-top-color:var(--gold);
+  border-radius:50%;
+  animation:spin .75s linear infinite;
+  margin:36px auto 0;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* ── AUTH ── */
+#screen-auth { padding:0 28px; justify-content:center; }
+.auth-logo { display:flex; align-items:center; gap:12px; margin-bottom:40px; }
+.auth-logo-icon {
+  width:44px; height:44px;
+  background:linear-gradient(145deg, var(--gold2), var(--gold));
+  border-radius:14px;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Syne',sans-serif; font-weight:800; font-size:20px; color:#07111f;
+}
+.auth-logo-text { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; }
+.auth-title { font-size:28px; font-weight:800; margin-bottom:6px; }
+.auth-sub { color:var(--muted); font-size:14px; margin-bottom:30px; }
+.form-group { margin-bottom:16px; }
+label { display:block; font-size:12px; color:var(--muted); margin-bottom:8px; font-weight:500; text-transform:uppercase; letter-spacing:.6px; }
+input, select {
+  width:100%; padding:16px 18px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:16px;
+  color:var(--text);
+  font-family:'DM Sans',sans-serif; font-size:15px;
+  outline:none;
+  transition:border .2s, box-shadow .2s;
+}
+input:focus {
+  border-color:rgba(255,176,32,.5);
+  box-shadow:0 0 0 4px rgba(255,176,32,.08);
+}
+input::placeholder { color:var(--muted); }
+select option { background:var(--s1); }
+.form-error { color:var(--danger); font-size:13px; margin-top:-6px; margin-bottom:10px; }
+.auth-switch { text-align:center; margin-top:22px; font-size:14px; color:var(--muted); }
+.auth-switch a { color:var(--gold); cursor:pointer; font-weight:600; }
+
+/* ── BUTTONS ── */
+.btn {
+  display:block; width:100%; padding:17px;
+  border-radius:18px;
+  font-family:'Syne',sans-serif; font-weight:700; font-size:16px;
+  cursor:pointer; border:none;
+  transition:transform .15s, box-shadow .15s;
+  text-align:center;
+}
+.btn:disabled { opacity:.45; cursor:not-allowed; }
+.btn-gold {
+  background:linear-gradient(180deg, var(--gold2) 0%, var(--gold) 100%);
+  color:#07111f;
+  box-shadow:0 12px 28px rgba(255,176,32,.28);
+}
+.btn-gold:active { transform:scale(.97); box-shadow:0 6px 14px rgba(255,176,32,.2); }
+.btn-outline {
+  background:rgba(255,255,255,.05);
+  color:var(--text);
+  border:1px solid rgba(255,255,255,.1);
+}
+.btn-outline:active { border-color:var(--gold); transform:scale(.97); }
+.btn-danger { background:var(--danger); color:white; }
+.btn-danger:active { transform:scale(.97); }
+.btn-sm { width:auto; display:inline-block; padding:10px 22px; font-size:14px; border-radius:12px; }
+
+/* ── SCREEN HEADER ── */
+.screen-header {
+  display:flex; align-items:center; gap:14px;
+  padding:54px 20px 20px;
+  background:var(--bg);
+  position:sticky; top:0; z-index:50;
+  border-bottom:1px solid rgba(255,255,255,.05);
+}
+.back-btn {
+  width:38px; height:38px;
+  background:rgba(255,255,255,.07);
+  border-radius:12px;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; font-size:20px; flex-shrink:0;
+  border:none; color:var(--text);
+  transition:background .15s;
+}
+.back-btn:active { background:rgba(255,255,255,.12); }
+.screen-header h2 { font-size:20px; font-weight:800; }
+
+/* ── HOME ── */
+#screen-home { padding:0; }
+.home-header { padding:56px 22px 20px; }
+.home-greeting { font-size:13px; color:var(--muted); margin-bottom:6px; letter-spacing:.3px; }
+.home-name { font-size:32px; font-weight:800; line-height:1.1; }
+
+/* Sub hero */
+.sub-status-bar {
+  margin:18px 16px 0;
+  padding:22px;
+  border-radius:var(--radius-lg);
+  background:linear-gradient(135deg, rgba(255,176,32,.15) 0%, rgba(255,176,32,.04) 100%);
+  border:1px solid rgba(255,176,32,.22);
+  box-shadow:0 16px 40px rgba(255,176,32,.1);
+  cursor:pointer;
+}
+.sub-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; }
+.sub-plan { font-size:18px; font-weight:800; color:var(--text); margin-bottom:3px; }
+.sub-plan-detail { font-size:12px; color:var(--muted); }
+.sub-badge {
+  font-size:11px; font-weight:700;
+  padding:5px 12px; border-radius:100px;
+  flex-shrink:0;
+}
+.badge-active { background:rgba(34,197,94,.15); color:var(--success); border:1px solid rgba(34,197,94,.2); }
+.badge-pending { background:rgba(255,176,32,.15); color:var(--gold); border:1px solid rgba(255,176,32,.2); }
+.badge-none { background:rgba(122,144,168,.12); color:var(--muted); border:1px solid rgba(122,144,168,.15); }
+.sub-progress-bar { background:rgba(255,255,255,.08); border-radius:6px; height:5px; overflow:hidden; }
+.sub-progress-fill { height:100%; border-radius:6px; background:linear-gradient(90deg, var(--gold2), var(--gold)); transition:width .4s; }
+.sub-progress-label { display:flex; justify-content:space-between; margin-top:7px; font-size:11px; color:var(--muted); }
+
+/* Quick actions */
+.quick-actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:14px 16px 0; }
+.quick-card {
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:22px;
+  padding:16px;
+  cursor:pointer;
+  transition:transform .15s, background .15s;
+}
+.quick-card:active { transform:scale(.97); background:rgba(255,255,255,.07); }
+.quick-icon { font-size:22px; margin-bottom:10px; }
+.quick-title { font-size:13px; font-weight:700; color:var(--text); margin-bottom:2px; }
+.quick-sub { font-size:11px; color:var(--muted); }
+
+/* Loyalty bar */
+.loyalty-strip {
+  margin:14px 16px 0;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:20px;
+  padding:14px 18px;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.loyalty-left { display:flex; align-items:center; gap:12px; }
+.loyalty-emoji { font-size:28px; }
+.loyalty-tier-name { font-size:14px; font-weight:700; }
+.loyalty-pts { font-size:12px; color:var(--muted); margin-top:2px; }
+.loyalty-right { text-align:right; }
+.loyalty-next-label { font-size:11px; color:var(--muted); }
+.loyalty-mini-bar { width:72px; height:4px; background:rgba(255,255,255,.08); border-radius:3px; margin-top:5px; overflow:hidden; }
+.loyalty-mini-fill { height:100%; border-radius:3px; background:var(--gold); transition:width .4s; }
+
+/* Next booking */
+.next-booking-strip {
+  margin:12px 16px 0;
+  background:rgba(255,255,255,.04);
+  border:1.5px solid rgba(255,176,32,.3);
+  border-radius:20px;
+  padding:14px 18px;
+  display:flex; align-items:center; gap:14px;
+  cursor:pointer;
+  transition:transform .15s;
+}
+.next-booking-strip:active { transform:scale(.98); }
+.next-icon { font-size:26px; }
+.next-info { flex:1; }
+.next-label { font-size:11px; color:var(--gold); font-weight:700; text-transform:uppercase; letter-spacing:.5px; margin-bottom:3px; }
+.next-text { font-size:14px; font-weight:700; }
+.next-sub { font-size:12px; color:var(--muted); margin-top:2px; }
+.next-arrow { font-size:20px; color:var(--gold); }
 
 /* MAP */
-.map-section { position: relative; }
-#map { height: 280px; width: 100%; z-index: 1; }
-.map-label { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); background: var(--navy); color: var(--white); font-size: 13px; font-weight: 600; padding: 6px 14px; border-radius: 100px; z-index: 10; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,.4); }
+.map-section { position:relative; margin:14px 0 0; }
+.map-label {
+  position:absolute; top:14px; left:50%; transform:translateX(-50%);
+  background:rgba(7,17,31,.85);
+  color:var(--text);
+  font-size:12px; font-weight:600;
+  padding:7px 16px; border-radius:100px;
+  z-index:10; white-space:nowrap;
+  box-shadow:0 4px 14px rgba(0,0,0,.4);
+  border:1px solid rgba(255,255,255,.08);
+}
+#map { height:260px; width:100%; z-index:1; }
 
-/* WASH POINTS */
-.wash-points { padding: 16px; }
-.wash-points-title { font-size: 14px; font-weight: 700; margin-bottom: 12px; color: var(--grey); text-transform: uppercase; letter-spacing: .5px; }
-.wash-point-card { background: var(--navy2); border-radius: 14px; padding: 16px; margin-bottom: 10px; border: 1.5px solid var(--navy3); display: flex; align-items: center; gap: 14px; cursor: pointer; transition: all .15s; }
-.wash-point-card:active { transform: scale(.98); border-color: var(--gold); }
-.wash-point-icon { width: 44px; height: 44px; background: rgba(245,166,35,.12); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
-.wash-point-info { flex: 1; }
-.wash-point-name { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
-.wash-point-area { font-size: 13px; color: var(--grey); }
-.wash-point-dist { font-size: 12px; color: var(--gold); font-weight: 600; }
+/* Wash points */
+.wash-points { padding:16px 16px 0; }
+.section-title {
+  font-size:11px; color:var(--muted);
+  text-transform:uppercase; letter-spacing:.7px;
+  font-weight:600; margin-bottom:12px;
+}
+.wash-point-card {
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:20px;
+  padding:16px 18px;
+  margin-bottom:10px;
+  display:flex; align-items:center; gap:14px;
+  cursor:pointer;
+  transition:transform .15s, background .15s, border-color .15s;
+}
+.wash-point-card:active { transform:scale(.98); background:rgba(255,255,255,.07); border-color:rgba(255,176,32,.3); }
+.wash-point-icon {
+  width:46px; height:46px;
+  background:rgba(255,176,32,.1);
+  border-radius:14px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:20px; flex-shrink:0;
+}
+.wash-point-info { flex:1; }
+.wash-point-name { font-size:15px; font-weight:700; margin-bottom:3px; }
+.wash-point-area { font-size:12px; color:var(--muted); }
+.wash-point-dist { font-size:12px; color:var(--gold); font-weight:700; }
 
-/* BOTTOM NAV */
-.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--navy2); border-top: 1px solid var(--navy3); display: flex; z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
-.nav-item { flex: 1; padding: 12px 0; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; color: var(--grey); font-size: 11px; font-weight: 600; transition: color .15s; }
-.nav-item.active { color: var(--gold); }
-.nav-icon { font-size: 22px; }
+/* ── BOTTOM NAV ── */
+.bottom-nav {
+  position:fixed;
+  left:14px; right:14px; bottom:14px;
+  border-radius:28px;
+  background:rgba(10,18,32,.88);
+  border:1px solid rgba(255,255,255,.07);
+  box-shadow:0 20px 50px rgba(0,0,0,.5);
+  display:flex; z-index:100;
+  padding:10px 8px;
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+}
+.nav-item {
+  flex:1; padding:8px 0;
+  display:flex; flex-direction:column; align-items:center; gap:4px;
+  cursor:pointer; color:var(--muted);
+  font-size:10px; font-weight:600;
+  transition:color .15s;
+  border-radius:18px;
+}
+.nav-item.active { color:var(--gold); }
+.nav-icon { font-size:22px; line-height:1; }
 
-/* BOOKING SCREEN */
-#screen-book { padding: 0; }
-.screen-header { display: flex; align-items: center; gap: 12px; padding: 56px 20px 20px; background: var(--navy2); }
-.back-btn { width: 36px; height: 36px; background: var(--navy3); border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; flex-shrink: 0; border: none; color: var(--white); }
-.screen-header h2 { font-size: 20px; font-weight: 800; }
-.book-content { padding: 20px; padding-bottom: 100px; }
-.selected-point-card { background: var(--navy2); border-radius: 14px; padding: 16px; border: 1.5px solid var(--gold); display: flex; gap: 12px; align-items: center; margin-bottom: 20px; }
-.section-label { font-size: 12px; color: var(--grey); text-transform: uppercase; letter-spacing: .5px; font-weight: 600; margin-bottom: 10px; }
-.time-slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 20px; }
-.slot { padding: 12px 6px; background: var(--navy2); border-radius: 10px; text-align: center; cursor: pointer; font-size: 13px; font-weight: 600; border: 1.5px solid var(--navy3); transition: all .15s; }
-.slot:active { transform: scale(.95); }
-.slot.selected { border-color: var(--gold); background: rgba(245,166,35,.1); color: var(--gold); }
-.slot.booked { opacity: .35; cursor: not-allowed; }
+/* ── BOOKING ── */
+#screen-book { padding:0; }
+.book-content { padding:20px; padding-bottom:100px; }
+.selected-point-card {
+  background:rgba(255,176,32,.08);
+  border-radius:20px;
+  padding:18px;
+  border:1px solid rgba(255,176,32,.25);
+  display:flex; gap:14px; align-items:center;
+  margin-bottom:22px;
+}
+.section-label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; font-weight:600; margin-bottom:10px; }
+.time-slots { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:22px; }
+.slot {
+  padding:13px 6px;
+  background:rgba(255,255,255,.04);
+  border-radius:14px;
+  text-align:center;
+  cursor:pointer;
+  font-size:13px; font-weight:600;
+  border:1px solid rgba(255,255,255,.07);
+  transition:all .15s;
+}
+.slot:active { transform:scale(.95); }
+.slot.selected { border-color:var(--gold); background:rgba(255,176,32,.12); color:var(--gold); }
+.slot.booked { opacity:.3; cursor:not-allowed; }
 
-/* QR SCREEN */
-#screen-qr { align-items: center; justify-content: center; padding: 40px 24px; text-align: center; }
-.qr-header { margin-bottom: 32px; }
-.qr-header h2 { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
-.qr-header p { color: var(--grey); font-size: 14px; }
-.qr-box { background: white; border-radius: 20px; padding: 20px; margin: 0 auto 24px; display: inline-block; }
-.qr-info { background: var(--navy2); border-radius: 14px; padding: 16px; width: 100%; margin-bottom: 24px; text-align: left; }
-.qr-info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--navy3); font-size: 14px; }
-.qr-info-row:last-child { border-bottom: none; }
-.qr-info-row span { color: var(--grey); }
-.qr-code-text { font-size: 28px; font-weight: 800; color: var(--gold); letter-spacing: 4px; margin: 16px 0; font-family: 'Syne', sans-serif; }
-
-/* PLANS SCREEN */
-#screen-plans { padding: 0; }
-.plans-content { padding: 20px; padding-bottom: 100px; }
-.plan-card { background: var(--navy2); border-radius: 16px; padding: 20px; margin-bottom: 12px; border: 1.5px solid var(--navy3); transition: all .15s; }
-.plan-card.popular { border-color: var(--gold); }
-.popular-tag { display: inline-block; background: var(--gold); color: var(--navy); font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 100px; margin-bottom: 10px; font-family: 'Syne', sans-serif; }
-.plan-name { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
-.plan-price { font-size: 32px; font-weight: 800; color: var(--gold); font-family: 'Syne', sans-serif; }
-.plan-price span { font-size: 14px; color: var(--grey); font-weight: 400; }
-.plan-features { list-style: none; margin: 12px 0 16px; }
-.plan-features li { font-size: 14px; padding: 5px 0; color: var(--grey); }
-.plan-features li::before { content: '✓ '; color: var(--gold); font-weight: 700; }
-
-/* PROFILE SCREEN */
-#screen-profile { padding: 0; }
-.profile-content { padding: 20px; padding-bottom: 100px; }
-.profile-card { background: var(--navy2); border-radius: 16px; padding: 20px; margin-bottom: 16px; border: 1px solid var(--navy3); }
-.profile-card h3 { font-size: 16px; margin-bottom: 14px; color: var(--grey); text-transform: uppercase; letter-spacing: .5px; font-size: 12px; }
-.profile-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--navy3); font-size: 14px; }
-.profile-row:last-child { border-bottom: none; }
-.profile-row span { color: var(--grey); font-size: 13px; }
-
-/* MPESA SCREEN */
-#screen-mpesa { padding: 0; }
-.mpesa-content { padding: 20px; padding-bottom: 100px; }
-.amount-box { background: var(--navy2); border-radius: 16px; padding: 24px; text-align: center; border: 1.5px dashed var(--gold); margin-bottom: 20px; }
-.amount-big { font-size: 40px; font-weight: 800; color: var(--gold); font-family: 'Syne', sans-serif; }
-.amount-label { color: var(--grey); font-size: 14px; margin-top: 4px; }
-.mpesa-status { font-size: 14px; text-align: center; padding: 12px; border-radius: 10px; margin-bottom: 16px; }
-.mpesa-status.pending { background: rgba(245,166,35,.1); color: var(--gold); }
-.mpesa-status.success { background: rgba(46,204,113,.1); color: var(--success); }
-.mpesa-status.error { background: rgba(231,76,60,.1); color: var(--danger); }
-
-
-/* TOAST */
-#toast { position: fixed; top: 60px; left: 50%; transform: translateX(-50%) translateY(-80px); background: var(--navy2); border: 1px solid var(--navy3); border-left: 4px solid var(--gold); padding: 12px 20px; border-radius: 10px; font-size: 14px; z-index: 999; opacity: 0; transition: all .3s; white-space: nowrap; max-width: 90vw; overflow: hidden; text-overflow: ellipsis; }
-#toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
-
-/* LEAFLET overrides */
-.leaflet-container { background: var(--navy2); }
-@keyframes pulse {
-  0% { transform: scale(1); opacity: .8; }
-  70% { transform: scale(2.5); opacity: 0; }
-  100% { transform: scale(1); opacity: 0; }
+/* ── QR ── */
+#screen-qr { align-items:center; justify-content:center; padding:40px 28px; text-align:center; }
+.qr-header { margin-bottom:28px; }
+.qr-header h2 { font-size:26px; font-weight:800; margin-bottom:6px; }
+.qr-header p { color:var(--muted); font-size:14px; }
+.qr-box {
+  background:white;
+  border-radius:30px;
+  padding:22px;
+  margin:0 auto 20px;
+  display:inline-block;
+  box-shadow:0 0 60px rgba(255,176,32,.18), 0 20px 40px rgba(0,0,0,.3);
+}
+.qr-info {
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:20px;
+  padding:16px;
+  width:100%; margin-bottom:22px; text-align:left;
+}
+.qr-info-row {
+  display:flex; justify-content:space-between;
+  padding:9px 0;
+  border-bottom:1px solid rgba(255,255,255,.06);
+  font-size:14px;
+}
+.qr-info-row:last-child { border-bottom:none; }
+.qr-info-row span { color:var(--muted); }
+.qr-code-text {
+  font-size:30px; font-weight:800;
+  color:var(--gold);
+  letter-spacing:5px;
+  margin:14px 0;
+  font-family:'Syne',sans-serif;
 }
 
-/* BOTTOM SHEET */
-.sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 200; display: none; }
-.sheet-overlay.show { display: block; }
-.bottom-sheet { position: fixed; bottom: 0; left: 0; right: 0; background: var(--navy2); border-radius: 20px 20px 0 0; padding: 20px; z-index: 201; transform: translateY(100%); transition: transform .3s cubic-bezier(.4,0,.2,1); }
-.bottom-sheet.show { transform: translateY(0); }
-.sheet-handle { width: 40px; height: 4px; background: var(--navy3); border-radius: 2px; margin: 0 auto 16px; }
-.sheet-point-name { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
-.sheet-point-area { font-size: 14px; color: var(--grey); margin-bottom: 4px; }
-.sheet-point-dist { font-size: 13px; color: var(--gold); font-weight: 600; margin-bottom: 20px; }
-.sheet-services { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
-.sheet-service-tag { background: var(--navy3); border-radius: 100px; padding: 5px 12px; font-size: 12px; color: var(--grey); }
+/* ── PLANS ── */
+#screen-plans { padding:0; }
+.plans-content { padding:20px; padding-bottom:100px; }
+.plans-intro { margin-bottom:22px; }
+.plans-intro h2 { font-size:26px; font-weight:800; margin-bottom:4px; }
+.plans-intro p { font-size:14px; color:var(--muted); }
+.plan-card {
+  border-radius:var(--radius-lg);
+  padding:22px;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.07);
+  margin-bottom:14px;
+  transition:transform .15s, border-color .15s;
+  position:relative;
+}
+.plan-card:active { transform:scale(.99); }
+.plan-card.popular {
+  border-color:rgba(255,176,32,.4);
+  background:rgba(255,176,32,.06);
+  box-shadow:0 16px 40px rgba(255,176,32,.1);
+}
+.popular-badge {
+  position:absolute; top:-1px; right:22px;
+  background:var(--gold);
+  color:#07111f;
+  font-size:10px; font-weight:800;
+  padding:5px 12px;
+  border-radius:0 0 12px 12px;
+  text-transform:uppercase; letter-spacing:.5px;
+  font-family:'Syne',sans-serif;
+}
+.plan-name { font-size:18px; font-weight:800; margin-bottom:4px; }
+.plan-price { font-size:34px; font-weight:800; color:var(--gold); font-family:'Syne',sans-serif; margin-top:8px; }
+.plan-price span { font-size:14px; color:var(--muted); font-weight:400; }
+.plan-features { list-style:none; margin:14px 0 18px; }
+.plan-features li { font-size:14px; padding:5px 0; color:var(--muted); display:flex; align-items:center; gap:8px; }
+.plan-features li::before { content:''; display:inline-block; width:16px; height:16px; background:rgba(255,176,32,.2); border-radius:50%; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3 8l3 3 7-7' stroke='%23ffb020' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-size:contain; flex-shrink:0; }
+
+/* ── PROFILE ── */
+#screen-profile { padding:0; }
+.profile-content { padding:20px; padding-bottom:100px; }
+
+/* Profile avatar */
+.profile-avatar-row {
+  display:flex; align-items:center; gap:16px;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:24px;
+  padding:20px;
+  margin-bottom:14px;
+}
+.profile-avatar {
+  width:56px; height:56px;
+  background:linear-gradient(135deg, rgba(255,176,32,.3), rgba(255,176,32,.1));
+  border-radius:18px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:22px; font-weight:800; font-family:'Syne',sans-serif;
+  color:var(--gold);
+  border:1px solid rgba(255,176,32,.2);
+  flex-shrink:0;
+}
+.profile-av-name { font-size:18px; font-weight:800; }
+.profile-av-email { font-size:13px; color:var(--muted); margin-top:2px; }
+.profile-av-phone { font-size:12px; color:var(--muted); margin-top:1px; }
+
+.profile-card {
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:22px;
+  padding:18px 20px;
+  margin-bottom:12px;
+}
+.profile-card-title {
+  font-size:11px; color:var(--muted);
+  text-transform:uppercase; letter-spacing:.6px;
+  font-weight:600; margin-bottom:14px;
+}
+.profile-row {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:11px 0;
+  border-bottom:1px solid rgba(255,255,255,.05);
+  font-size:14px;
+}
+.profile-row:last-child { border-bottom:none; }
+.profile-row span { color:var(--muted); font-size:13px; }
+
+/* Profile menu rows (Account screen) */
+.profile-menu-row {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 0;
+  border-bottom:1px solid rgba(255,255,255,.05);
+  cursor:pointer;
+}
+.profile-menu-row:last-child { border-bottom:none; }
+.profile-menu-left { display:flex; align-items:center; gap:12px; }
+.profile-menu-icon {
+  width:36px; height:36px;
+  background:rgba(255,255,255,.06);
+  border-radius:12px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:16px;
+}
+.profile-menu-label { font-size:15px; font-weight:500; }
+.profile-menu-value { font-size:13px; color:var(--muted); }
+.profile-menu-arrow { color:var(--muted); font-size:16px; }
+
+/* ── MPESA ── */
+#screen-mpesa { padding:0; }
+.mpesa-content { padding:20px; padding-bottom:100px; }
+.amount-box {
+  background:rgba(255,176,32,.08);
+  border-radius:var(--radius-lg);
+  padding:28px 24px;
+  text-align:center;
+  border:1.5px dashed rgba(255,176,32,.35);
+  margin-bottom:22px;
+}
+.amount-big { font-size:44px; font-weight:800; color:var(--gold); font-family:'Syne',sans-serif; }
+.amount-label { color:var(--muted); font-size:14px; margin-top:6px; }
+.mpesa-status { font-size:14px; text-align:center; padding:14px; border-radius:14px; margin-bottom:16px; }
+.mpesa-status.pending { background:rgba(255,176,32,.1); color:var(--gold); }
+.mpesa-status.success { background:rgba(34,197,94,.1); color:var(--success); }
+.mpesa-status.error { background:rgba(239,68,68,.1); color:var(--danger); }
+
+/* ── TOAST ── */
+#toast {
+  position:fixed; top:64px; left:50%;
+  transform:translateX(-50%) translateY(-90px);
+  background:var(--s2);
+  border:1px solid rgba(255,255,255,.08);
+  border-left:4px solid var(--gold);
+  padding:13px 22px;
+  border-radius:14px;
+  font-size:14px; z-index:999;
+  opacity:0; transition:all .3s;
+  white-space:nowrap; max-width:90vw;
+  overflow:hidden; text-overflow:ellipsis;
+  box-shadow:0 8px 24px rgba(0,0,0,.4);
+}
+#toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
+
+/* ── LEAFLET ── */
+.leaflet-container { background:var(--s1); }
+@keyframes pulse {
+  0%   { transform:scale(1); opacity:.8; }
+  70%  { transform:scale(2.5); opacity:0; }
+  100% { transform:scale(1); opacity:0; }
+}
+
+/* ── BOTTOM SHEET ── */
+.sheet-overlay { position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:200; display:none; }
+.sheet-overlay.show { display:block; }
+.bottom-sheet {
+  position:fixed; bottom:0; left:0; right:0;
+  background:var(--s1);
+  border-radius:28px 28px 0 0;
+  padding:20px 22px 36px;
+  z-index:201;
+  transform:translateY(100%);
+  transition:transform .3s cubic-bezier(.4,0,.2,1);
+  border-top:1px solid rgba(255,255,255,.07);
+}
+.bottom-sheet.show { transform:translateY(0); }
+.sheet-handle { width:40px; height:4px; background:rgba(255,255,255,.15); border-radius:2px; margin:0 auto 18px; }
+.sheet-point-name { font-size:20px; font-weight:800; margin-bottom:4px; }
+.sheet-point-area { font-size:14px; color:var(--muted); margin-bottom:4px; }
+.sheet-point-dist { font-size:13px; color:var(--gold); font-weight:700; margin-bottom:20px; }
+.sheet-services { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:22px; }
+.sheet-service-tag {
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:100px;
+  padding:6px 14px;
+  font-size:12px; color:var(--muted);
+}
+
+/* ── CONFIRMED SCREEN ── */
+#screen-confirmed { align-items:center; justify-content:center; padding:36px 28px; text-align:center; }
+.confirm-icon { font-size:72px; margin-bottom:20px; }
+.confirm-card {
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:22px;
+  padding:20px;
+  width:100%; text-align:left; margin-bottom:22px;
+}
+.confirm-row {
+  display:flex; justify-content:space-between;
+  padding:11px 0;
+  border-bottom:1px solid rgba(255,255,255,.06);
+  font-size:14px;
+}
+.confirm-row:last-child { border-bottom:none; }
+.confirm-row span { color:var(--muted); }
+
+/* ── EDIT CAR ── */
+#screen-edit-car { padding:0; }
+
+/* ── STATUS BADGES (booking cards) ── */
+.status-badge { font-size:11px; font-weight:700; padding:4px 10px; border-radius:100px; }
+.status-confirmed { background:rgba(255,176,32,.15); color:var(--gold); }
+.status-completed { background:rgba(34,197,94,.15); color:var(--success); }
 </style>
 </head>
 <body>
@@ -196,8 +583,8 @@ input::placeholder { color: var(--grey); }
 <div id="screen-splash" class="screen active">
   <div class="splash-logo">
     <div class="splash-icon">S</div>
-    <div class="splash-title">SplashPass</div>
-    <div class="splash-sub">Unlimited car washes · Mombasa</div>
+    <div class="splash-title">Splash<span style="color:var(--gold)">Pass</span></div>
+    <div class="splash-sub">Premium car care · Mombasa</div>
     <div class="splash-spinner"></div>
   </div>
 </div>
@@ -210,85 +597,108 @@ input::placeholder { color: var(--grey); }
   </div>
   <div id="auth-login">
     <div class="auth-title">Welcome back</div>
-    <div class="auth-sub">Log in to your account</div>
+    <div class="auth-sub">Sign in to continue</div>
     <div class="form-group"><label>Email</label><input type="email" id="login-email" placeholder="you@example.com"></div>
     <div class="form-group"><label>Password</label><input type="password" id="login-pass" placeholder="Your password"></div>
     <div id="login-error" class="form-error"></div>
-    <button class="btn btn-gold" id="login-btn" onclick="login()" style="margin-bottom:12px">Log in</button>
+    <button class="btn btn-gold" id="login-btn" onclick="login()" style="margin-bottom:14px">Sign In</button>
     <div class="auth-switch">No account? <a onclick="showAuth('register')">Sign up</a></div>
   </div>
   <div id="auth-register" class="hidden">
     <div class="auth-title">Create account</div>
-    <div class="auth-sub">Start your carwash subscription</div>
+    <div class="auth-sub">Join SplashPass today</div>
     <div class="form-group"><label>Full name</label><input type="text" id="reg-name" placeholder="John Kamau"></div>
     <div class="form-group"><label>Email</label><input type="email" id="reg-email" placeholder="you@example.com"></div>
-    <div class="form-group"><label>Phone (M-Pesa)</label><input type="tel" id="reg-phone" placeholder="0712 345 678"></div>
+    <div class="form-group"><label>Phone number</label><input type="tel" id="reg-phone" placeholder="0712 345 678"></div>
     <div class="form-group"><label>Password</label><input type="password" id="reg-pass" placeholder="At least 6 characters"></div>
     <div class="form-group"><label>Confirm password</label><input type="password" id="reg-pass2" placeholder="Repeat password"></div>
     <div id="reg-error" class="form-error"></div>
-    <button class="btn btn-gold" id="reg-btn" onclick="register()" style="margin-bottom:12px">Create account</button>
-    <div class="auth-switch">Have an account? <a onclick="showAuth('login')">Log in</a></div>
+    <button class="btn btn-gold" id="reg-btn" onclick="register()" style="margin-bottom:14px">Create Account</button>
+    <div class="auth-switch">Have an account? <a onclick="showAuth('login')">Sign in</a></div>
   </div>
 </div>
 
 <!-- HOME -->
 <div id="screen-home" class="screen">
   <div class="home-header">
-    <div class="home-greeting">Good morning 👋</div>
+    <div class="home-greeting" id="home-greeting">Good morning ☀️</div>
     <div class="home-name" id="home-name">Loading...</div>
-    <div class="sub-status-bar" onclick="goToPlans()">
+  </div>
+
+  <!-- Sub hero card -->
+  <div class="sub-status-bar" onclick="goToPlans()">
+    <div class="sub-top">
       <div>
         <div class="sub-plan" id="home-plan">No active plan</div>
-        <div style="font-size:12px;color:var(--grey);margin-top:2px" id="home-plan-sub">Tap to subscribe</div>
+        <div class="sub-plan-detail" id="home-plan-sub">Tap to subscribe</div>
       </div>
       <span class="sub-badge badge-none" id="home-badge">Get Plan</span>
     </div>
+    <div class="sub-progress-bar" id="sub-progress-wrap" style="display:none">
+      <div class="sub-progress-fill" id="sub-progress-fill" style="width:0%"></div>
+    </div>
+    <div class="sub-progress-label" id="sub-progress-label" style="display:none">
+      <span id="sub-credits-used">0 used</span>
+      <span id="sub-credits-total">0 total</span>
+    </div>
   </div>
-  <div id="loyalty-bar" class="hidden" style="margin:12px 16px 0;background:var(--navy2);border-radius:14px;padding:14px 16px;border:1px solid var(--navy3);display:flex;align-items:center;justify-content:space-between">
-    <div style="display:flex;align-items:center;gap:10px">
-      <div style="font-size:28px" id="loyalty-icon">🥉</div>
+
+  <!-- Quick actions -->
+  <div class="quick-actions">
+    <div class="quick-card" onclick="document.getElementById('bottom-nav') && navTo('home'); setTimeout(function(){document.querySelector('.wash-points').scrollIntoView({behavior:'smooth'})},100)">
+      <div class="quick-icon">📅</div>
+      <div class="quick-title">Book a Wash</div>
+      <div class="quick-sub">Find a slot near you</div>
+    </div>
+    <div class="quick-card" onclick="openNextBookingQR()">
+      <div class="quick-icon">🔲</div>
+      <div class="quick-title">My QR Code</div>
+      <div class="quick-sub">Show at wash point</div>
+    </div>
+  </div>
+
+  <!-- Loyalty strip -->
+  <div class="loyalty-strip" id="loyalty-bar">
+    <div class="loyalty-left">
+      <div class="loyalty-emoji" id="loyalty-icon">🥉</div>
       <div>
-        <div style="font-size:13px;font-weight:700" id="loyalty-tier-name">Bronze</div>
-        <div style="font-size:12px;color:var(--grey)" id="loyalty-points-text">0 points</div>
+        <div class="loyalty-tier-name" id="loyalty-tier-name">Bronze Member</div>
+        <div class="loyalty-pts" id="loyalty-points-text">0 points</div>
       </div>
     </div>
-    <div style="text-align:right">
-      <div style="font-size:12px;color:var(--grey)" id="loyalty-next">100 to Silver</div>
-      <div style="width:80px;height:4px;background:var(--navy3);border-radius:2px;margin-top:4px;overflow:hidden">
-        <div style="height:100%;background:var(--gold);border-radius:2px;transition:width .3s" id="loyalty-progress"></div>
+    <div class="loyalty-right">
+      <div class="loyalty-next-label" id="loyalty-next">100 to Silver</div>
+      <div class="loyalty-mini-bar">
+        <div class="loyalty-mini-fill" id="loyalty-progress" style="width:0%"></div>
       </div>
     </div>
   </div>
-  <div id="credits-bar" class="hidden" style="margin:12px 16px 0;background:var(--navy2);border-radius:14px;padding:14px 16px;border:1px solid var(--navy3);display:flex;align-items:center;justify-content:space-between">
-    <div>
-      <div style="font-size:12px;color:var(--grey);margin-bottom:2px;text-transform:uppercase;letter-spacing:.5px">Wash Credits</div>
-      <div style="font-size:22px;font-weight:800;font-family:Syne,sans-serif;color:var(--gold)" id="credits-display">0</div>
+
+  <!-- Next booking -->
+  <div class="next-booking-strip hidden" id="next-booking-bar" onclick="openNextBookingQR()">
+    <div class="next-icon">🚿</div>
+    <div class="next-info">
+      <div class="next-label">Upcoming Wash</div>
+      <div class="next-text" id="next-booking-text">—</div>
+      <div class="next-sub" id="next-booking-sub">—</div>
     </div>
-    <div style="text-align:right">
-      <div style="font-size:12px;color:var(--grey)">Refreshes weekly</div>
-      <div style="font-size:13px;color:var(--white);margin-top:2px" id="credits-sub">—</div>
-    </div>
+    <div class="next-arrow">›</div>
   </div>
-  <div id="next-booking-bar" class="hidden" onclick="openNextBookingQR()" style="margin:0 16px 0;background:var(--navy2);border-radius:14px;padding:14px 16px;border:1.5px solid var(--gold);display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:12px">
-    <div style="font-size:28px">🚿</div>
-    <div style="flex:1">
-      <div style="font-size:13px;color:var(--gold);font-weight:700;margin-bottom:2px">UPCOMING WASH</div>
-      <div style="font-size:15px;font-weight:700" id="next-booking-text">—</div>
-      <div style="font-size:12px;color:var(--grey)" id="next-booking-sub">—</div>
-    </div>
-    <div style="color:var(--gold);font-size:20px">›</div>
-  </div>
+
+  <!-- Map -->
   <div class="map-section">
     <div id="map"></div>
     <div class="map-label" id="map-label">📍 Locating you...</div>
   </div>
+
+  <!-- Wash points -->
   <div class="wash-points">
-    <div class="wash-points-title">Nearby Wash Points</div>
+    <div class="section-title">Nearby Wash Points</div>
     <div id="wash-points-list">
-      <div style="color:var(--grey);font-size:14px;padding:12px 0">Finding nearby locations...</div>
+      <div style="color:var(--muted);font-size:14px;padding:12px 0">Finding nearby locations...</div>
     </div>
   </div>
-  <div style="height:80px"></div>
+  <div style="height:90px"></div>
 </div>
 
 <!-- BOOK -->
@@ -302,7 +712,7 @@ input::placeholder { color: var(--grey); }
       <div style="font-size:28px">💧</div>
       <div>
         <div style="font-weight:700;font-size:15px" id="book-point-name">—</div>
-        <div style="font-size:13px;color:var(--grey)" id="book-point-area">—</div>
+        <div style="font-size:13px;color:var(--muted)" id="book-point-area">—</div>
       </div>
     </div>
     <div class="form-group">
@@ -311,30 +721,30 @@ input::placeholder { color: var(--grey); }
     </div>
     <div class="section-label">Available Times</div>
     <div class="time-slots" id="time-slots">
-      <div style="color:var(--grey);font-size:13px;grid-column:span 3">Select a date first</div>
+      <div style="color:var(--muted);font-size:13px;grid-column:span 3">Select a date first</div>
     </div>
     <div class="section-label" style="margin-top:8px">Add Extras (optional)</div>
     <div id="extras-list" style="margin-bottom:16px"></div>
-    <div style="background:var(--navy2);border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
-      <div style="font-size:13px;color:var(--grey)">Total Credits</div>
-      <div style="font-size:18px;font-weight:800;color:var(--gold);font-family:Syne,sans-serif" id="booking-total">1 credit</div>
+    <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:14px 18px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:13px;color:var(--muted)">Total Credits</div>
+      <div style="font-size:20px;font-weight:800;color:var(--gold);font-family:Syne,sans-serif" id="booking-total">1 credit</div>
     </div>
     <button class="btn btn-gold" id="book-btn" onclick="confirmBooking()">Confirm Booking</button>
   </div>
 </div>
 
 <!-- BOOKING CONFIRMED -->
-<div id="screen-confirmed" class="screen" style="align-items:center;justify-content:center;padding:32px 24px;text-align:center">
-  <div style="font-size:72px;margin-bottom:20px">✅</div>
+<div id="screen-confirmed" class="screen" style="align-items:center;justify-content:center;padding:36px 28px;text-align:center">
+  <div class="confirm-icon">✅</div>
   <h2 style="font-size:28px;font-weight:800;margin-bottom:8px">Booking Confirmed!</h2>
-  <p style="color:var(--grey);font-size:15px;margin-bottom:28px">Your wash has been booked. See you soon!</p>
-  <div style="background:var(--navy2);border-radius:16px;padding:20px;width:100%;text-align:left;margin-bottom:24px;border:1px solid var(--navy3)">
-    <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--navy3);font-size:14px"><span style="color:var(--grey)">Location</span><strong id="conf-location">—</strong></div>
-    <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--navy3);font-size:14px"><span style="color:var(--grey)">Date</span><strong id="conf-date">—</strong></div>
-    <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--navy3);font-size:14px"><span style="color:var(--grey)">Time</span><strong id="conf-time">—</strong></div>
-    <div style="display:flex;justify-content:space-between;padding:10px 0;font-size:14px"><span style="color:var(--grey)">Plan</span><strong id="conf-plan">—</strong></div>
+  <p style="color:var(--muted);font-size:15px;margin-bottom:26px">Your wash has been booked. See you soon!</p>
+  <div class="confirm-card">
+    <div class="confirm-row"><span>Location</span><strong id="conf-location">—</strong></div>
+    <div class="confirm-row"><span>Date</span><strong id="conf-date">—</strong></div>
+    <div class="confirm-row"><span>Time</span><strong id="conf-time">—</strong></div>
+    <div class="confirm-row"><span>Plan</span><strong id="conf-plan">—</strong></div>
   </div>
-  <div style="color:var(--grey);font-size:13px;margin-bottom:24px" id="conf-sms-note">📱 Confirmation SMS sent to your phone</div>
+  <div style="color:var(--muted);font-size:13px;margin-bottom:22px" id="conf-sms-note">📱 Sending confirmation SMS...</div>
   <button class="btn btn-gold" onclick="showQRFromConfirm()" style="margin-bottom:12px">View Wash Pass (QR)</button>
   <button class="btn btn-outline" onclick="showScreen('home')">Back to Home</button>
 </div>
@@ -342,8 +752,8 @@ input::placeholder { color: var(--grey); }
 <!-- QR CODE -->
 <div id="screen-qr" class="screen">
   <div class="qr-header">
-    <h2>Your Wash Pass</h2>
-    <p>Show this to the wash attendant</p>
+    <h2>Your Wash Code</h2>
+    <p>Show this QR code at the wash point</p>
   </div>
   <div class="qr-box" id="qr-canvas"></div>
   <div class="qr-code-text" id="qr-code-display"></div>
@@ -357,8 +767,11 @@ input::placeholder { color: var(--grey); }
     <button class="back-btn" onclick="showScreen('home')">←</button>
     <h2>Choose a Plan</h2>
   </div>
-  <div class="plans-content" id="plans-content">
-    <!-- Rendered dynamically -->
+  <div class="plans-content">
+    <div class="plans-intro">
+      <p style="color:var(--muted);font-size:14px">Weekly subscription · Cancel anytime</p>
+    </div>
+    <div id="plans-content"></div>
   </div>
 </div>
 
@@ -385,36 +798,68 @@ input::placeholder { color: var(--grey); }
 
 <!-- PROFILE -->
 <div id="screen-profile" class="screen">
-  <div class="screen-header" style="border-bottom:1px solid var(--navy3)">
-    <div style="width:36px"></div>
-    <h2>My Account</h2>
+  <div class="screen-header" style="border-bottom:1px solid rgba(255,255,255,.06)">
+    <div style="width:38px"></div>
+    <h2>Profile</h2>
   </div>
   <div class="profile-content">
-    <div class="profile-card">
-      <h3>Personal Info</h3>
-      <div class="profile-row"><span>Name</span><strong id="prof-name">—</strong></div>
-      <div class="profile-row"><span>Email</span><strong id="prof-email" style="font-size:12px">—</strong></div>
-      <div class="profile-row"><span>Phone</span><strong id="prof-phone">—</strong></div>
-      <div class="profile-row"><span>Home</span><strong id="prof-home">—</strong></div>
+
+    <!-- Avatar row -->
+    <div class="profile-avatar-row">
+      <div class="profile-avatar" id="prof-avatar">?</div>
+      <div>
+        <div class="profile-av-name" id="prof-name">—</div>
+        <div class="profile-av-email" id="prof-email">—</div>
+        <div class="profile-av-phone" id="prof-phone">—</div>
+      </div>
     </div>
+
+    <!-- My Car -->
     <div class="profile-card">
-      <h3>My Car</h3>
+      <div class="profile-card-title">My Vehicle</div>
       <div class="profile-row"><span>Make & Model</span><strong id="prof-car">—</strong></div>
       <div class="profile-row"><span>Colour</span><strong id="prof-colour">—</strong></div>
-      <div class="profile-row"><span>Number Plate</span><strong id="prof-plate" style="color:var(--gold)">—</strong></div>
+      <div class="profile-row"><span>Plate</span><strong id="prof-plate" style="color:var(--gold)">—</strong></div>
       <div class="profile-row"><span>Type</span><strong id="prof-cartype">—</strong></div>
-      <button class="btn btn-outline btn-sm" onclick="showScreen('edit-car')" style="margin-top:12px;width:100%">Edit Car Details</button>
+      <button class="btn btn-outline btn-sm" onclick="showScreen('edit-car')" style="margin-top:14px;width:100%">Edit Vehicle Details</button>
     </div>
+
+    <!-- Subscription -->
     <div class="profile-card">
-      <h3>Subscription</h3>
+      <div class="profile-card-title">Subscription</div>
       <div class="profile-row"><span>Plan</span><strong id="prof-plan">—</strong></div>
       <div class="profile-row"><span>Credits</span><strong id="prof-credits" style="color:var(--gold)">—</strong></div>
       <div class="profile-row"><span>Status</span><strong id="prof-status">—</strong></div>
       <div class="profile-row"><span>Started</span><strong id="prof-start">—</strong></div>
       <div class="profile-row"><span>Renews</span><strong id="prof-renew">—</strong></div>
     </div>
-    <button class="btn btn-outline" onclick="goToPlans()" style="margin-bottom:12px">Change Plan</button>
-    <button class="btn btn-danger" onclick="logout()">Log Out</button>
+
+    <!-- Menu rows -->
+    <div class="profile-card">
+      <div class="profile-card-title">Account</div>
+      <div class="profile-menu-row" onclick="goToPlans()">
+        <div class="profile-menu-left">
+          <div class="profile-menu-icon">💳</div>
+          <div class="profile-menu-label">Change Plan</div>
+        </div>
+        <div class="profile-menu-arrow">›</div>
+      </div>
+      <div class="profile-menu-row" onclick="showScreen('edit-car')">
+        <div class="profile-menu-left">
+          <div class="profile-menu-icon">🚗</div>
+          <div class="profile-menu-label">My Vehicle</div>
+        </div>
+        <div class="profile-menu-arrow">›</div>
+      </div>
+      <div class="profile-menu-row" style="border-bottom:none" onclick="logout()">
+        <div class="profile-menu-left">
+          <div class="profile-menu-icon" style="background:rgba(239,68,68,.12)">🚪</div>
+          <div class="profile-menu-label" style="color:var(--danger)">Log Out</div>
+        </div>
+        <div class="profile-menu-arrow" style="color:var(--danger)">›</div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -458,7 +903,6 @@ input::placeholder { color: var(--grey); }
   </div>
 </div>
 
-
 <!-- BOTTOM NAV -->
 <div class="bottom-nav" id="bottom-nav" style="display:none">
   <div class="nav-item active" id="nav-home" onclick="navTo('home')">
@@ -499,59 +943,56 @@ var SUPABASE_URL = 'https://msdvyiqjoogafzyaoycg.supabase.co';
 var SUPABASE_KEY = 'sb_publishable_N_g24aU7TLHLNeu72gnfeg_1d7OleFW';
 var SLOTS = ['7:00 AM','8:00 AM','9:00 AM','10:00 AM','11:00 AM','12:00 PM','1:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM'];
 
-// Plans definition
 var PLANS = [
-  { id: 'saloon-light', name: 'Saloon Light', price: 540, credits: 2, car: 'Saloon', washes: '2 washes/week', color: '#f5a623' },
-  { id: 'saloon-standard', name: 'Saloon Standard', price: 720, credits: 4, car: 'Saloon', washes: '4 washes/week', color: '#f5a623' },
-  { id: 'suv-light', name: 'SUV Light', price: 720, credits: 2, car: 'SUV', washes: '2 washes/week', color: '#4a9eff' },
-  { id: 'suv-standard', name: 'SUV Standard', price: 1080, credits: 4, car: 'SUV', washes: '4 washes/week', color: '#4a9eff' }
+  { id: 'saloon-light',    name: 'Saloon Light',    price: 540,  credits: 2, car: 'Saloon', washes: '2 washes/week' },
+  { id: 'saloon-standard', name: 'Saloon Standard', price: 720,  credits: 4, car: 'Saloon', washes: '4 washes/week' },
+  { id: 'suv-light',       name: 'SUV Light',       price: 720,  credits: 2, car: 'SUV',    washes: '2 washes/week' },
+  { id: 'suv-standard',    name: 'SUV Standard',    price: 1080, credits: 4, car: 'SUV',    washes: '4 washes/week' }
 ];
 
-// Extras menu
 var EXTRAS = [
-  { id: 'engine-wash', name: 'Engine Wash', credits: 1, price: 300 },
-  { id: 'vacuum', name: 'Vacuum Only', credits: 1, price: 200 },
-  { id: 'roof-cleaning', name: 'Roof Cleaning', credits: 1, price: 250 },
-  { id: 'polish-outside', name: 'Polish Outside', credits: 1, price: 100 },
-  { id: 'underwash', name: 'Underwash', credits: 1, price: 300 },
-  { id: 'detailing', name: 'Full Detailing', credits: 5, price: 2500 },
-  { id: 'buffing', name: 'Buffing', credits: 4, price: 2000 },
-  { id: 'outwash-wipe', name: 'Outwash Full Body Wipe', credits: 1, price: 200 }
+  { id: 'engine-wash',   name: 'Engine Wash',           credits: 1, price: 300 },
+  { id: 'vacuum',        name: 'Vacuum Only',            credits: 1, price: 200 },
+  { id: 'roof-cleaning', name: 'Roof Cleaning',          credits: 1, price: 250 },
+  { id: 'polish-outside',name: 'Polish Outside',         credits: 1, price: 100 },
+  { id: 'underwash',     name: 'Underwash',              credits: 1, price: 300 },
+  { id: 'detailing',     name: 'Full Detailing',         credits: 5, price: 2500 },
+  { id: 'buffing',       name: 'Buffing',                credits: 4, price: 2000 },
+  { id: 'outwash-wipe',  name: 'Outwash Full Body Wipe', credits: 1, price: 200 }
 ];
 
-// Loyalty tiers
 var LOYALTY_TIERS = [
-  { name: 'Bronze', min: 0, max: 99, icon: '🥉', benefit: 'Access & booking' },
-  { name: 'Silver', min: 100, max: 299, icon: '🥈', benefit: 'Free wash every 10th' },
-  { name: 'Gold', min: 300, max: 599, icon: '🥇', benefit: 'Free wash every 8th + priority' },
-  { name: 'Platinum', min: 600, max: 999999, icon: '💎', benefit: 'Free wash every 6th + exclusive offers' }
+  { name: 'Bronze',   min: 0,   max: 99,    icon: '🥉', benefit: 'Access & booking' },
+  { name: 'Silver',   min: 100, max: 299,   icon: '🥈', benefit: 'Free wash every 10th' },
+  { name: 'Gold',     min: 300, max: 599,   icon: '🥇', benefit: 'Free wash every 8th + priority' },
+  { name: 'Platinum', min: 600, max: 999999,icon: '💎', benefit: 'Free wash every 6th + exclusive offers' }
 ];
 
 function getTier(points) {
   return LOYALTY_TIERS.find(function(t) { return points >= t.min && points <= t.max; }) || LOYALTY_TIERS[0];
 }
 
-// Dummy wash points around Mombasa
 var WASH_POINTS = [
-  { id: 1, name: 'SplashPass Nyali', area: 'Nyali, Mombasa', lat: -4.0435, lng: 39.7173 },
-  { id: 2, name: 'SplashPass CBD', area: 'Mombasa CBD', lat: -4.0557, lng: 39.6682 },
-  { id: 3, name: 'SplashPass Bamburi', area: 'Bamburi, Mombasa', lat: -3.9932, lng: 39.7242 },
-  { id: 4, name: 'SplashPass Likoni', area: 'Likoni, Mombasa', lat: -4.0817, lng: 39.6629 },
-  { id: 5, name: 'SplashPass Kisauni', area: 'Kisauni, Mombasa', lat: -4.0162, lng: 39.6981 },
-  { id: 6, name: 'SplashPass Diani', area: 'Diani Beach Road', lat: -4.2823, lng: 39.5901 }
+  { id: 1, name: 'SplashPass Nyali',   area: 'Nyali, Mombasa',    lat: -4.0435, lng: 39.7173 },
+  { id: 2, name: 'SplashPass CBD',     area: 'Mombasa CBD',       lat: -4.0557, lng: 39.6682 },
+  { id: 3, name: 'SplashPass Bamburi', area: 'Bamburi, Mombasa',  lat: -3.9932, lng: 39.7242 },
+  { id: 4, name: 'SplashPass Likoni',  area: 'Likoni, Mombasa',   lat: -4.0817, lng: 39.6629 },
+  { id: 5, name: 'SplashPass Kisauni', area: 'Kisauni, Mombasa',  lat: -4.0162, lng: 39.6981 },
+  { id: 6, name: 'SplashPass Diani',   area: 'Diani Beach Road',  lat: -4.2823, lng: 39.5901 }
 ];
 
 // ── STATE ─────────────────────────────────────────
-var currentUser = null;
-var selectedPlan = null;
-var selectedPoint = null;
-var selectedSlot = null;
-var mapInstance = null;
-var nextBooking = null;
-var nextBookingCode = null;
-var userMarker = null;
-var userLat = -4.0435;
-var userLng = 39.7173;
+var currentUser    = null;
+var selectedPlan   = null;
+var selectedPlanData = null;
+var selectedPoint  = null;
+var selectedSlot   = null;
+var selectedExtras = [];
+var mapInstance    = null;
+var nextBooking    = null;
+var nextBookingCode= null;
+var userLat        = -4.0435;
+var userLng        = 39.7173;
 
 // ── SUPABASE ──────────────────────────────────────
 async function sbFetch(path, options) {
@@ -621,16 +1062,15 @@ function showScreen(name) {
   document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
   document.getElementById('screen-' + name).classList.add('active');
   var nav = document.getElementById('bottom-nav');
-  var noNav = ['splash','auth','book','qr','mpesa','edit-car'];
+  var noNav = ['splash','auth','book','qr','mpesa','edit-car','confirmed'];
   nav.style.display = noNav.indexOf(name) > -1 ? 'none' : 'flex';
-  // Update nav active state
   ['home','plans','profile'].forEach(function(n) {
     var el = document.getElementById('nav-' + n);
     if (el) el.classList.toggle('active', n === name);
   });
-  if (name === 'home') renderHome();
+  if (name === 'home')    renderHome();
   if (name === 'profile') renderProfile();
-  if (name === 'plans') renderPlans();
+  if (name === 'plans')   renderPlans();
 }
 function navTo(name) { showScreen(name); }
 function goToPlans() { showScreen('plans'); }
@@ -638,6 +1078,14 @@ function goToPlans() { showScreen('plans'); }
 // ── BOOT ─────────────────────────────────────────
 window.onload = function() {
   setTimeout(function() {
+    var saved = localStorage.getItem('splashpass_user');
+    if (saved) {
+      try {
+        currentUser = JSON.parse(saved);
+        initApp();
+        return;
+      } catch(e) { localStorage.removeItem('splashpass_user'); }
+    }
     showScreen('auth');
   }, 1800);
 };
@@ -650,56 +1098,55 @@ function showAuth(mode) {
 
 async function login() {
   var email = document.getElementById('login-email').value.trim().toLowerCase();
-  var pass = document.getElementById('login-pass').value;
-  var err = document.getElementById('login-error');
-  setBtn('login-btn', true, 'Log in');
+  var pass  = document.getElementById('login-pass').value;
+  var err   = document.getElementById('login-error');
+  setBtn('login-btn', true, 'Sign In');
   try {
     var user = await getUserByEmail(email);
     if (!user || user.password !== pass) { err.textContent = 'Invalid email or password.'; return; }
     if (user.role === 'operator') { err.textContent = 'This is an operator account. Use the operator app.'; return; }
     currentUser = user;
+    localStorage.setItem('splashpass_user', JSON.stringify(user));
     err.textContent = '';
     initApp();
   } catch(e) { err.textContent = 'Error: ' + e.message; }
-  finally { setBtn('login-btn', false, 'Log in'); }
+  finally { setBtn('login-btn', false, 'Sign In'); }
 }
 
-
 async function register() {
-  var name = document.getElementById('reg-name').value.trim();
+  var name  = document.getElementById('reg-name').value.trim();
   var email = document.getElementById('reg-email').value.trim().toLowerCase();
   var phone = document.getElementById('reg-phone').value.trim();
-  var pass = document.getElementById('reg-pass').value;
+  var pass  = document.getElementById('reg-pass').value;
   var pass2 = document.getElementById('reg-pass2').value;
-  var err = document.getElementById('reg-error');
+  var err   = document.getElementById('reg-error');
   if (!name || !email || !phone || !pass) { err.textContent = 'Please fill in all fields.'; return; }
   if (pass.length < 6) { err.textContent = 'Password must be at least 6 characters.'; return; }
-  if (pass !== pass2) { err.textContent = 'Passwords do not match.'; return; }
-  setBtn('reg-btn', true, 'Create account');
+  if (pass !== pass2)  { err.textContent = 'Passwords do not match.'; return; }
+  setBtn('reg-btn', true, 'Create Account');
   try {
     var existing = await getUserByEmail(email);
     if (existing) { err.textContent = 'Account already exists.'; return; }
-    // Check if email is registered as an operator
     var opCheck = await sbFetch('operators?email=eq.' + encodeURIComponent(email) + '&select=email');
     if (opCheck && opCheck.length) { err.textContent = 'This email is registered as an operator account.'; return; }
     var result = await createUser({ name: name, email: email, phone: phone, password: pass, role: 'customer', sub_status: 'pending' });
     currentUser = result[0];
+    localStorage.setItem('splashpass_user', JSON.stringify(result[0]));
     err.textContent = '';
     initApp();
   } catch(e) { err.textContent = 'Error: ' + e.message; }
-  finally { setBtn('reg-btn', false, 'Create account'); }
+  finally { setBtn('reg-btn', false, 'Create Account'); }
 }
 
 function logout() {
   currentUser = null;
-  selectedPlan = null;
-  selectedPoint = null;
-  selectedSlot = null;
+  localStorage.removeItem('splashpass_user');
+  selectedPlan = null; selectedPoint = null; selectedSlot = null;
   showScreen('auth');
   showAuth('login');
 }
 
-// ── INIT APP ─────────────────────────────────────
+// ── INIT ─────────────────────────────────────────
 function initApp() {
   showScreen('home');
   getLocation();
@@ -711,7 +1158,7 @@ function getLocation() {
     navigator.geolocation.getCurrentPosition(function(pos) {
       userLat = pos.coords.latitude;
       userLng = pos.coords.longitude;
-      updateMapLabel();
+      document.getElementById('map-label').textContent = '📍 Your location';
       initMap();
       sortAndRenderPoints();
     }, function() {
@@ -725,17 +1172,13 @@ function getLocation() {
   }
 }
 
-function updateMapLabel() {
-  document.getElementById('map-label').textContent = '📍 Your location';
-}
-
 function distKm(lat1, lng1, lat2, lng2) {
   var R = 6371;
   var dLat = (lat2 - lat1) * Math.PI / 180;
   var dLng = (lng2 - lng1) * Math.PI / 180;
-  var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) *
-    Math.sin(dLng/2) * Math.sin(dLng/2);
+  var a = Math.sin(dLat/2)*Math.sin(dLat/2) +
+    Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*
+    Math.sin(dLng/2)*Math.sin(dLng/2);
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
@@ -746,14 +1189,14 @@ function sortAndRenderPoints() {
 
   var container = document.getElementById('wash-points-list');
   container.innerHTML = sorted.map(function(p) {
-    var dist = p.dist < 1 ? Math.round(p.dist * 1000) + 'm' : p.dist.toFixed(1) + 'km';
-    return '<div class="wash-point-card" onclick="bookPoint(' + p.id + ')">' +
+    var dist = p.dist < 1 ? Math.round(p.dist*1000)+'m' : p.dist.toFixed(1)+'km';
+    return '<div class="wash-point-card" onclick="bookPoint('+p.id+')">' +
       '<div class="wash-point-icon">💧</div>' +
       '<div class="wash-point-info">' +
-        '<div class="wash-point-name">' + p.name + '</div>' +
-        '<div class="wash-point-area">' + p.area + '</div>' +
+        '<div class="wash-point-name">'+p.name+'</div>' +
+        '<div class="wash-point-area">'+p.area+'</div>' +
       '</div>' +
-      '<div class="wash-point-dist">' + dist + '</div>' +
+      '<div class="wash-point-dist">'+dist+'</div>' +
     '</div>';
   }).join('');
 }
@@ -761,35 +1204,28 @@ function sortAndRenderPoints() {
 // ── MAP ───────────────────────────────────────────
 function initMap() {
   if (mapInstance) { mapInstance.remove(); mapInstance = null; }
-  mapInstance = L.map('map', { zoomControl: false, attributionControl: false }).setView([userLat, userLng], 14);
-
-  // Stadia Maps - Alidade Smooth Dark (Uber/Bolt style dark map)
+  mapInstance = L.map('map', { zoomControl:false, attributionControl:false }).setView([userLat, userLng], 14);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    maxZoom: 20,
-    subdomains: 'abcd'
+    maxZoom: 20, subdomains: 'abcd'
   }).addTo(mapInstance);
 
-  // Pulsing user location dot (like Bolt/Uber)
   var pulseHtml = '<div style="position:relative;width:20px;height:20px">' +
-    '<div style="position:absolute;inset:0;background:#f5a623;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.4);z-index:2"></div>' +
-    '<div style="position:absolute;inset:-6px;background:rgba(245,166,35,.25);border-radius:50%;animation:pulse 2s ease-out infinite;z-index:1"></div>' +
+    '<div style="position:absolute;inset:0;background:#ffb020;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.4);z-index:2"></div>' +
+    '<div style="position:absolute;inset:-6px;background:rgba(255,176,32,.25);border-radius:50%;animation:pulse 2s ease-out infinite;z-index:1"></div>' +
     '</div>';
-  var userIcon = L.divIcon({ html: pulseHtml, iconSize: [20,20], iconAnchor: [10,10], className: '' });
+  var userIcon = L.divIcon({ html: pulseHtml, iconSize:[20,20], iconAnchor:[10,10], className:'' });
   L.marker([userLat, userLng], { icon: userIcon }).addTo(mapInstance);
 
-  // Wash point markers - pill style like Bolt
   WASH_POINTS.forEach(function(p) {
     var dist = distKm(userLat, userLng, p.lat, p.lng);
-    var distLabel = dist < 1 ? Math.round(dist*1000) + 'm' : dist.toFixed(1) + 'km';
-    var markerHtml = '<div onclick="showPointSheet(' + p.id + ')" style="' +
-      'background:#0d1b2a;border:2px solid #f5a623;border-radius:20px;' +
-      'padding:6px 10px;display:flex;align-items:center;gap:5px;' +
-      'box-shadow:0 4px 12px rgba(0,0,0,.5);cursor:pointer;white-space:nowrap;' +
+    var distLabel = dist < 1 ? Math.round(dist*1000)+'m' : dist.toFixed(1)+'km';
+    var markerHtml = '<div onclick="showPointSheet('+p.id+')" style="' +
+      'background:#0f1d30;border:1.5px solid #ffb020;border-radius:20px;' +
+      'padding:6px 11px;display:flex;align-items:center;gap:5px;' +
+      'box-shadow:0 4px 14px rgba(0,0,0,.5);cursor:pointer;white-space:nowrap;' +
       'font-family:DM Sans,sans-serif;font-size:12px;font-weight:600;color:white">' +
-      '<span style="font-size:14px">💧</span>' +
-      '<span>' + distLabel + '</span>' +
-      '</div>';
-    var icon = L.divIcon({ html: markerHtml, iconAnchor: [40,20], className: '' });
+      '<span style="font-size:13px">💧</span><span>'+distLabel+'</span></div>';
+    var icon = L.divIcon({ html: markerHtml, iconAnchor:[40,20], className:'' });
     L.marker([p.lat, p.lng], { icon: icon }).addTo(mapInstance);
   });
 }
@@ -820,19 +1256,18 @@ async function loadSlots() {
   var date = document.getElementById('book-date').value;
   var container = document.getElementById('time-slots');
   if (!date) return;
-  container.innerHTML = '<div style="color:var(--grey);font-size:13px;grid-column:span 3">Loading...</div>';
+  container.innerHTML = '<div style="color:var(--muted);font-size:13px;grid-column:span 3">Loading...</div>';
   try {
     var bookings = await getBookingsByDate(date);
     var bookedTimes = bookings.filter(function(b) {
       return b.location === (selectedPoint ? selectedPoint.name : '');
     }).map(function(b) { return b.time; });
-
     container.innerHTML = SLOTS.map(function(s) {
       var isBooked = bookedTimes.indexOf(s) > -1;
       var isSel = selectedSlot === s;
       var cls = 'slot' + (isBooked ? ' booked' : '') + (isSel ? ' selected' : '');
-      var click = isBooked ? '' : 'onclick="selectSlot(\'' + s + '\')"';
-      return '<div class="' + cls + '" ' + click + '>' + s + '</div>';
+      var click = isBooked ? '' : 'onclick="selectSlot(\''+s+'\')"';
+      return '<div class="'+cls+'" '+click+'>'+s+'</div>';
     }).join('');
   } catch(e) {
     container.innerHTML = '<div style="color:var(--danger);font-size:13px;grid-column:span 3">Could not load slots</div>';
@@ -844,20 +1279,18 @@ function selectSlot(s) {
   loadSlots();
 }
 
-var selectedExtras = [];
-
 function renderExtras() {
   var container = document.getElementById('extras-list');
   if (!container) return;
   var html = '';
   EXTRAS.forEach(function(e) {
     var sel = selectedExtras.indexOf(e.id) > -1;
-    var bg = sel ? 'rgba(245,166,35,.1)' : 'var(--navy2)';
-    var bc = sel ? 'var(--gold)' : 'var(--navy3)';
-    html += '<div data-extra="' + e.id + '" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:' + bg + ';border-radius:10px;margin-bottom:6px;border:1.5px solid ' + bc + ';cursor:pointer">';
-    html += '<div><div style="font-size:14px;font-weight:600">' + e.name + '</div>';
-    html += '<div style="font-size:12px;color:var(--grey)">KSh ' + e.price + '</div></div>';
-    html += '<div style="font-size:18px;color:var(--gold)">' + (sel ? '&#10003;' : '+') + '</div></div>';
+    var bg  = sel ? 'rgba(255,176,32,.1)' : 'rgba(255,255,255,.04)';
+    var bc  = sel ? 'rgba(255,176,32,.4)' : 'rgba(255,255,255,.07)';
+    html += '<div data-extra="'+e.id+'" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:'+bg+';border-radius:14px;margin-bottom:8px;border:1px solid '+bc+';cursor:pointer;transition:all .15s">';
+    html += '<div><div style="font-size:14px;font-weight:600">'+e.name+'</div>';
+    html += '<div style="font-size:12px;color:var(--muted);margin-top:2px">KSh '+e.price+' · '+e.credits+' credit'+(e.credits>1?'s':'')+'</div></div>';
+    html += '<div style="width:26px;height:26px;border-radius:50%;background:'+(sel?'var(--gold)':'rgba(255,255,255,.08)')+';display:flex;align-items:center;justify-content:center;font-size:14px;color:'+(sel?'#07111f':'var(--muted)')+';">'+(sel?'✓':'+')+'</div></div>';
   });
   container.innerHTML = html;
   container.querySelectorAll('[data-extra]').forEach(function(el) {
@@ -868,13 +1301,12 @@ function renderExtras() {
 
 function toggleExtra(id) {
   var idx = selectedExtras.indexOf(id);
-  if (idx > -1) { selectedExtras.splice(idx, 1); }
-  else { selectedExtras.push(id); }
+  if (idx > -1) { selectedExtras.splice(idx, 1); } else { selectedExtras.push(id); }
   renderExtras();
 }
 
 function updateBookingTotal() {
-  var total = 1; // base wash = 1 credit
+  var total = 1;
   selectedExtras.forEach(function(id) {
     var ex = EXTRAS.find(function(e) { return e.id === id; });
     if (ex) total += ex.credits;
@@ -890,7 +1322,7 @@ async function confirmBooking() {
     return s + (ex ? ex.credits : 0);
   }, 0);
   if (!currentUser.credits || currentUser.credits < totalCredits) {
-    toast('Not enough credits. Need ' + totalCredits + ', have ' + (currentUser.credits || 0) + '.', true);
+    toast('Not enough credits. Need '+totalCredits+', have '+(currentUser.credits||0)+'.', true);
     showScreen('plans');
     return;
   }
@@ -903,70 +1335,63 @@ async function confirmBooking() {
     }).filter(Boolean);
     var booking = await createBooking({
       user_email: currentUser.email,
-      user_name: currentUser.name,
-      date: date,
-      time: selectedSlot,
+      user_name:  currentUser.name,
+      date: date, time: selectedSlot,
       location: selectedPoint.name,
       status: 'confirmed',
       plan: currentUser.plan,
       extras: extrasData
     });
     var b = booking[0];
-    // Deduct credits
-    var newCredits = currentUser.credits - totalCredits;
-    // Add loyalty points — 10 per wash + 5 per extra
-    var pointsEarned = 10 + (selectedExtras.length * 5);
-    var newPoints = (currentUser.loyalty_points || 0) + pointsEarned;
-    var newTier = getTier(newPoints).name;
+    var newCredits  = currentUser.credits - totalCredits;
+    var pointsEarned= 10 + (selectedExtras.length * 5);
+    var newPoints   = (currentUser.loyalty_points || 0) + pointsEarned;
+    var newTier     = getTier(newPoints).name;
     await updateUser(currentUser.email, { credits: newCredits, loyalty_points: newPoints, loyalty_tier: newTier });
-    currentUser.credits = newCredits;
+    currentUser.credits        = newCredits;
     currentUser.loyalty_points = newPoints;
-    currentUser.loyalty_tier = newTier;
+    currentUser.loyalty_tier   = newTier;
+    localStorage.setItem('splashpass_user', JSON.stringify(currentUser));
     selectedExtras = [];
     showQR(b, code, date, extrasData, pointsEarned);
   } catch(e) { toast('Booking failed: ' + e.message, true); }
   finally { setBtn('book-btn', false, 'Confirm Booking'); }
 }
 
-// ── QR CODE ───────────────────────────────────────
+// ── QR ────────────────────────────────────────────
 var pendingQRData = null;
 
 function showQR(booking, code, date, extras, pointsEarned) {
-  extras = extras || [];
+  extras       = extras || [];
   pointsEarned = pointsEarned || 10;
-  var qrData = JSON.stringify({ id: booking.id, user: currentUser.name, point: selectedPoint.name, date: date, time: selectedSlot, code: code });
+  var qrData   = JSON.stringify({ id: booking.id, user: currentUser.name, point: selectedPoint.name, date: date, time: selectedSlot, code: code });
   pendingQRData = { qrData: qrData, code: code, date: date };
 
-  // Pre-render QR
   document.getElementById('qr-canvas').innerHTML = '';
-  new QRCode(document.getElementById('qr-canvas'), { text: qrData, width: 200, height: 200, colorDark: '#0d1b2a', colorLight: '#ffffff' });
+  new QRCode(document.getElementById('qr-canvas'), { text: qrData, width: 200, height: 200, colorDark: '#07111f', colorLight: '#ffffff' });
   document.getElementById('qr-code-display').textContent = code;
-  var plateInfo = currentUser.plate ? currentUser.plate : '—';
-  var carInfo = (currentUser.car_colour || '') + ' ' + (currentUser.car_make || '') + ' ' + (currentUser.car_model || '');
-  document.getElementById('qr-info').innerHTML =
-    '<div class="qr-info-row"><span>Location</span><strong>' + selectedPoint.name + '</strong></div>' +
-    '<div class="qr-info-row"><span>Date</span><strong>' + date + '</strong></div>' +
-    '<div class="qr-info-row"><span>Time</span><strong>' + selectedSlot + '</strong></div>' +
-    '<div class="qr-info-row"><span>Plan</span><strong>' + currentUser.plan + '</strong></div>' +
-    '<div class="qr-info-row"><span>Plate</span><strong style="color:var(--gold)">' + plateInfo + '</strong></div>' +
-    '<div class="qr-info-row"><span>Car</span><strong>' + carInfo.trim() + '</strong></div>';
 
-  // Show confirmation screen first
+  var plateInfo = currentUser.plate || '—';
+  var carInfo   = ((currentUser.car_colour || '') + ' ' + (currentUser.car_make || '') + ' ' + (currentUser.car_model || '')).trim();
+  document.getElementById('qr-info').innerHTML =
+    '<div class="qr-info-row"><span>Location</span><strong>'+selectedPoint.name+'</strong></div>' +
+    '<div class="qr-info-row"><span>Date</span><strong>'+date+'</strong></div>' +
+    '<div class="qr-info-row"><span>Time</span><strong>'+selectedSlot+'</strong></div>' +
+    '<div class="qr-info-row"><span>Plan</span><strong>'+currentUser.plan+'</strong></div>' +
+    '<div class="qr-info-row"><span>Plate</span><strong style="color:var(--gold)">'+plateInfo+'</strong></div>' +
+    '<div class="qr-info-row"><span>Car</span><strong>'+(carInfo||'—')+'</strong></div>';
+
   document.getElementById('conf-location').textContent = selectedPoint.name;
-  document.getElementById('conf-date').textContent = date;
-  document.getElementById('conf-time').textContent = selectedSlot;
-  document.getElementById('conf-plan').textContent = currentUser.plan + ' Plan';
+  document.getElementById('conf-date').textContent     = date;
+  document.getElementById('conf-time').textContent     = selectedSlot;
+  document.getElementById('conf-plan').textContent     = currentUser.plan + ' Plan';
   document.getElementById('conf-sms-note').textContent = '📱 Sending confirmation SMS...';
 
   showScreen('confirmed');
-
-  // Send SMS
   sendBookingSMS(date);
 }
 
-function showQRFromConfirm() {
-  showScreen('qr');
-}
+function showQRFromConfirm() { showScreen('qr'); }
 
 async function sendBookingSMS(date) {
   if (!currentUser || !currentUser.phone) {
@@ -974,22 +1399,18 @@ async function sendBookingSMS(date) {
     return;
   }
   try {
-    var msg = 'SplashPass Booking Confirmed! ' +
-      'Location: ' + selectedPoint.name + ' | ' +
-      'Date: ' + date + ' | ' +
-      'Time: ' + selectedSlot + ' | ' +
-      'Plan: ' + currentUser.plan + '. Show QR code to attendant. Drive clean!';
-    var res = await fetch('/api/send-sms', {
+    var msg = 'SplashPass Booking Confirmed! Location: ' + selectedPoint.name +
+      ' | Date: ' + date + ' | Time: ' + selectedSlot +
+      ' | Plan: ' + currentUser.plan + '. Show QR code to attendant. Drive clean!';
+    var res  = await fetch('/api/send-sms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ phone: currentUser.phone, message: msg })
     });
     var data = await res.json();
-    if (data.success) {
-      document.getElementById('conf-sms-note').textContent = 'Confirmation SMS sent to ' + currentUser.phone;
-    } else {
-      document.getElementById('conf-sms-note').textContent = 'Booking saved. SMS unavailable.';
-    }
+    document.getElementById('conf-sms-note').textContent = data.success
+      ? 'Confirmation SMS sent to ' + currentUser.phone
+      : 'Booking saved. SMS unavailable.';
   } catch(e) {
     document.getElementById('conf-sms-note').textContent = 'Booking saved. SMS unavailable.';
   }
@@ -999,58 +1420,59 @@ async function sendBookingSMS(date) {
 function renderHome() {
   if (!currentUser) return;
   loadNextBooking();
-  var hour = new Date().getHours();
-  var greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-  document.querySelector('.home-greeting').textContent = greet + ' 👋';
+
+  var hour  = new Date().getHours();
+  var greet = hour < 12 ? 'Good morning ☀️' : hour < 17 ? 'Good afternoon 👋' : 'Good evening 🌙';
+  document.getElementById('home-greeting').textContent = greet;
   document.getElementById('home-name').textContent = currentUser.name ? currentUser.name.split(' ')[0] : 'there';
 
-  var planEl = document.getElementById('home-plan');
-  var subEl = document.getElementById('home-plan-sub');
-  var badgeEl = document.getElementById('home-badge');
+  var planEl   = document.getElementById('home-plan');
+  var subEl    = document.getElementById('home-plan-sub');
+  var badgeEl  = document.getElementById('home-badge');
+  var progWrap = document.getElementById('sub-progress-wrap');
+  var progFill = document.getElementById('sub-progress-fill');
+  var progLbl  = document.getElementById('sub-progress-label');
 
   if (currentUser.plan && currentUser.sub_status === 'active') {
-    planEl.textContent = currentUser.plan + ' Plan';
-    subEl.textContent = 'KSh ' + currentUser.plan_price + '/week · Active';
+    var plan = PLANS.find(function(p) { return p.name === currentUser.plan; });
+    var total = plan ? plan.credits : (currentUser.credits || 0);
+    var used  = total - (currentUser.credits || 0);
+    planEl.textContent  = currentUser.plan;
+    subEl.textContent   = 'KSh ' + currentUser.plan_price + '/week · Active';
     badgeEl.textContent = 'Active';
-    badgeEl.className = 'sub-badge badge-active';
+    badgeEl.className   = 'sub-badge badge-active';
+    progWrap.style.display = 'block';
+    progLbl.style.display  = 'flex';
+    progFill.style.width   = Math.min((used / total) * 100, 100) + '%';
+    document.getElementById('sub-credits-used').textContent  = used + ' used';
+    document.getElementById('sub-credits-total').textContent = total + ' total';
   } else if (currentUser.plan && currentUser.sub_status === 'pending') {
-    planEl.textContent = currentUser.plan + ' Plan';
-    subEl.textContent = 'Payment pending · Tap to pay';
+    planEl.textContent  = currentUser.plan;
+    subEl.textContent   = 'Payment pending · Tap to pay';
     badgeEl.textContent = 'Pending';
-    badgeEl.className = 'sub-badge badge-pending';
+    badgeEl.className   = 'sub-badge badge-pending';
+    progWrap.style.display = 'none';
+    progLbl.style.display  = 'none';
   } else {
-    planEl.textContent = 'No active plan';
-    subEl.textContent = 'Tap to subscribe';
+    planEl.textContent  = 'No active plan';
+    subEl.textContent   = 'Tap to subscribe';
     badgeEl.textContent = 'Get Plan';
-    badgeEl.className = 'sub-badge badge-none';
+    badgeEl.className   = 'sub-badge badge-none';
+    progWrap.style.display = 'none';
+    progLbl.style.display  = 'none';
   }
 
-  // Credits bar
-  var creditsBar = document.getElementById('credits-bar');
-  var creditsDisplay = document.getElementById('credits-display');
-  var creditsSub = document.getElementById('credits-sub');
-  if (currentUser.plan && currentUser.sub_status === 'active') {
-    creditsBar.classList.remove('hidden');
-    var c = currentUser.credits || 0;
-    creditsDisplay.textContent = c;
-    creditsSub.textContent = c === 1 ? '1 wash left' : c + ' washes left';
-  } else {
-    creditsBar.classList.add('hidden');
-  }
-
-  // Loyalty bar
-  var loyaltyBar = document.getElementById('loyalty-bar');
-  var points = currentUser.loyalty_points || 0;
-  var tier = getTier(points);
-  var nextTier = LOYALTY_TIERS.find(function(t) { return t.min > points; });
-  loyaltyBar.classList.remove('hidden');
-  document.getElementById('loyalty-icon').textContent = tier.icon;
-  document.getElementById('loyalty-tier-name').textContent = tier.name + ' Member';
-  document.getElementById('loyalty-points-text').textContent = points + ' points';
+  // Loyalty strip
+  var points  = currentUser.loyalty_points || 0;
+  var tier    = getTier(points);
+  var nextTier= LOYALTY_TIERS.find(function(t) { return t.min > points; });
+  document.getElementById('loyalty-icon').textContent       = tier.icon;
+  document.getElementById('loyalty-tier-name').textContent  = tier.name + ' Member';
+  document.getElementById('loyalty-points-text').textContent= points + ' points';
   if (nextTier) {
-    var toNext = nextTier.min - points;
-    document.getElementById('loyalty-next').textContent = toNext + ' to ' + nextTier.name;
+    var toNext   = nextTier.min - points;
     var progress = ((points - tier.min) / (nextTier.min - tier.min)) * 100;
+    document.getElementById('loyalty-next').textContent = toNext + ' to ' + nextTier.name;
     document.getElementById('loyalty-progress').style.width = Math.min(progress, 100) + '%';
   } else {
     document.getElementById('loyalty-next').textContent = 'Max tier reached!';
@@ -1061,17 +1483,18 @@ function renderHome() {
 // ── PROFILE ───────────────────────────────────────
 function renderProfile() {
   if (!currentUser) return;
-  document.getElementById('prof-name').textContent = currentUser.name || '—';
-  document.getElementById('prof-email').textContent = currentUser.email || '—';
-  document.getElementById('prof-phone').textContent = currentUser.phone || '—';
-  document.getElementById('prof-home').textContent = currentUser.home_location || 'Not set';
-  document.getElementById('prof-car').textContent = (currentUser.car_make || '') + ' ' + (currentUser.car_model || '') || 'Not set';
-  document.getElementById('prof-colour').textContent = currentUser.car_colour || 'Not set';
-  document.getElementById('prof-plate').textContent = currentUser.plate || 'Not set';
-  document.getElementById('prof-cartype').textContent = currentUser.car_type || 'Not set';
-  document.getElementById('prof-plan').textContent = currentUser.plan || 'None';
+  var initials = (currentUser.name || '?').split(' ').map(function(w){return w[0];}).join('').substring(0,2).toUpperCase();
+  document.getElementById('prof-avatar').textContent  = initials;
+  document.getElementById('prof-name').textContent    = currentUser.name  || '—';
+  document.getElementById('prof-email').textContent   = currentUser.email || '—';
+  document.getElementById('prof-phone').textContent   = currentUser.phone || '—';
+  document.getElementById('prof-car').textContent     = ((currentUser.car_make||'') + ' ' + (currentUser.car_model||'')).trim() || 'Not set';
+  document.getElementById('prof-colour').textContent  = currentUser.car_colour || 'Not set';
+  document.getElementById('prof-plate').textContent   = currentUser.plate    || 'Not set';
+  document.getElementById('prof-cartype').textContent = currentUser.car_type  || 'Not set';
+  document.getElementById('prof-plan').textContent    = currentUser.plan     || 'None';
   document.getElementById('prof-credits').textContent = currentUser.plan === 'Fleet' ? 'Unlimited' : (currentUser.credits || 0) + ' washes';
-  document.getElementById('prof-status').textContent = currentUser.sub_status || 'pending';
+  document.getElementById('prof-status').textContent  = currentUser.sub_status || 'pending';
   if (currentUser.sub_start) {
     var start = new Date(currentUser.sub_start);
     var renew = new Date(start); renew.setDate(renew.getDate() + 7);
@@ -1082,15 +1505,12 @@ function renderProfile() {
     document.getElementById('prof-renew').textContent = '—';
   }
   // Pre-fill edit car form
-  if (document.getElementById('car-make')) {
-    document.getElementById('car-make').value = currentUser.car_make || '';
-    document.getElementById('car-model').value = currentUser.car_model || '';
-    document.getElementById('car-colour').value = currentUser.car_colour || '';
-    document.getElementById('car-plate').value = currentUser.plate || '';
-    document.getElementById('car-type').value = currentUser.car_type || '';
-    document.getElementById('home-loc').value = currentUser.home_location || '';
-    document.getElementById('pref-point').value = currentUser.preferred_point || '';
-  }
+  var fields = { 'car-make': 'car_make', 'car-model': 'car_model', 'car-colour': 'car_colour',
+                 'car-plate': 'plate', 'car-type': 'car_type', 'home-loc': 'home_location', 'pref-point': 'preferred_point' };
+  Object.keys(fields).forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.value = currentUser[fields[id]] || '';
+  });
 }
 
 // ── PLANS ─────────────────────────────────────────
@@ -1100,18 +1520,18 @@ function renderPlans() {
   var html = '';
   PLANS.forEach(function(p) {
     var isPopular = p.id === 'saloon-standard';
-    html += '<div class="plan-card' + (isPopular ? ' popular' : '') + '">';
-    if (isPopular) html += '<div class="popular-tag">Most Popular</div>';
-    html += '<div class="plan-name">' + p.name + '</div>';
-    html += '<div class="plan-price">KSh ' + p.price.toLocaleString() + '<span>/week</span></div>';
+    html += '<div class="plan-card'+(isPopular?' popular':'')+'">';
+    if (isPopular) html += '<div class="popular-badge">Most Popular</div>';
+    html += '<div class="plan-name">'+p.name+'</div>';
+    html += '<div class="plan-price">KSh '+p.price.toLocaleString()+'<span>/week</span></div>';
     html += '<ul class="plan-features">';
-    html += '<li>' + p.washes + '</li>';
-    html += '<li>' + p.car + ' body wash included</li>';
+    html += '<li>'+p.washes+'</li>';
+    html += '<li>'+p.car+' body wash included</li>';
     html += '<li>Guaranteed slot booking</li>';
     html += '<li>Digital wash pass + QR</li>';
     html += '<li>10 loyalty points per wash</li>';
     html += '</ul>';
-    html += '<button class="btn ' + (isPopular ? 'btn-gold' : 'btn-outline') + '" data-plan="' + p.id + '" data-price="' + p.price + '" data-credits="' + p.credits + '">Choose ' + p.name + '</button>';
+    html += '<button class="btn '+(isPopular?'btn-gold':'btn-outline')+'" data-plan="'+p.id+'" data-price="'+p.price+'" data-credits="'+p.credits+'">Choose '+p.name+'</button>';
     html += '</div>';
   });
   container.innerHTML = html;
@@ -1125,7 +1545,7 @@ function renderPlans() {
 async function selectPlan(planId, price, credits) {
   var plan = PLANS.find(function(p) { return p.id === planId; });
   if (!plan) return;
-  selectedPlanData = { id: planId, name: plan.name, price: price, credits: credits };
+  selectedPlanData = { id: planId, name: plan.name, price: price, credits: credits, washes: plan.washes };
   if (currentUser && currentUser.role === 'customer') {
     try {
       await updateUser(currentUser.email, {
@@ -1133,43 +1553,43 @@ async function selectPlan(planId, price, credits) {
         sub_start: new Date().toISOString(),
         sub_status: 'pending', credits: credits
       });
-      currentUser.plan = plan.name;
+      currentUser.plan       = plan.name;
       currentUser.plan_price = price;
-      currentUser.sub_start = new Date().toISOString();
+      currentUser.sub_start  = new Date().toISOString();
       currentUser.sub_status = 'pending';
-      currentUser.credits = credits;
+      currentUser.credits    = credits;
+      localStorage.setItem('splashpass_user', JSON.stringify(currentUser));
     } catch(e) { toast('Error saving plan: ' + e.message, true); return; }
   }
-  document.getElementById('mpesa-amount').textContent = 'KSh ' + price.toLocaleString();
+  document.getElementById('mpesa-amount').textContent    = 'KSh ' + price.toLocaleString();
   document.getElementById('mpesa-plan-name').textContent = plan.name + ' · ' + plan.washes;
   if (currentUser && currentUser.phone) document.getElementById('mpesa-phone').value = currentUser.phone;
-  document.getElementById('mpesa-status').className = 'mpesa-status hidden';
+  document.getElementById('mpesa-status').className  = 'mpesa-status hidden';
   document.getElementById('mpesa-status').textContent = '';
   showScreen('mpesa');
 }
 
 // ── MPESA ─────────────────────────────────────────
 async function triggerSTK() {
-  var phone = document.getElementById('mpesa-phone').value.trim();
+  var phone    = document.getElementById('mpesa-phone').value.trim();
   var statusEl = document.getElementById('mpesa-status');
   if (!phone) { statusEl.className = 'mpesa-status error'; statusEl.textContent = 'Please enter your M-Pesa number.'; return; }
   var activePlan = selectedPlanData || selectedPlan;
   if (!activePlan) { statusEl.className = 'mpesa-status error'; statusEl.textContent = 'No plan selected.'; return; }
 
   setBtn('pay-btn', true, 'Pay Now');
-  statusEl.className = 'mpesa-status pending';
+  statusEl.className   = 'mpesa-status pending';
   statusEl.textContent = 'Sending prompt to your phone...';
 
   try {
-    var res = await fetch('/api/mpesa-stk', {
+    var res  = await fetch('/api/mpesa-stk', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ phone: phone, amount: activePlan.price })
     });
     var data = await res.json();
-
     if (data.success) {
-      statusEl.className = 'mpesa-status pending';
+      statusEl.className   = 'mpesa-status pending';
       statusEl.textContent = 'Enter your M-Pesa PIN on your phone to confirm payment.';
       toast('M-Pesa prompt sent!');
       var attempts = 0;
@@ -1180,7 +1600,8 @@ async function triggerSTK() {
           if (updated && updated.sub_status === 'active') {
             clearInterval(poll);
             currentUser.sub_status = 'active';
-            statusEl.className = 'mpesa-status success';
+            localStorage.setItem('splashpass_user', JSON.stringify(currentUser));
+            statusEl.className   = 'mpesa-status success';
             statusEl.textContent = 'Payment confirmed! Subscription is now active.';
             toast('Subscription activated!');
             setTimeout(function() { showScreen('home'); }, 2000);
@@ -1188,16 +1609,16 @@ async function triggerSTK() {
         } catch(e) {}
         if (attempts >= 12) {
           clearInterval(poll);
-          statusEl.className = 'mpesa-status pending';
+          statusEl.className   = 'mpesa-status pending';
           statusEl.textContent = 'Payment pending. Dashboard updates once confirmed.';
         }
       }, 5000);
     } else {
-      statusEl.className = 'mpesa-status error';
+      statusEl.className   = 'mpesa-status error';
       statusEl.textContent = data.message || 'Payment failed. Try again.';
     }
   } catch(e) {
-    statusEl.className = 'mpesa-status error';
+    statusEl.className   = 'mpesa-status error';
     statusEl.textContent = 'Error: ' + e.message;
   } finally {
     setBtn('pay-btn', false, 'Pay Now');
@@ -1210,8 +1631,8 @@ var sheetPoint = null;
 function showPointSheet(pointId) {
   sheetPoint = WASH_POINTS.find(function(p) { return p.id === pointId; });
   if (!sheetPoint) return;
-  var dist = distKm(userLat, userLng, sheetPoint.lat, sheetPoint.lng);
-  var distLabel = dist < 1 ? Math.round(dist*1000) + 'm away' : dist.toFixed(1) + 'km away';
+  var dist      = distKm(userLat, userLng, sheetPoint.lat, sheetPoint.lng);
+  var distLabel = dist < 1 ? Math.round(dist*1000)+'m away' : dist.toFixed(1)+'km away';
   document.getElementById('sheet-name').textContent = sheetPoint.name;
   document.getElementById('sheet-area').textContent = sheetPoint.area;
   document.getElementById('sheet-dist').textContent = '📍 ' + distLabel;
@@ -1233,30 +1654,26 @@ function bookFromSheet() {
 
 // ── CAR DETAILS ──────────────────────────────────
 async function saveCarDetails() {
-  var make = document.getElementById('car-make').value.trim();
-  var model = document.getElementById('car-model').value.trim();
+  var make   = document.getElementById('car-make').value.trim();
+  var model  = document.getElementById('car-model').value.trim();
   var colour = document.getElementById('car-colour').value.trim();
-  var plate = document.getElementById('car-plate').value.trim().toUpperCase();
-  var type = document.getElementById('car-type').value;
-  var home = document.getElementById('home-loc').value.trim();
-  var pref = document.getElementById('pref-point').value;
-  var err = document.getElementById('car-save-error');
-
+  var plate  = document.getElementById('car-plate').value.trim().toUpperCase();
+  var type   = document.getElementById('car-type').value;
+  var home   = document.getElementById('home-loc').value.trim();
+  var pref   = document.getElementById('pref-point').value;
+  var err    = document.getElementById('car-save-error');
   if (!make || !model || !plate) { err.textContent = 'Make, model and plate are required.'; return; }
-
   setBtn('car-save-btn', true, 'Save Details');
   try {
     await updateUser(currentUser.email, {
       car_make: make, car_model: model, car_colour: colour,
       plate: plate, car_type: type, home_location: home, preferred_point: pref
     });
-    currentUser.car_make = make;
-    currentUser.car_model = model;
-    currentUser.car_colour = colour;
-    currentUser.plate = plate;
-    currentUser.car_type = type;
-    currentUser.home_location = home;
+    currentUser.car_make = make; currentUser.car_model = model;
+    currentUser.car_colour = colour; currentUser.plate = plate;
+    currentUser.car_type = type; currentUser.home_location = home;
     currentUser.preferred_point = pref;
+    localStorage.setItem('splashpass_user', JSON.stringify(currentUser));
     err.textContent = '';
     toast('Car details saved!');
     showScreen('profile');
@@ -1268,18 +1685,18 @@ async function saveCarDetails() {
 async function loadNextBooking() {
   try {
     var bookings = await getBookingsByEmail(currentUser.email);
-    var today = new Date().toISOString().split('T')[0];
+    var today    = new Date().toISOString().split('T')[0];
     var upcoming = bookings.filter(function(b) {
       return b.date >= today && b.status !== 'completed';
     }).sort(function(a,b) {
-      return (a.date + a.time) > (b.date + b.time) ? 1 : -1;
+      return (a.date+a.time) > (b.date+b.time) ? 1 : -1;
     });
     var bar = document.getElementById('next-booking-bar');
     if (upcoming.length) {
-      nextBooking = upcoming[0];
+      nextBooking     = upcoming[0];
       nextBookingCode = 'SP' + nextBooking.id.toString().slice(-6).toUpperCase();
       document.getElementById('next-booking-text').textContent = nextBooking.location + ' · ' + nextBooking.time;
-      document.getElementById('next-booking-sub').textContent = formatBookingDate(nextBooking.date) + ' · Tap to view pass';
+      document.getElementById('next-booking-sub').textContent  = formatBookingDate(nextBooking.date) + ' · Tap to view pass';
       bar.classList.remove('hidden');
     } else {
       bar.classList.add('hidden');
@@ -1291,27 +1708,25 @@ async function loadNextBooking() {
 }
 
 function formatBookingDate(dateStr) {
-  var d = new Date(dateStr + 'T00:00:00');
-  var today = new Date(); today.setHours(0,0,0,0);
-  var tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate()+1);
-  if (d.getTime() === today.getTime()) return 'Today';
+  var d       = new Date(dateStr + 'T00:00:00');
+  var today   = new Date(); today.setHours(0,0,0,0);
+  var tomorrow= new Date(today); tomorrow.setDate(tomorrow.getDate()+1);
+  if (d.getTime() === today.getTime())    return 'Today';
   if (d.getTime() === tomorrow.getTime()) return 'Tomorrow';
   return d.toLocaleDateString('en-KE', { weekday:'short', month:'short', day:'numeric' });
 }
 
 function openNextBookingQR() {
-  if (!nextBooking) return;
-  var point = WASH_POINTS.find(function(p) { return p.name === nextBooking.location; });
-  if (!point) point = { name: nextBooking.location, area: '' };
+  if (!nextBooking) { toast('No upcoming booking found.'); return; }
   var qrData = JSON.stringify({ id: nextBooking.id, user: currentUser.name, point: nextBooking.location, date: nextBooking.date, time: nextBooking.time, code: nextBookingCode });
   document.getElementById('qr-canvas').innerHTML = '';
-  new QRCode(document.getElementById('qr-canvas'), { text: qrData, width: 200, height: 200, colorDark: '#0d1b2a', colorLight: '#ffffff' });
+  new QRCode(document.getElementById('qr-canvas'), { text: qrData, width: 200, height: 200, colorDark: '#07111f', colorLight: '#ffffff' });
   document.getElementById('qr-code-display').textContent = nextBookingCode;
   document.getElementById('qr-info').innerHTML =
-    '<div class="qr-info-row"><span>Location</span><strong>' + nextBooking.location + '</strong></div>' +
-    '<div class="qr-info-row"><span>Date</span><strong>' + nextBooking.date + '</strong></div>' +
-    '<div class="qr-info-row"><span>Time</span><strong>' + nextBooking.time + '</strong></div>' +
-    '<div class="qr-info-row"><span>Plan</span><strong>' + (nextBooking.plan || currentUser.plan) + '</strong></div>';
+    '<div class="qr-info-row"><span>Location</span><strong>'+nextBooking.location+'</strong></div>' +
+    '<div class="qr-info-row"><span>Date</span><strong>'+nextBooking.date+'</strong></div>' +
+    '<div class="qr-info-row"><span>Time</span><strong>'+nextBooking.time+'</strong></div>' +
+    '<div class="qr-info-row"><span>Plan</span><strong>'+(nextBooking.plan||currentUser.plan)+'</strong></div>';
   showScreen('qr');
 }
 
