@@ -113,6 +113,73 @@ select option { background:var(--s1); }
 .auth-switch { text-align:center; margin-top:22px; font-size:14px; color:var(--muted); }
 .auth-switch a { color:var(--gold); cursor:pointer; font-weight:600; }
 
+/* ── ONBOARDING ── */
+#screen-onboarding { padding:0; justify-content:flex-start; }
+.onboard-wrap { min-height:100vh; display:flex; flex-direction:column; padding:54px 24px 40px; }
+.onboard-progress { display:flex; gap:6px; margin-bottom:36px; }
+.onboard-progress-bar { flex:1; height:4px; border-radius:2px; background:rgba(255,255,255,.1); transition:background .3s; }
+.onboard-progress-bar.done { background:var(--gold); }
+.onboard-progress-bar.active { background:var(--gold2); }
+.onboard-step-label { font-size:11px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.8px; margin-bottom:10px; }
+.onboard-question { font-size:26px; font-weight:800; line-height:1.2; margin-bottom:8px; }
+.onboard-sub { font-size:14px; color:var(--muted); margin-bottom:32px; line-height:1.5; }
+.onboard-options { display:flex; flex-direction:column; gap:10px; flex:1; }
+.onboard-option {
+  display:flex; align-items:center; gap:16px;
+  background:rgba(255,255,255,.04);
+  border:1.5px solid rgba(255,255,255,.07);
+  border-radius:20px;
+  padding:18px 20px;
+  cursor:pointer;
+  transition:all .15s;
+}
+.onboard-option:active { transform:scale(.98); }
+.onboard-option.selected { border-color:var(--gold); background:rgba(255,176,32,.08); }
+.onboard-option-icon { font-size:28px; flex-shrink:0; }
+.onboard-option-text { flex:1; }
+.onboard-option-title { font-size:15px; font-weight:700; margin-bottom:2px; }
+.onboard-option-sub { font-size:12px; color:var(--muted); }
+.onboard-option-check {
+  width:24px; height:24px; border-radius:50%;
+  border:2px solid rgba(255,255,255,.15);
+  display:flex; align-items:center; justify-content:center;
+  font-size:13px; flex-shrink:0;
+  transition:all .15s;
+}
+.onboard-option.selected .onboard-option-check { background:var(--gold); border-color:var(--gold); color:#07111f; }
+.onboard-nav { display:flex; gap:10px; margin-top:24px; }
+.onboard-back { width:52px; height:52px; border-radius:16px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.08); display:flex; align-items:center; justify-content:center; font-size:22px; cursor:pointer; flex-shrink:0; color:var(--text); }
+.onboard-back:active { background:rgba(255,255,255,.1); }
+
+/* Recommendation screen */
+.reco-card {
+  background:linear-gradient(135deg, rgba(255,176,32,.14), rgba(255,176,32,.04));
+  border:1.5px solid rgba(255,176,32,.3);
+  border-radius:var(--radius-lg);
+  padding:26px;
+  margin-bottom:16px;
+  box-shadow:0 16px 40px rgba(255,176,32,.1);
+}
+.reco-badge {
+  display:inline-block;
+  background:var(--gold);
+  color:#07111f;
+  font-size:10px; font-weight:800;
+  padding:5px 12px; border-radius:100px;
+  text-transform:uppercase; letter-spacing:.6px;
+  font-family:'Syne',sans-serif;
+  margin-bottom:14px;
+}
+.reco-name { font-size:26px; font-weight:800; margin-bottom:4px; }
+.reco-price { font-size:36px; font-weight:800; color:var(--gold); font-family:'Syne',sans-serif; }
+.reco-price span { font-size:14px; color:var(--muted); font-weight:400; }
+.reco-why { font-size:13px; color:var(--muted); margin-top:8px; line-height:1.5; }
+.reco-features { list-style:none; margin:16px 0 0; }
+.reco-features li { font-size:14px; padding:6px 0; color:var(--muted); display:flex; align-items:center; gap:10px; border-bottom:1px solid rgba(255,255,255,.05); }
+.reco-features li:last-child { border-bottom:none; }
+.reco-features li::before { content:''; display:inline-block; width:18px; height:18px; background:rgba(255,176,32,.15); border-radius:50%; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3 8l3 3 7-7' stroke='%23ffb020' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-size:contain; flex-shrink:0; }
+
+
 /* ── BUTTONS ── */
 .btn {
   display:block; width:100%; padding:17px;
@@ -903,6 +970,193 @@ select option { background:var(--s1); }
   </div>
 </div>
 
+
+<!-- ONBOARDING -->
+<div id="screen-onboarding" class="screen">
+  <div class="onboard-wrap" id="onboard-wrap">
+    <!-- progress bars -->
+    <div class="onboard-progress">
+      <div class="onboard-progress-bar active" id="ob-bar-1"></div>
+      <div class="onboard-progress-bar" id="ob-bar-2"></div>
+      <div class="onboard-progress-bar" id="ob-bar-3"></div>
+      <div class="onboard-progress-bar" id="ob-bar-4"></div>
+    </div>
+
+    <!-- STEP 1: Car type -->
+    <div id="ob-step-1">
+      <div class="onboard-step-label">Step 1 of 4</div>
+      <div class="onboard-question">What type of car do you drive?</div>
+      <div class="onboard-sub">This helps us match the right wash plan for your vehicle.</div>
+      <div class="onboard-options">
+        <div class="onboard-option" data-step="1" data-value="Sedan" onclick="selectOption(this)">
+          <div class="onboard-option-icon">🚗</div>
+          <div class="onboard-option-text">
+            <div class="onboard-option-title">Sedan / Saloon</div>
+            <div class="onboard-option-sub">Regular passenger car</div>
+          </div>
+          <div class="onboard-option-check"></div>
+        </div>
+        <div class="onboard-option" data-step="1" data-value="SUV" onclick="selectOption(this)">
+          <div class="onboard-option-icon">🚙</div>
+          <div class="onboard-option-text">
+            <div class="onboard-option-title">SUV / 4x4</div>
+            <div class="onboard-option-sub">Sport utility or off-road vehicle</div>
+          </div>
+          <div class="onboard-option-check"></div>
+        </div>
+        <div class="onboard-option" data-step="1" data-value="Pickup" onclick="selectOption(this)">
+          <div class="onboard-option-icon">🛻</div>
+          <div class="onboard-option-text">
+            <div class="onboard-option-title">Pickup / Van</div>
+            <div class="onboard-option-sub">Commercial or utility vehicle</div>
+          </div>
+          <div class="onboard-option-check"></div>
+        </div>
+      </div>
+      <div class="onboard-nav">
+        <button class="btn btn-gold" onclick="obNext(1)" style="flex:1">Continue →</button>
+      </div>
+    </div>
+
+    <!-- STEP 2: Wash frequency -->
+    <div id="ob-step-2" class="hidden">
+      <div class="onboard-step-label">Step 2 of 4</div>
+      <div class="onboard-question">How often do you wash your car?</div>
+      <div class="onboard-sub">We'll recommend a credit plan that fits your routine.</div>
+      <div class="onboard-options">
+        <div class="onboard-option" data-step="2" data-value="1" onclick="selectOption(this)">
+          <div class="onboard-option-icon">📅</div>
+          <div class="onboard-option-text">
+            <div class="onboard-option-title">Once a week</div>
+            <div class="onboard-option-sub">Light plan — 2 credits</div>
+          </div>
+          <div class="onboard-option-check"></div>
+        </div>
+        <div class="onboard-option" data-step="2" data-value="2" onclick="selectOption(this)">
+          <div class="onboard-option-icon">🔄</div>
+          <div class="onboard-option-text">
+            <div class="onboard-option-title">Twice a week</div>
+            <div class="onboard-option-sub">Standard plan — 4 credits</div>
+          </div>
+          <div class="onboard-option-check"></div>
+        </div>
+        <div class="onboard-option" data-step="2" data-value="3" onclick="selectOption(this)">
+          <div class="onboard-option-icon">⚡</div>
+          <div class="onboard-option-text">
+            <div class="onboard-option-title">Almost every day</div>
+            <div class="onboard-option-sub">Standard plan — 4 credits</div>
+          </div>
+          <div class="onboard-option-check"></div>
+        </div>
+      </div>
+      <div class="onboard-nav">
+        <button class="onboard-back" onclick="obBack(2)">←</button>
+        <button class="btn btn-gold" onclick="obNext(2)" style="flex:1">Continue →</button>
+      </div>
+    </div>
+
+    <!-- STEP 3: Profile type -->
+    <div id="ob-step-3" class="hidden">
+      <div class="onboard-step-label">Step 3 of 4</div>
+      <div class="onboard-question">How would you describe yourself?</div>
+      <div class="onboard-sub">Helps us personalise your SplashPass experience.</div>
+      <div class="onboard-options">
+        <div class="onboard-option" data-step="3" data-value="Personal" onclick="selectOption(this)">
+          <div class="onboard-option-icon">👤</div>
+          <div class="onboard-option-text">
+            <div class="onboard-option-title">Personal driver</div>
+            <div class="onboard-option-sub">My own car, my own use</div>
+          </div>
+          <div class="onboard-option-check"></div>
+        </div>
+        <div class="onboard-option" data-step="3" data-value="Family" onclick="selectOption(this)">
+          <div class="onboard-option-icon">👨‍👩‍👧</div>
+          <div class="onboard-option-text">
+            <div class="onboard-option-title">Family car</div>
+            <div class="onboard-option-sub">Shared with household members</div>
+          </div>
+          <div class="onboard-option-check"></div>
+        </div>
+        <div class="onboard-option" data-step="3" data-value="Ride-hailing" onclick="selectOption(this)">
+          <div class="onboard-option-icon">🚕</div>
+          <div class="onboard-option-text">
+            <div class="onboard-option-title">Ride-hailing driver</div>
+            <div class="onboard-option-sub">Uber, Bolt or similar</div>
+          </div>
+          <div class="onboard-option-check"></div>
+        </div>
+        <div class="onboard-option" data-step="3" data-value="Company" onclick="selectOption(this)">
+          <div class="onboard-option-icon">🏢</div>
+          <div class="onboard-option-text">
+            <div class="onboard-option-title">Company / Work vehicle</div>
+            <div class="onboard-option-sub">Business or fleet use</div>
+          </div>
+          <div class="onboard-option-check"></div>
+        </div>
+      </div>
+      <div class="onboard-nav">
+        <button class="onboard-back" onclick="obBack(3)">←</button>
+        <button class="btn btn-gold" onclick="obNext(3)" style="flex:1">Continue →</button>
+      </div>
+    </div>
+
+    <!-- STEP 4: Preferred wash area -->
+    <div id="ob-step-4" class="hidden">
+      <div class="onboard-step-label">Step 4 of 4</div>
+      <div class="onboard-question">Where do you usually want to wash?</div>
+      <div class="onboard-sub">We'll prioritise the nearest wash point for you.</div>
+      <div class="onboard-options">
+        <div class="onboard-option" data-step="4" data-value="SplashPass Nyali" onclick="selectOption(this)">
+          <div class="onboard-option-icon">📍</div>
+          <div class="onboard-option-text"><div class="onboard-option-title">Nyali</div><div class="onboard-option-sub">Off Links Road</div></div>
+          <div class="onboard-option-check"></div>
+        </div>
+        <div class="onboard-option" data-step="4" data-value="SplashPass CBD" onclick="selectOption(this)">
+          <div class="onboard-option-icon">📍</div>
+          <div class="onboard-option-text"><div class="onboard-option-title">Mombasa CBD</div><div class="onboard-option-sub">City centre</div></div>
+          <div class="onboard-option-check"></div>
+        </div>
+        <div class="onboard-option" data-step="4" data-value="SplashPass Bamburi" onclick="selectOption(this)">
+          <div class="onboard-option-icon">📍</div>
+          <div class="onboard-option-text"><div class="onboard-option-title">Bamburi</div><div class="onboard-option-sub">North Coast</div></div>
+          <div class="onboard-option-check"></div>
+        </div>
+        <div class="onboard-option" data-step="4" data-value="SplashPass Likoni" onclick="selectOption(this)">
+          <div class="onboard-option-icon">📍</div>
+          <div class="onboard-option-text"><div class="onboard-option-title">Likoni</div><div class="onboard-option-sub">South Coast side</div></div>
+          <div class="onboard-option-check"></div>
+        </div>
+        <div class="onboard-option" data-step="4" data-value="SplashPass Diani" onclick="selectOption(this)">
+          <div class="onboard-option-icon">📍</div>
+          <div class="onboard-option-text"><div class="onboard-option-title">Diani</div><div class="onboard-option-sub">Diani Beach Road</div></div>
+          <div class="onboard-option-check"></div>
+        </div>
+      </div>
+      <div class="onboard-nav">
+        <button class="onboard-back" onclick="obBack(4)">←</button>
+        <button class="btn btn-gold" onclick="obNext(4)" style="flex:1">See My Plan →</button>
+      </div>
+    </div>
+
+    <!-- STEP 5: Recommendation -->
+    <div id="ob-step-5" class="hidden">
+      <div class="onboard-step-label" style="color:var(--gold)">Your perfect plan ✨</div>
+      <div class="onboard-question" id="ob-reco-title">We found the right plan for you</div>
+      <div class="onboard-sub" id="ob-reco-sub">Based on your preferences</div>
+      <div class="reco-card" id="ob-reco-card">
+        <div class="reco-badge">Recommended for you</div>
+        <div class="reco-name" id="ob-reco-name">—</div>
+        <div class="reco-price" id="ob-reco-price">—</div>
+        <div class="reco-why" id="ob-reco-why">—</div>
+        <ul class="reco-features" id="ob-reco-features"></ul>
+      </div>
+      <button class="btn btn-gold" onclick="acceptRecommendation()" style="margin-bottom:12px">Get Started with This Plan</button>
+      <button class="btn btn-outline" onclick="goToPlans()">View All Plans</button>
+    </div>
+
+  </div>
+</div>
+
 <!-- BOTTOM NAV -->
 <div class="bottom-nav" id="bottom-nav" style="display:none">
   <div class="nav-item active" id="nav-home" onclick="navTo('home')">
@@ -1062,7 +1316,7 @@ function showScreen(name) {
   document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
   document.getElementById('screen-' + name).classList.add('active');
   var nav = document.getElementById('bottom-nav');
-  var noNav = ['splash','auth','book','qr','mpesa','edit-car','confirmed'];
+  var noNav = ['splash','auth','book','qr','mpesa','edit-car','confirmed','onboarding'];
   nav.style.display = noNav.indexOf(name) > -1 ? 'none' : 'flex';
   ['home','plans','profile'].forEach(function(n) {
     var el = document.getElementById('nav-' + n);
@@ -1133,7 +1387,7 @@ async function register() {
     currentUser = result[0];
     localStorage.setItem('splashpass_user', JSON.stringify(result[0]));
     err.textContent = '';
-    initApp();
+    startOnboarding();
   } catch(e) { err.textContent = 'Error: ' + e.message; }
   finally { setBtn('reg-btn', false, 'Create Account'); }
 }
