@@ -1380,7 +1380,24 @@ async function register() {
   setBtn('reg-btn', true, 'Create Account');
   try {
     var existing = await getUserByEmail(email);
-    if (existing) { err.textContent = 'Account already exists.'; return; }
+    if (existing) {
+      // Account exists — check if onboarding was completed
+      if (!existing.plan) {
+        // Orphaned account: created but never finished onboarding
+        // Verify password then route to onboarding
+        if (existing.password !== pass) {
+          err.textContent = 'Account exists but password is wrong. Please sign in instead.';
+          return;
+        }
+        currentUser = existing;
+        localStorage.setItem('splashpass_user', JSON.stringify(existing));
+        err.textContent = '';
+        startOnboarding();
+        return;
+      }
+      err.textContent = 'Account already exists. Please sign in.';
+      return;
+    }
     var opCheck = await sbFetch('operators?email=eq.' + encodeURIComponent(email) + '&select=email');
     if (opCheck && opCheck.length) { err.textContent = 'This email is registered as an operator account.'; return; }
     var result = await createUser({ name: name, email: email, phone: phone, password: pass, role: 'customer', sub_status: 'pending' });
