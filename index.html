@@ -330,17 +330,18 @@ select option { background:var(--s1); }
   text-transform:uppercase; letter-spacing:.7px;
   font-weight:600; margin-bottom:12px;
 }
-.wash-point-card {
-  background:rgba(255,255,255,.04);
-  border:1px solid rgba(255,255,255,.06);
-  border-radius:20px;
-  padding:16px 18px;
-  margin-bottom:10px;
-  display:flex; align-items:center; gap:14px;
-  cursor:pointer;
-  transition:transform .15s, background .15s, border-color .15s;
+/* ── HOME SCREEN MAP LAYOUT ── */
+#screen-home {
+  overflow: hidden !important;
+  background: var(--bg) !important;
 }
-.wash-point-card:active { transform:scale(.98); background:rgba(255,255,255,.07); border-color:rgba(255,176,32,.3); }
+#screen-home #map {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 1 !important;
+}
 .wash-point-icon {
   width:46px; height:46px;
   background:rgba(255,176,32,.1);
@@ -687,62 +688,80 @@ select option { background:var(--s1); }
 
 <!-- HOME -->
 <div id="screen-home" class="screen">
-  <div class="home-header">
-    <div class="home-greeting" id="home-greeting">Good morning ☀️</div>
-    <div class="home-name" id="home-name">Loading...</div>
-  </div>
 
-  <!-- Sub hero card -->
-  <div class="sub-status-bar" onclick="goToPlans()">
-    <div class="sub-top">
-      <div>
-        <div class="sub-plan" id="home-plan">No active plan</div>
-        <div class="sub-plan-detail" id="home-plan-sub">Tap to subscribe</div>
+  <!-- Full-screen map -->
+  <div id="map" style="position:absolute;inset:0;z-index:1;height:100%;width:100%"></div>
+  <div class="map-label hidden" id="map-label">📍 Locating you...</div>
+
+  <!-- Top floating bar -->
+  <div style="position:absolute;top:0;left:0;right:0;padding:48px 14px 12px;z-index:20;">
+    <div style="display:flex;align-items:center;justify-content:space-between;
+      background:rgba(7,17,31,.88);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+      border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:11px 14px;
+      box-shadow:0 8px 24px rgba(0,0,0,.5);margin-bottom:10px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div id="home-avatar" style="width:36px;height:36px;background:linear-gradient(135deg,#ffd166,#ffb020);
+          border-radius:11px;display:flex;align-items:center;justify-content:center;
+          font-family:'Syne',sans-serif;font-weight:800;font-size:15px;color:#07111f;">?</div>
+        <div>
+          <div id="home-greeting" style="font-size:12px;color:#7a90a8;">Good morning ☀️</div>
+          <div id="home-name" style="font-size:15px;font-weight:700;color:#f0f4f8;font-family:'Syne',sans-serif;line-height:1.1;">Loading...</div>
+        </div>
       </div>
       <span class="sub-badge badge-none" id="home-badge">Get Plan</span>
     </div>
-    <div class="sub-progress-bar" id="sub-progress-wrap" style="display:none">
-      <div class="sub-progress-fill" id="sub-progress-fill" style="width:0%"></div>
-    </div>
-    <div class="sub-progress-label" id="sub-progress-label" style="display:none">
-      <span id="sub-credits-used">0 used</span>
-      <span id="sub-credits-total">0 total</span>
-    </div>
-  </div>
 
-  <!-- Quick actions -->
-  <div class="quick-actions">
-    <div class="quick-card" onclick="document.getElementById('bottom-nav') && navTo('home'); setTimeout(function(){document.querySelector('.wash-points').scrollIntoView({behavior:'smooth'})},100)">
-      <div class="quick-icon">📅</div>
-      <div class="quick-title">Book a Wash</div>
-      <div class="quick-sub">Find a slot near you</div>
-    </div>
-    <div class="quick-card" onclick="openNextBookingQR()">
-      <div class="quick-icon">🔲</div>
-      <div class="quick-title">My QR Code</div>
-      <div class="quick-sub">Show at wash point</div>
-    </div>
-  </div>
-
-  <!-- Loyalty strip -->
-  <div class="loyalty-strip" id="loyalty-bar">
-    <div class="loyalty-left">
-      <div class="loyalty-emoji" id="loyalty-icon">🥉</div>
-      <div>
-        <div class="loyalty-tier-name" id="loyalty-tier-name">Bronze Member</div>
-        <div class="loyalty-pts" id="loyalty-points-text">0 points</div>
+    <!-- Stats chips horizontal scroll -->
+    <div id="home-stats-row" style="display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;">
+      <!-- Plan chip -->
+      <div style="flex-shrink:0;background:rgba(7,17,31,.88);backdrop-filter:blur(20px);
+        border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:9px 13px;
+        box-shadow:0 4px 14px rgba(0,0,0,.4);display:flex;align-items:center;gap:8px;">
+        <div style="font-size:16px;">💳</div>
+        <div>
+          <div style="font-size:10px;color:#7a90a8;font-weight:600;text-transform:uppercase;letter-spacing:.4px;">Plan</div>
+          <div id="home-plan" style="font-size:13px;font-weight:700;color:#f0f4f8;font-family:'Syne',sans-serif;">No plan</div>
+        </div>
+      </div>
+      <!-- Washes chip -->
+      <div style="flex-shrink:0;background:rgba(7,17,31,.88);backdrop-filter:blur(20px);
+        border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:9px 13px;
+        box-shadow:0 4px 14px rgba(0,0,0,.4);display:flex;align-items:center;gap:8px;">
+        <div style="font-size:16px;">💧</div>
+        <div>
+          <div style="font-size:10px;color:#7a90a8;font-weight:600;text-transform:uppercase;letter-spacing:.4px;">Washes left</div>
+          <div id="home-credits" style="font-size:13px;font-weight:700;color:#ffb020;font-family:'Syne',sans-serif;">—</div>
+          <div style="width:60px;height:3px;background:rgba(255,255,255,.08);border-radius:2px;margin-top:4px;overflow:hidden;">
+            <div id="home-credits-bar" style="height:100%;border-radius:2px;background:linear-gradient(90deg,#ffd166,#ffb020);width:0%"></div>
+          </div>
+        </div>
+      </div>
+      <!-- Loyalty chip -->
+      <div style="flex-shrink:0;background:rgba(7,17,31,.88);backdrop-filter:blur(20px);
+        border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:9px 13px;
+        box-shadow:0 4px 14px rgba(0,0,0,.4);display:flex;align-items:center;gap:8px;">
+        <div style="font-size:16px;" id="home-loyalty-icon">🥉</div>
+        <div>
+          <div style="font-size:10px;color:#7a90a8;font-weight:600;text-transform:uppercase;letter-spacing:.4px;">Loyalty</div>
+          <div id="home-loyalty-tier" style="font-size:13px;font-weight:700;color:#22c55e;font-family:'Syne',sans-serif;">Bronze</div>
+        </div>
+      </div>
+      <!-- Points chip -->
+      <div style="flex-shrink:0;background:rgba(7,17,31,.88);backdrop-filter:blur(20px);
+        border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:9px 13px;
+        box-shadow:0 4px 14px rgba(0,0,0,.4);display:flex;align-items:center;gap:8px;">
+        <div style="font-size:16px;">⭐</div>
+        <div>
+          <div style="font-size:10px;color:#7a90a8;font-weight:600;text-transform:uppercase;letter-spacing:.4px;">Points</div>
+          <div id="home-points" style="font-size:13px;font-weight:700;color:#ffb020;font-family:'Syne',sans-serif;">0</div>
+        </div>
       </div>
     </div>
-    <div class="loyalty-right">
-      <div class="loyalty-next-label" id="loyalty-next">100 to Silver</div>
-      <div class="loyalty-mini-bar">
-        <div class="loyalty-mini-fill" id="loyalty-progress" style="width:0%"></div>
-      </div>
-    </div>
   </div>
 
-  <!-- Next booking -->
-  <div class="next-booking-strip hidden" id="next-booking-bar" onclick="openNextBookingQR()">
+  <!-- Next booking strip (floating) -->
+  <div class="next-booking-strip hidden" id="next-booking-bar" onclick="openNextBookingQR()"
+    style="position:absolute;left:14px;right:14px;top:200px;z-index:20;">
     <div class="next-icon">🚿</div>
     <div class="next-info">
       <div class="next-label">Upcoming Wash</div>
@@ -752,20 +771,25 @@ select option { background:var(--s1); }
     <div class="next-arrow">›</div>
   </div>
 
-  <!-- Map -->
-  <div class="map-section">
-    <div id="map"></div>
-    <div class="map-label" id="map-label">📍 Locating you...</div>
-  </div>
-
-  <!-- Wash points -->
-  <div class="wash-points">
-    <div class="section-title">Nearby Wash Points</div>
-    <div id="wash-points-list">
-      <div style="color:var(--muted);font-size:14px;padding:12px 0">Finding nearby locations...</div>
+  <!-- Bottom drawer -->
+  <div style="position:absolute;bottom:0;left:0;right:0;z-index:20;">
+    <div style="background:rgba(7,17,31,.94);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+      border-top:1px solid rgba(255,255,255,.07);border-radius:26px 26px 0 0;padding:10px 14px 100px;">
+      <div style="width:34px;height:4px;background:rgba(255,255,255,.15);border-radius:2px;margin:0 auto 12px;"></div>
+      <div class="section-title" style="margin-bottom:10px;">Nearby Wash Points</div>
+      <div id="wash-points-list" style="display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px;margin-bottom:14px;">
+        <div style="color:var(--muted);font-size:14px;padding:12px 0">Finding nearby locations...</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <button class="btn btn-gold" onclick="showScreen('plans')"
+          style="flex:1;padding:14px;font-size:14px;border-radius:16px;" id="home-cta-btn">Book a Wash →</button>
+        <div onclick="openNextBookingQR()"
+          style="width:48px;height:48px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);
+          border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;flex-shrink:0;">🔲</div>
+      </div>
     </div>
   </div>
-  <div style="height:90px"></div>
+
 </div>
 
 <!-- BOOK -->
@@ -945,7 +969,7 @@ select option { background:var(--s1); }
       <label>Car Type</label>
       <select id="car-type">
         <option value="">Select type</option>
-        <option value="Sedan">Sedan</option>
+        <option value="Saloon">Saloon</option>
         <option value="SUV">SUV</option>
         <option value="Pickup">Pickup</option>
         <option value="Van">Van</option>
@@ -988,19 +1012,11 @@ select option { background:var(--s1); }
       <div class="onboard-question">What type of car do you drive?</div>
       <div class="onboard-sub">This helps us match the right wash plan for your vehicle.</div>
       <div class="onboard-options">
-        <div class="onboard-option" data-step="1" data-value="Sedan" onclick="selectOption(this)">
+        <div class="onboard-option" data-step="1" data-value="Saloon" onclick="selectOption(this)">
           <div class="onboard-option-icon">🚗</div>
           <div class="onboard-option-text">
             <div class="onboard-option-title">Sedan / Saloon</div>
-            <div class="onboard-option-sub">Regular passenger car</div>
-          </div>
-          <div class="onboard-option-check"></div>
-        </div>
-        <div class="onboard-option" data-step="1" data-value="SUV" onclick="selectOption(this)">
-          <div class="onboard-option-icon">🚙</div>
-          <div class="onboard-option-text">
-            <div class="onboard-option-title">SUV / 4x4</div>
-            <div class="onboard-option-sub">Sport utility or off-road vehicle</div>
+            <div class="onboard-option-sub">Regular passenger car · KSh 300/wash</div>
           </div>
           <div class="onboard-option-check"></div>
         </div>
@@ -1008,7 +1024,15 @@ select option { background:var(--s1); }
           <div class="onboard-option-icon">🛻</div>
           <div class="onboard-option-text">
             <div class="onboard-option-title">Pickup / Van</div>
-            <div class="onboard-option-sub">Commercial or utility vehicle</div>
+            <div class="onboard-option-sub">Commercial or utility vehicle · KSh 350/wash</div>
+          </div>
+          <div class="onboard-option-check"></div>
+        </div>
+        <div class="onboard-option" data-step="1" data-value="SUV" onclick="selectOption(this)">
+          <div class="onboard-option-icon">🚙</div>
+          <div class="onboard-option-text">
+            <div class="onboard-option-title">SUV / 4x4</div>
+            <div class="onboard-option-sub">Sport utility or off-road · KSh 400/wash</div>
           </div>
           <div class="onboard-option-check"></div>
         </div>
@@ -1024,27 +1048,19 @@ select option { background:var(--s1); }
       <div class="onboard-question">How often do you wash your car?</div>
       <div class="onboard-sub">We'll recommend a credit plan that fits your routine.</div>
       <div class="onboard-options">
-        <div class="onboard-option" data-step="2" data-value="1" onclick="selectOption(this)">
+        <div class="onboard-option" data-step="2" data-value="3" onclick="selectOption(this)">
           <div class="onboard-option-icon">📅</div>
           <div class="onboard-option-text">
-            <div class="onboard-option-title">Once a week</div>
-            <div class="onboard-option-sub">Light plan — 2 credits</div>
+            <div class="onboard-option-title">3 times a week</div>
+            <div class="onboard-option-sub">Mon · Wed · Fri — steady routine</div>
           </div>
           <div class="onboard-option-check"></div>
         </div>
-        <div class="onboard-option" data-step="2" data-value="2" onclick="selectOption(this)">
-          <div class="onboard-option-icon">🔄</div>
-          <div class="onboard-option-text">
-            <div class="onboard-option-title">Twice a week</div>
-            <div class="onboard-option-sub">Standard plan — 4 credits</div>
-          </div>
-          <div class="onboard-option-check"></div>
-        </div>
-        <div class="onboard-option" data-step="2" data-value="3" onclick="selectOption(this)">
+        <div class="onboard-option" data-step="2" data-value="6" onclick="selectOption(this)">
           <div class="onboard-option-icon">⚡</div>
           <div class="onboard-option-text">
-            <div class="onboard-option-title">Almost every day</div>
-            <div class="onboard-option-sub">Standard plan — 4 credits</div>
+            <div class="onboard-option-title">6 times a week</div>
+            <div class="onboard-option-sub">Daily driver — ride-hailing or fleet</div>
           </div>
           <div class="onboard-option-check"></div>
         </div>
@@ -1198,10 +1214,12 @@ var SUPABASE_KEY = 'sb_publishable_N_g24aU7TLHLNeu72gnfeg_1d7OleFW';
 var SLOTS = ['7:00 AM','8:00 AM','9:00 AM','10:00 AM','11:00 AM','12:00 PM','1:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM'];
 
 var PLANS = [
-  { id: 'saloon-light',    name: 'Saloon Light',    price: 540,  credits: 2, car: 'Saloon', washes: '2 washes/week' },
-  { id: 'saloon-standard', name: 'Saloon Standard', price: 720,  credits: 4, car: 'Saloon', washes: '4 washes/week' },
-  { id: 'suv-light',       name: 'SUV Light',       price: 720,  credits: 2, car: 'SUV',    washes: '2 washes/week' },
-  { id: 'suv-standard',    name: 'SUV Standard',    price: 1080, credits: 4, car: 'SUV',    washes: '4 washes/week' }
+  { id: 'saloon-3x', name: 'Saloon 3x',  price: 810,  credits: 3, car: 'Saloon',  washes: '3 washes/week', basePrice: 300 },
+  { id: 'saloon-6x', name: 'Saloon 6x',  price: 1620, credits: 6, car: 'Saloon',  washes: '6 washes/week', basePrice: 300 },
+  { id: 'pickup-3x', name: 'Pickup 3x',  price: 945,  credits: 3, car: 'Pickup',  washes: '3 washes/week', basePrice: 350 },
+  { id: 'pickup-6x', name: 'Pickup 6x',  price: 1890, credits: 6, car: 'Pickup',  washes: '6 washes/week', basePrice: 350 },
+  { id: 'suv-3x',    name: 'SUV 3x',     price: 1080, credits: 3, car: 'SUV',     washes: '3 washes/week', basePrice: 400 },
+  { id: 'suv-6x',    name: 'SUV 6x',     price: 2160, credits: 6, car: 'SUV',     washes: '6 washes/week', basePrice: 400 }
 ];
 
 var EXTRAS = [
@@ -1380,24 +1398,7 @@ async function register() {
   setBtn('reg-btn', true, 'Create Account');
   try {
     var existing = await getUserByEmail(email);
-    if (existing) {
-      // Account exists — check if onboarding was completed
-      if (!existing.plan) {
-        // Orphaned account: created but never finished onboarding
-        // Verify password then route to onboarding
-        if (existing.password !== pass) {
-          err.textContent = 'Account exists but password is wrong. Please sign in instead.';
-          return;
-        }
-        currentUser = existing;
-        localStorage.setItem('splashpass_user', JSON.stringify(existing));
-        err.textContent = '';
-        startOnboarding();
-        return;
-      }
-      err.textContent = 'Account already exists. Please sign in.';
-      return;
-    }
+    if (existing) { err.textContent = 'Account already exists.'; return; }
     var opCheck = await sbFetch('operators?email=eq.' + encodeURIComponent(email) + '&select=email');
     if (opCheck && opCheck.length) { err.textContent = 'This email is registered as an operator account.'; return; }
     var result = await createUser({ name: name, email: email, phone: phone, password: pass, role: 'customer', sub_status: 'pending' });
@@ -1459,17 +1460,63 @@ function sortAndRenderPoints() {
   }).sort(function(a, b) { return a.dist - b.dist; });
 
   var container = document.getElementById('wash-points-list');
-  container.innerHTML = sorted.map(function(p) {
+  container.innerHTML = sorted.map(function(p, i) {
     var dist = p.dist < 1 ? Math.round(p.dist*1000)+'m' : p.dist.toFixed(1)+'km';
-    return '<div class="wash-point-card" onclick="bookPoint('+p.id+')">' +
-      '<div class="wash-point-icon">💧</div>' +
-      '<div class="wash-point-info">' +
-        '<div class="wash-point-name">'+p.name+'</div>' +
-        '<div class="wash-point-area">'+p.area+'</div>' +
-      '</div>' +
-      '<div class="wash-point-dist">'+dist+'</div>' +
+    var isFirst = i === 0;
+    return '<div onclick="showPointSheet('+p.id+')" style="' +
+      'flex-shrink:0;width:150px;' +
+      'background:'+(isFirst?'rgba(255,176,32,.08)':'rgba(255,255,255,.04)')+';' +
+      'border:1px solid '+(isFirst?'rgba(255,176,32,.35)':'rgba(255,255,255,.07)')+';' +
+      'border-radius:18px;padding:14px;cursor:pointer;">' +
+      '<div style="font-size:20px;margin-bottom:8px">💧</div>' +
+      '<div style="font-size:13px;font-weight:700;color:#f0f4f8;margin-bottom:2px">'+p.name+'</div>' +
+      '<div style="font-size:11px;color:#ffb020;font-weight:600">'+dist+' away</div>' +
+      '<div style="font-size:10px;color:#7a90a8;margin-top:1px">'+p.area+'</div>' +
     '</div>';
   }).join('');
+}
+
+// ── POINT BOTTOM SHEET ────────────────────────────
+function showPointSheet(pointId) {
+  var p = WASH_POINTS.find(function(w) { return w.id === pointId; });
+  if (!p) return;
+  selectedPoint = p;
+
+  var dist = distKm(userLat, userLng, p.lat, p.lng);
+  var distLabel = dist < 1 ? Math.round(dist*1000)+'m' : dist.toFixed(1)+'km';
+
+  // Remove existing sheet if any
+  var existing = document.getElementById('point-sheet-overlay');
+  if (existing) existing.remove();
+
+  var overlay = document.createElement('div');
+  overlay.id = 'point-sheet-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:200;display:flex;flex-direction:column;justify-content:flex-end;';
+  overlay.innerHTML =
+    '<div onclick="this.parentElement.remove()" style="flex:1"></div>' +
+    '<div style="background:rgba(7,17,31,.97);backdrop-filter:blur(24px);' +
+      'border-top:1px solid rgba(255,255,255,.07);border-radius:28px 28px 0 0;' +
+      'padding:14px 18px 48px;">' +
+      '<div style="width:36px;height:4px;background:rgba(255,255,255,.15);border-radius:2px;margin:0 auto 18px"></div>' +
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px">' +
+        '<div>' +
+          '<div style="font-size:21px;font-weight:800;font-family:Syne,sans-serif;color:#f0f4f8">'+p.name+'</div>' +
+          '<div style="font-size:13px;color:#ffb020;font-weight:600;margin-top:3px">📍 '+distLabel+' away · '+p.area+'</div>' +
+        '</div>' +
+        '<div style="background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.2);' +
+          'border-radius:100px;padding:5px 13px;font-size:11px;font-weight:700;color:#22c55e;">Open</div>' +
+      '</div>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px">' +
+        '<div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:100px;padding:5px 13px;font-size:11px;color:#7a90a8">💧 Exterior Wash</div>' +
+        '<div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:100px;padding:5px 13px;font-size:11px;color:#7a90a8">✨ Interior</div>' +
+        '<div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:100px;padding:5px 13px;font-size:11px;color:#7a90a8">🕐 7am – 6pm</div>' +
+      '</div>' +
+      '<button onclick="document.getElementById(\'point-sheet-overlay\').remove(); bookPoint('+p.id+')" ' +
+        'style="width:100%;background:linear-gradient(180deg,#ffd166,#ffb020);color:#07111f;border:none;' +
+        'border-radius:16px;padding:15px;font-family:Syne,sans-serif;font-weight:800;font-size:15px;' +
+        'cursor:pointer;box-shadow:0 8px 24px rgba(255,176,32,.3)">Book a Wash Here →</button>' +
+    '</div>';
+  document.body.appendChild(overlay);
 }
 
 // ── MAP ───────────────────────────────────────────
@@ -1695,59 +1742,60 @@ function renderHome() {
   var hour  = new Date().getHours();
   var greet = hour < 12 ? 'Good morning ☀️' : hour < 17 ? 'Good afternoon 👋' : 'Good evening 🌙';
   document.getElementById('home-greeting').textContent = greet;
-  document.getElementById('home-name').textContent = currentUser.name ? currentUser.name.split(' ')[0] : 'there';
+  var firstName = currentUser.name ? currentUser.name.split(' ')[0] : 'there';
+  document.getElementById('home-name').textContent = firstName;
 
-  var planEl   = document.getElementById('home-plan');
-  var subEl    = document.getElementById('home-plan-sub');
-  var badgeEl  = document.getElementById('home-badge');
-  var progWrap = document.getElementById('sub-progress-wrap');
-  var progFill = document.getElementById('sub-progress-fill');
-  var progLbl  = document.getElementById('sub-progress-label');
+  // Avatar initials
+  var initials = (currentUser.name || '?').split(' ').map(function(w){return w[0];}).join('').substring(0,2).toUpperCase();
+  var avatarEl = document.getElementById('home-avatar');
+  if (avatarEl) avatarEl.textContent = initials;
 
+  // Badge
+  var badgeEl = document.getElementById('home-badge');
   if (currentUser.plan && currentUser.sub_status === 'active') {
-    var plan = PLANS.find(function(p) { return p.name === currentUser.plan; });
-    var total = plan ? plan.credits : (currentUser.credits || 0);
-    var used  = total - (currentUser.credits || 0);
-    planEl.textContent  = currentUser.plan;
-    subEl.textContent   = 'KSh ' + currentUser.plan_price + '/week · Active';
-    badgeEl.textContent = 'Active';
-    badgeEl.className   = 'sub-badge badge-active';
-    progWrap.style.display = 'block';
-    progLbl.style.display  = 'flex';
-    progFill.style.width   = Math.min((used / total) * 100, 100) + '%';
-    document.getElementById('sub-credits-used').textContent  = used + ' used';
-    document.getElementById('sub-credits-total').textContent = total + ' total';
+    badgeEl.textContent = 'Active'; badgeEl.className = 'sub-badge badge-active';
   } else if (currentUser.plan && currentUser.sub_status === 'pending') {
-    planEl.textContent  = currentUser.plan;
-    subEl.textContent   = 'Payment pending · Tap to pay';
-    badgeEl.textContent = 'Pending';
-    badgeEl.className   = 'sub-badge badge-pending';
-    progWrap.style.display = 'none';
-    progLbl.style.display  = 'none';
+    badgeEl.textContent = 'Pending'; badgeEl.className = 'sub-badge badge-pending';
   } else {
-    planEl.textContent  = 'No active plan';
-    subEl.textContent   = 'Tap to subscribe';
-    badgeEl.textContent = 'Get Plan';
-    badgeEl.className   = 'sub-badge badge-none';
-    progWrap.style.display = 'none';
-    progLbl.style.display  = 'none';
+    badgeEl.textContent = 'Get Plan'; badgeEl.className = 'sub-badge badge-none';
   }
 
-  // Loyalty strip
-  var points  = currentUser.loyalty_points || 0;
-  var tier    = getTier(points);
-  var nextTier= LOYALTY_TIERS.find(function(t) { return t.min > points; });
-  document.getElementById('loyalty-icon').textContent       = tier.icon;
-  document.getElementById('loyalty-tier-name').textContent  = tier.name + ' Member';
-  document.getElementById('loyalty-points-text').textContent= points + ' points';
-  if (nextTier) {
-    var toNext   = nextTier.min - points;
-    var progress = ((points - tier.min) / (nextTier.min - tier.min)) * 100;
-    document.getElementById('loyalty-next').textContent = toNext + ' to ' + nextTier.name;
-    document.getElementById('loyalty-progress').style.width = Math.min(progress, 100) + '%';
-  } else {
-    document.getElementById('loyalty-next').textContent = 'Max tier reached!';
-    document.getElementById('loyalty-progress').style.width = '100%';
+  // Plan chip
+  var planEl = document.getElementById('home-plan');
+  if (planEl) planEl.textContent = currentUser.plan || 'No plan';
+
+  // Credits chip
+  var creditsEl = document.getElementById('home-credits');
+  var creditsBar = document.getElementById('home-credits-bar');
+  if (creditsEl) {
+    var plan = PLANS.find(function(p) { return p.name === currentUser.plan; });
+    var total = plan ? plan.credits : 0;
+    var left  = currentUser.credits || 0;
+    creditsEl.textContent = total ? left + ' / ' + total : '—';
+    if (creditsBar && total) creditsBar.style.width = Math.min((left / total) * 100, 100) + '%';
+  }
+
+  // Loyalty chip
+  var points   = currentUser.loyalty_points || 0;
+  var tier     = getTier(points);
+  var nextTier = LOYALTY_TIERS.find(function(t) { return t.min > points; });
+  var loyaltyIconEl = document.getElementById('home-loyalty-icon');
+  var loyaltyTierEl = document.getElementById('home-loyalty-tier');
+  var pointsEl      = document.getElementById('home-points');
+  if (loyaltyIconEl) loyaltyIconEl.textContent = tier.icon;
+  if (loyaltyTierEl) loyaltyTierEl.textContent = tier.name;
+  if (pointsEl)      pointsEl.textContent = points;
+
+  // CTA button
+  var ctaBtn = document.getElementById('home-cta-btn');
+  if (ctaBtn) {
+    if (currentUser.plan && currentUser.sub_status === 'active') {
+      ctaBtn.textContent = 'Book a Wash →';
+      ctaBtn.onclick = function() { showScreen('plans'); };
+    } else {
+      ctaBtn.textContent = 'Get a Plan →';
+      ctaBtn.onclick = function() { showScreen('plans'); };
+    }
   }
 }
 
@@ -1790,7 +1838,7 @@ function renderPlans() {
   if (!container) return;
   var html = '';
   PLANS.forEach(function(p) {
-    var isPopular = p.id === 'saloon-standard';
+    var isPopular = p.id === 'saloon-3x';
     html += '<div class="plan-card'+(isPopular?' popular':'')+'">';
     if (isPopular) html += '<div class="popular-badge">Most Popular</div>';
     html += '<div class="plan-name">'+p.name+'</div>';
@@ -1798,7 +1846,8 @@ function renderPlans() {
     html += '<ul class="plan-features">';
     html += '<li>'+p.washes+'</li>';
     html += '<li>'+p.car+' body wash included</li>';
-    html += '<li>Guaranteed slot booking</li>';
+    html += '<li>10% off walk-in price</li>';
+    html += '<li>Guaranteed slot — no queuing</li>';
     html += '<li>Digital wash pass + QR</li>';
     html += '<li>10 loyalty points per wash</li>';
     html += '</ul>';
@@ -1899,29 +1948,6 @@ async function triggerSTK() {
 // ── BOTTOM SHEET ─────────────────────────────────
 var sheetPoint = null;
 
-function showPointSheet(pointId) {
-  sheetPoint = WASH_POINTS.find(function(p) { return p.id === pointId; });
-  if (!sheetPoint) return;
-  var dist      = distKm(userLat, userLng, sheetPoint.lat, sheetPoint.lng);
-  var distLabel = dist < 1 ? Math.round(dist*1000)+'m away' : dist.toFixed(1)+'km away';
-  document.getElementById('sheet-name').textContent = sheetPoint.name;
-  document.getElementById('sheet-area').textContent = sheetPoint.area;
-  document.getElementById('sheet-dist').textContent = '📍 ' + distLabel;
-  document.getElementById('sheet-overlay').classList.add('show');
-  document.getElementById('bottom-sheet').classList.add('show');
-}
-
-function closeSheet() {
-  document.getElementById('sheet-overlay').classList.remove('show');
-  document.getElementById('bottom-sheet').classList.remove('show');
-  sheetPoint = null;
-}
-
-function bookFromSheet() {
-  var point = sheetPoint;
-  closeSheet();
-  if (point) bookPoint(point.id);
-}
 
 // ── CAR DETAILS ──────────────────────────────────
 async function saveCarDetails() {
@@ -2074,17 +2100,12 @@ function obBack(step) { obGoTo(step - 1); }
 
 function buildRecommendation() {
   var carType   = obAnswers.carType;
-  var frequency = parseInt(obAnswers.frequency);
+  var frequency = parseInt(obAnswers.frequency); // 3 or 6
   var profile   = obAnswers.profile;
 
-  var isHeavyUser = frequency >= 2 || profile === 'Ride-hailing' || profile === 'Company';
-  var isSUV = carType === 'SUV' || carType === 'Pickup';
-
-  var planId;
-  if (isSUV && isHeavyUser)  planId = 'suv-standard';
-  else if (isSUV)            planId = 'suv-light';
-  else if (isHeavyUser)      planId = 'saloon-standard';
-  else                       planId = 'saloon-light';
+  var carKey = carType === 'Saloon' ? 'saloon' : carType === 'Pickup' ? 'pickup' : 'suv';
+  var freqKey = frequency >= 6 ? '6x' : '3x';
+  var planId  = carKey + '-' + freqKey;
 
   var plan = PLANS.find(function(p) { return p.id === planId; });
 
@@ -2092,8 +2113,10 @@ function buildRecommendation() {
                      profile === 'Company'       ? 'company vehicles' :
                      profile === 'Family'        ? 'family cars' : 'personal drivers';
 
-  var whyText = 'Based on your ' + carType + ' and ' + (isHeavyUser ? 'frequent' : 'light') +
-                ' wash routine, this plan gives you the best value. Ideal for ' + profileLabel + '.';
+  var saving = Math.round(plan.basePrice * plan.credits * 0.1);
+  var whyText = 'KSh ' + plan.basePrice + '/wash × ' + plan.credits + ' washes = KSh ' +
+                (plan.basePrice * plan.credits).toLocaleString() + ' walk-in price. ' +
+                'You save KSh ' + saving + '/week with your SplashPass subscription. Ideal for ' + profileLabel + '.';
 
   document.getElementById('ob-reco-name').textContent  = plan.name;
   document.getElementById('ob-reco-price').innerHTML   = 'KSh ' + plan.price.toLocaleString() + '<span>/week</span>';
@@ -2102,11 +2125,13 @@ function buildRecommendation() {
     '<li>' + plan.washes + '</li>' +
     '<li>' + plan.car + ' body wash included</li>' +
     '<li>' + plan.credits + ' wash credits per week</li>' +
+    '<li>10% off walk-in price</li>' +
+    '<li>Guaranteed slot — no queuing</li>' +
     '<li>Digital wash pass + QR code</li>' +
     '<li>10 loyalty points per wash</li>';
 
   var firstName = currentUser && currentUser.name ? currentUser.name.split(' ')[0] : 'you';
-  document.getElementById('ob-reco-title').textContent = 'Perfect for your ' + carType.toLowerCase() + ', ' + firstName + '!';
+  document.getElementById('ob-reco-title').textContent = 'Perfect for your ' + carType + ', ' + firstName + '!';
 
   obAnswers.recommendedPlan = plan;
   saveOnboardingProfile();
