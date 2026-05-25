@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SplashPass Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 <style>
 :root {
   --navy: #0d1b2a;
@@ -40,6 +43,22 @@ label { display: block; font-size: 12px; color: var(--grey); margin-bottom: 6px;
 .login-icon { width: 40px; height: 40px; background: var(--gold); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; color: var(--navy); }
 .login-tag { font-size: 12px; color: var(--gold); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 24px; }
 
+/* 2FA OTP SCREEN */
+#screen-otp { display: none; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+.otp-card { background: var(--navy2); border-radius: 16px; padding: 40px; width: 100%; max-width: 400px; border: 1px solid var(--navy3); }
+.otp-header { text-align: center; margin-bottom: 32px; }
+.otp-icon { font-size: 48px; margin-bottom: 16px; }
+.otp-title { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+.otp-subtitle { font-size: 14px; color: var(--grey); }
+.otp-inputs { display: flex; gap: 8px; margin-bottom: 24px; justify-content: center; }
+.otp-input { width: 45px; height: 50px; background: var(--navy3); border: 1.5px solid var(--navy3); border-radius: 10px; color: var(--white); font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 800; text-align: center; outline: none; transition: border .2s; }
+.otp-input:focus { border-color: var(--gold); }
+.otp-timer { text-align: center; font-size: 13px; color: var(--grey); margin-bottom: 16px; }
+.otp-timer.warning { color: var(--danger); }
+#otp-error { color: var(--danger); font-size: 13px; margin-bottom: 16px; text-align: center; }
+.otp-actions { display: flex; gap: 10px; }
+.otp-actions button { flex: 1; }
+
 /* ADMIN */
 #screen-admin { display: none; }
 .admin-nav { background: var(--navy2); border-bottom: 1px solid var(--navy3); padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; }
@@ -47,7 +66,7 @@ label { display: block; font-size: 12px; color: var(--grey); margin-bottom: 6px;
 .admin-nav-icon { width: 32px; height: 32px; background: var(--gold); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 14px; color: var(--navy); }
 .admin-nav-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 800; }
 .admin-nav-tag { font-size: 11px; color: var(--gold); font-weight: 700; }
-.admin-body { max-width: 1000px; margin: 0 auto; padding: 32px 24px; }
+.admin-body { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
 .admin-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 32px; }
 .stat-card { background: var(--navy2); border-radius: 12px; padding: 20px; border: 1px solid var(--navy3); }
 .stat-num { font-size: 32px; font-weight: 800; color: var(--gold); font-family: 'Syne', sans-serif; }
@@ -55,6 +74,7 @@ label { display: block; font-size: 12px; color: var(--grey); margin-bottom: 6px;
 .section { background: var(--navy2); border-radius: 14px; padding: 24px; border: 1px solid var(--navy3); margin-bottom: 24px; }
 .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
 .section-title { font-size: 18px; font-weight: 800; }
+.chart-container { position: relative; height: 300px; margin-bottom: 24px; }
 .op-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
 .op-card { background: var(--navy3); border-radius: 12px; padding: 16px; border: 1px solid rgba(255,255,255,.05); }
 .op-card-name { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
@@ -88,9 +108,35 @@ label { display: block; font-size: 12px; color: var(--grey); margin-bottom: 6px;
       </div>
     </div>
     <div class="login-tag">Admin Panel</div>
-    <div class="form-group"><label>Admin Password</label><input type="password" id="admin-pass" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')adminLogin()"></div>
+    <div class="form-group"><label>Admin Email</label><input type="email" id="admin-email" placeholder="admin@splashpass.co.ke"></div>
+    <div class="form-group"><label>Password</label><input type="password" id="admin-pass" placeholder="Enter password" onkeydown="if(event.key==='Enter')adminLogin()"></div>
     <div id="admin-error" class="form-error"></div>
     <button class="btn btn-gold btn-full" id="admin-login-btn" onclick="adminLogin()">Access Admin Panel</button>
+  </div>
+</div>
+
+<!-- 2FA OTP SCREEN -->
+<div id="screen-otp">
+  <div class="otp-card">
+    <div class="otp-header">
+      <div class="otp-icon">🔐</div>
+      <div class="otp-title">Two-Factor Authentication</div>
+      <div class="otp-subtitle">Enter the 6-digit code sent to your email</div>
+    </div>
+    <div class="otp-inputs" id="otp-inputs-container">
+      <input type="text" class="otp-input" maxlength="1" inputmode="numeric" onkeyup="handleOtpInput(this, 0)">
+      <input type="text" class="otp-input" maxlength="1" inputmode="numeric" onkeyup="handleOtpInput(this, 1)">
+      <input type="text" class="otp-input" maxlength="1" inputmode="numeric" onkeyup="handleOtpInput(this, 2)">
+      <input type="text" class="otp-input" maxlength="1" inputmode="numeric" onkeyup="handleOtpInput(this, 3)">
+      <input type="text" class="otp-input" maxlength="1" inputmode="numeric" onkeyup="handleOtpInput(this, 4)">
+      <input type="text" class="otp-input" maxlength="1" inputmode="numeric" onkeyup="handleOtpInput(this, 5)">
+    </div>
+    <div class="otp-timer" id="otp-timer">Code expires in: <span id="timer-seconds">60</span>s</div>
+    <div id="otp-error" class="form-error"></div>
+    <div class="otp-actions">
+      <button class="btn btn-gold" id="verify-otp-btn" onclick="verifyOTP()" style="flex:1">Verify Code</button>
+      <button class="btn btn-outline" onclick="cancelOTP()" style="flex:1">Back</button>
+    </div>
   </div>
 </div>
 
@@ -113,6 +159,21 @@ label { display: block; font-size: 12px; color: var(--grey); margin-bottom: 6px;
       <div class="stat-card"><div class="stat-num" id="stat-subscribers">0</div><div class="stat-label">Subscribers</div></div>
       <div class="stat-card"><div class="stat-num" id="stat-bookings">0</div><div class="stat-label">Total Bookings</div></div>
       <div class="stat-card"><div class="stat-num" id="stat-revenue" style="font-size:20px">KSh 0</div><div class="stat-label">Est. Revenue</div></div>
+    </div>
+
+    <!-- REVENUE TRACKER -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">Revenue Tracker</div>
+        <select id="revenue-period" onchange="updateRevenueChart()" style="width: 150px; padding: 8px 12px; font-size: 13px;">
+          <option value="7days">Last 7 Days</option>
+          <option value="30days">Last 30 Days</option>
+          <option value="90days">Last 90 Days</option>
+        </select>
+      </div>
+      <div class="chart-container">
+        <canvas id="revenueChart"></canvas>
+      </div>
     </div>
 
     <!-- OPERATORS -->
@@ -174,27 +235,27 @@ label { display: block; font-size: 12px; color: var(--grey); margin-bottom: 6px;
 <div id="toast"></div>
 
 <script>
+// Supabase Config
 var SUPABASE_URL = 'https://msdvyiqjoogafzyaoycg.supabase.co';
 var SUPABASE_KEY = 'sb_publishable_N_g24aU7TLHLNeu72gnfeg_1d7OleFW';
-var ADMIN_PASSWORD = 'Letmelive3!!';
 
-async function sbFetch(path, options) {
-  options = options || {};
-  var res = await fetch(SUPABASE_URL + '/rest/v1/' + path, Object.assign({}, options, {
-    headers: Object.assign({
-      'apikey': SUPABASE_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_KEY,
-      'Content-Type': 'application/json',
-      'Prefer': options.prefer || 'return=representation'
-    }, options.headers || {})
-  }));
-  if (!res.ok) {
-    var err = await res.json().catch(function() { return {}; });
-    throw new Error(err.message || 'Request failed');
-  }
-  var text = await res.text();
-  return text ? JSON.parse(text) : null;
-}
+// EmailJS Config
+var EMAILJS_SERVICE_ID = 'service_cv3llnb';
+var EMAILJS_TEMPLATE_ID = 'template_rciorsr';
+var EMAILJS_PUBLIC_KEY = 'wsqNpybwN5UxgOAIC';
+
+// Initialize Supabase
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// State
+var CURRENT_OTP = null;
+var revenueChart = null;
+var ALL_BOOKINGS = [];
+
+// Initialize EmailJS
+(function() {
+  emailjs.init(EMAILJS_PUBLIC_KEY);
+})();
 
 function toast(msg, isError) {
   var t = document.getElementById('toast');
@@ -203,6 +264,7 @@ function toast(msg, isError) {
   t.classList.add('show');
   setTimeout(function() { t.classList.remove('show'); }, 3500);
 }
+
 function setBtn(id, loading, label) {
   var b = document.getElementById(id);
   if (!b) return;
@@ -210,65 +272,246 @@ function setBtn(id, loading, label) {
   b.textContent = loading ? 'Please wait...' : label;
 }
 
-// ── AUTH ─────────────────────────────────────────
-function adminLogin() {
-  var pass = document.getElementById('admin-pass').value;
-  var err = document.getElementById('admin-error');
-  if (pass !== ADMIN_PASSWORD) { err.textContent = 'Incorrect password.'; return; }
-  document.getElementById('screen-login').style.display = 'none';
+// ── 2FA OTP FUNCTIONS ─────────────────────────────
+function generateOTP() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+var timerInterval;
+function startOTPTimer() {
+  var seconds = 60;
+  var timerEl = document.getElementById('timer-seconds');
+  var timerContainer = document.getElementById('otp-timer');
+  clearInterval(timerInterval);
+  
+  timerInterval = setInterval(function() {
+    seconds--;
+    timerEl.textContent = seconds;
+    if (seconds <= 10) timerContainer.classList.add('warning');
+    if (seconds <= 0) {
+      clearInterval(timerInterval);
+      document.getElementById('verify-otp-btn').disabled = true;
+      document.getElementById('otp-error').textContent = 'Code expired. Please try again.';
+    }
+  }, 1000);
+}
+
+function handleOtpInput(input, index) {
+  if (input.value && /[0-9]/.test(input.value)) {
+    input.value = input.value[0];
+    var inputs = document.querySelectorAll('.otp-input');
+    if (index < 5) inputs[index + 1].focus();
+  } else if (input.value && !/[0-9]/.test(input.value)) {
+    input.value = '';
+  }
+  if (event.key === 'Backspace' && !input.value && index > 0) {
+    document.querySelectorAll('.otp-input')[index - 1].focus();
+  }
+}
+
+function getOTPValue() {
+  var otp = '';
+  document.querySelectorAll('.otp-input').forEach(input => otp += input.value);
+  return otp;
+}
+
+async function sendOTPEmail(otp, email) {
+  try {
+    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      otp: otp,
+      to_email: email
+    });
+    toast('Login code sent to your email!');
+  } catch(e) {
+    console.error('EmailJS Error:', e);
+    toast('Failed to send email. Check console.', true);
+  }
+}
+
+function verifyOTP() {
+  var enteredOtp = getOTPValue();
+  var errorEl = document.getElementById('otp-error');
+  if (enteredOtp.length !== 6) { errorEl.textContent = 'Enter all 6 digits.'; return; }
+  if (enteredOtp !== CURRENT_OTP) { errorEl.textContent = 'Incorrect code.'; return; }
+  
+  document.getElementById('screen-otp').style.display = 'none';
   document.getElementById('screen-admin').style.display = 'block';
   loadData();
 }
-function adminLogout() {
+
+function clearOTPInputs() {
+  document.querySelectorAll('.otp-input').forEach(input => input.value = '');
+  document.getElementById('otp-error').textContent = '';
+  document.getElementById('otp-timer').classList.remove('warning');
+  document.getElementById('timer-seconds').textContent = '60';
+  document.getElementById('verify-otp-btn').disabled = false;
+}
+
+function cancelOTP() {
+  document.getElementById('screen-otp').style.display = 'none';
+  document.getElementById('screen-login').style.display = 'flex';
+  clearInterval(timerInterval);
+}
+
+// ── AUTH ─────────────────────────────────────────
+async function adminLogin() {
+  var email = document.getElementById('admin-email').value;
+  var pass = document.getElementById('admin-pass').value;
+  var err = document.getElementById('admin-error');
+  
+  if (!email || !pass) { err.textContent = 'Enter email and password.'; return; }
+  
+  setBtn('admin-login-btn', true, 'Verifying...');
+  
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: email,
+    password: pass,
+  });
+
+  if (error) {
+    err.textContent = 'Login failed: ' + error.message;
+    setBtn('admin-login-btn', false, 'Access Admin Panel');
+    return;
+  }
+  
+  // Successful Supabase Login -> Trigger 2FA
+  CURRENT_OTP = generateOTP();
+  document.getElementById('screen-login').style.display = 'none';
+  document.getElementById('screen-otp').style.display = 'flex';
+  clearOTPInputs();
+  startOTPTimer();
+  sendOTPEmail(CURRENT_OTP, email);
+  document.querySelectorAll('.otp-input')[0].focus();
+  setBtn('admin-login-btn', false, 'Access Admin Panel');
+}
+
+async function adminLogout() {
+  await supabase.auth.signOut();
   document.getElementById('screen-login').style.display = 'flex';
   document.getElementById('screen-admin').style.display = 'none';
   document.getElementById('admin-pass').value = '';
 }
 
+// ── REVENUE CHART ────────────────────────────────
+function processRevenueData(bookings, period) {
+  var days = period === '7days' ? 7 : (period === '30days' ? 30 : 90);
+  var dailyMap = {};
+  var labels = [];
+  var data = [];
+
+  for (var i = days - 1; i >= 0; i--) {
+    var d = new Date();
+    d.setDate(d.getDate() - i);
+    var key = d.toISOString().split('T')[0];
+    dailyMap[key] = 0;
+    labels.push((d.getMonth() + 1) + '/' + d.getDate());
+  }
+
+  bookings.forEach(b => {
+    var bDate = b.created_at.split('T')[0];
+    if (dailyMap[bDate] !== undefined) {
+      dailyMap[bDate] += parseFloat(b.price || b.amount || 0);
+    }
+  });
+
+  Object.keys(dailyMap).sort().forEach(key => data.push(dailyMap[key]));
+  return { labels, data };
+}
+
+function updateRevenueChart() {
+  var period = document.getElementById('revenue-period').value;
+  var chartData = processRevenueData(ALL_BOOKINGS, period);
+  if (revenueChart) {
+    revenueChart.data.labels = chartData.labels;
+    revenueChart.data.datasets[0].data = chartData.data;
+    revenueChart.update();
+  }
+}
+
+function initRevenueChart() {
+  var ctx = document.getElementById('revenueChart');
+  if (!ctx) return;
+  var chartData = processRevenueData(ALL_BOOKINGS, '7days');
+  if (revenueChart) revenueChart.destroy();
+  revenueChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: chartData.labels,
+      datasets: [{
+        label: 'Daily Revenue (KSh)',
+        data: chartData.data,
+        borderColor: '#f5a623',
+        backgroundColor: 'rgba(245, 166, 35, 0.1)',
+        borderWidth: 2,
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: '#f5a623'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#f0f4f8' } } },
+      scales: {
+        y: { beginAtZero: true, ticks: { color: '#8a9bb0' }, grid: { color: '#1e3050' } },
+        x: { ticks: { color: '#8a9bb0' }, grid: { color: '#1e3050' } }
+      }
+    }
+  });
+}
+
 // ── DATA ─────────────────────────────────────────
 async function loadData() {
   try {
-    var operators = await sbFetch('operators?select=*&order=created_at.desc');
-    var subscribers = await sbFetch('profiles?select=*&order=created_at.desc');
-    var bookings = await sbFetch('bookings?select=*');
+    const { data: operators, error: opError } = await supabase.from('operators').select('*').order('created_at', { ascending: false });
+    const { data: subscribers, error: subError } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
+    const { data: bookings, error: bookError } = await supabase.from('bookings').select('*');
+
+    if (opError || subError || bookError) throw new Error("Data loading failed. Ensure RLS is configured.");
+
+    ALL_BOOKINGS = bookings;
 
     document.getElementById('stat-operators').textContent = operators.length;
     document.getElementById('stat-subscribers').textContent = subscribers.length;
-    document.getElementById('stat-bookings').textContent = bookings.length;
-    var rev = subscribers.reduce(function(s,u) { return s + (u.plan_price ? parseInt(u.plan_price)*4 : 0); }, 0);
-    document.getElementById('stat-revenue').textContent = 'KSh ' + rev.toLocaleString();
+    document.getElementById('stat-bookings').textContent = ALL_BOOKINGS.length;
+    
+    var totalRev = ALL_BOOKINGS.reduce((s, b) => s + parseFloat(b.price || b.amount || 0), 0);
+    document.getElementById('stat-revenue').textContent = 'KSh ' + totalRev.toLocaleString();
 
     renderOperators(operators);
     renderSubscribers(subscribers);
+    initRevenueChart();
   } catch(e) { toast('Error loading data: ' + e.message, true); }
 }
 
 function renderOperators(operators) {
   var grid = document.getElementById('operators-grid');
-  if (!operators.length) { grid.innerHTML = '<div style="color:var(--grey);font-size:14px">No operators yet. Add one above.</div>'; return; }
-  grid.innerHTML = operators.map(function(op) {
-    return '<div class="op-card">' +
-      '<div class="op-card-name">' + (op.full_name || op.name || '—') + '</div>' +
-      '<div class="op-card-email">' + op.email + '</div>' +
-      '<div class="op-card-point">📍 ' + op.wash_point + '</div>' +
-      '<button class="btn btn-danger" style="padding:6px 14px;font-size:12px" onclick="deleteOperator(\'' + op.id + '\')">Remove</button>' +
-    '</div>';
-  }).join('');
+  if (!operators.length) { grid.innerHTML = '<div style="color:var(--grey);font-size:14px">No operators yet.</div>'; return; }
+  grid.innerHTML = operators.map(op => `
+    <div class="op-card">
+      <div class="op-card-name">${op.full_name || op.name || '—'}</div>
+      <div class="op-card-email">${op.email}</div>
+      <div class="op-card-point">📍 ${op.wash_point}</div>
+      <button class="btn btn-danger" style="padding:6px 14px;font-size:12px;margin-top:10px" onclick="deleteOperator('${op.id}')">Remove</button>
+    </div>
+  `).join('');
 }
 
 function renderSubscribers(subs) {
   var tbody = document.getElementById('subs-table-body');
-  if (!subs.length) { tbody.innerHTML = '<tr><td colspan="6" style="color:var(--grey);text-align:center;padding:20px">No subscribers yet</td></tr>'; return; }
-  tbody.innerHTML = subs.map(function(u) {
+  if (!subs.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px">No subscribers.</td></tr>'; return; }
+  tbody.innerHTML = subs.map(u => {
     var badgeCls = u.sub_status === 'active' ? 'badge-active' : 'badge-pending';
-    return '<tr>' +
-      '<td>' + (u.name || '—') + '</td>' +
-      '<td>' + (u.phone || '—') + '</td>' +
-      '<td>' + (u.plan || '—') + '</td>' +
-      '<td style="color:var(--gold);font-weight:700">' + (u.plan === 'Fleet' ? '∞' : (u.credits || 0)) + '</td>' +
-      '<td><span class="status-badge ' + badgeCls + '">' + (u.sub_status || 'pending') + '</span></td>' +
-      '<td style="font-weight:700;letter-spacing:1px">' + (u.plate || '—') + '</td>' +
-    '</tr>';
+    return `
+      <tr>
+        <td>${u.name || '—'}</td>
+        <td>${u.phone || '—'}</td>
+        <td>${u.plan || '—'}</td>
+        <td style="color:var(--gold);font-weight:700">${u.plan === 'Fleet' ? '∞' : (u.credits || 0)}</td>
+        <td><span class="status-badge ${badgeCls}">${u.sub_status || 'pending'}</span></td>
+        <td style="font-weight:700;letter-spacing:1px">${u.plate || '—'}</td>
+      </tr>
+    `;
   }).join('');
 }
 
@@ -280,7 +523,6 @@ function hideCreateModal() {
   document.getElementById('new-op-email').value = '';
   document.getElementById('new-op-pass').value = '';
   document.getElementById('new-op-point').value = '';
-  document.getElementById('create-error').textContent = '';
 }
 
 async function createOperator() {
@@ -289,17 +531,12 @@ async function createOperator() {
   var pass = document.getElementById('new-op-pass').value;
   var point = document.getElementById('new-op-point').value;
   var err = document.getElementById('create-error');
-  if (!name || !email || !pass || !point) { err.textContent = 'Please fill in all fields.'; return; }
+  if (!name || !email || !pass || !point) { err.textContent = 'Fill in all fields.'; return; }
   setBtn('create-btn', true, 'Create Operator');
   try {
-    // Block if email already exists as a customer
-    var custCheck = await sbFetch('profiles?email=eq.' + encodeURIComponent(email) + '&select=email');
-    if (custCheck && custCheck.length) { err.textContent = 'This email is already registered as a customer account.'; return; }
-    // Block if email already exists as an operator
-    var opCheck = await sbFetch('operators?email=eq.' + encodeURIComponent(email) + '&select=email');
-    if (opCheck && opCheck.length) { err.textContent = 'An operator with this email already exists.'; return; }
-    await sbFetch('operators', { method: 'POST', body: JSON.stringify({ name: name, email: email, password: pass, wash_point: point }), prefer: 'return=representation' });
-    toast('Operator created successfully!');
+    const { error } = await supabase.from('operators').insert([{ name, email, password: pass, wash_point: point }]);
+    if (error) throw error;
+    toast('Operator created!');
     hideCreateModal();
     loadData();
   } catch(e) { err.textContent = 'Error: ' + e.message; }
@@ -307,9 +544,10 @@ async function createOperator() {
 }
 
 async function deleteOperator(id) {
-  if (!confirm('Remove this operator? They will lose access immediately.')) return;
+  if (!confirm('Remove this operator?')) return;
   try {
-    await sbFetch('operators?id=eq.' + id, { method: 'DELETE', prefer: 'return=minimal' });
+    const { error } = await supabase.from('operators').delete().eq('id', id);
+    if (error) throw error;
     toast('Operator removed.');
     loadData();
   } catch(e) { toast('Error: ' + e.message, true); }
