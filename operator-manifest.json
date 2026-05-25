@@ -1,0 +1,33 @@
+{
+  "name": "SplashPass Ops",
+  "short_name": "SP Ops",
+  "description": "SplashPass Operator Console — manage bookings and wash point status",
+  "start_url": "/operator.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#07111f",
+  "theme_color": "#07111f",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "utilities"],
+  "lang": "en"
+}
