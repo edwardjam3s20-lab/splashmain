@@ -1651,6 +1651,13 @@ async function confirmBooking() {
     var extrasData = selectedExtras.map(function(id) {
       return EXTRAS.find(function(e) { return e.id === id; });
     }).filter(Boolean);
+
+    // Calculate wash amount based on car type
+    var carType = currentUser.car_type || 'Saloon';
+    var basePrice = carType === 'SUV' ? 440 : carType === 'Pickup' ? 385 : 330;
+    var grossAmount = basePrice;
+    var operatorAmount = Math.round(grossAmount * 0.8);
+
     var booking = await createBooking({
       user_email: currentUser.email,
       user_name:  currentUser.name,
@@ -1658,7 +1665,11 @@ async function confirmBooking() {
       location: selectedPoint.name,
       status: 'confirmed',
       plan: currentUser.plan,
-      extras: extrasData
+      extras: extrasData,
+      car_type: carType,
+      amount: grossAmount,
+      operator_amount: operatorAmount,
+      booking_type: 'subscription'
     });
     var b = booking[0];
     var newCredits  = currentUser.credits - totalCredits;

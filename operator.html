@@ -485,6 +485,38 @@ select option { background:var(--s1); }
     </div>
   </div>
 
+  <!-- Revenue summary -->
+  <div style="padding:0 16px 14px;">
+    <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;font-weight:600;margin-bottom:10px;">Your Earnings (after 20% commission)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+
+      <div style="background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.15);border-radius:18px;padding:14px 10px;text-align:center;">
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px;">Today</div>
+        <div id="rev-today" style="font-size:18px;font-weight:800;color:#22c55e;font-family:'Syne',sans-serif;line-height:1;">—</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:3px;">KSh</div>
+      </div>
+
+      <div style="background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.15);border-radius:18px;padding:14px 10px;text-align:center;">
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px;">This Week</div>
+        <div id="rev-week" style="font-size:18px;font-weight:800;color:#22c55e;font-family:'Syne',sans-serif;line-height:1;">—</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:3px;">KSh</div>
+      </div>
+
+      <div style="background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.15);border-radius:18px;padding:14px 10px;text-align:center;">
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px;">This Month</div>
+        <div id="rev-month" style="font-size:18px;font-weight:800;color:#22c55e;font-family:'Syne',sans-serif;line-height:1;">—</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:3px;">KSh</div>
+      </div>
+
+    </div>
+
+    <!-- Commission note -->
+    <div style="margin-top:8px;background:rgba(255,176,32,.06);border:1px solid rgba(255,176,32,.12);border-radius:12px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;">
+      <div style="font-size:12px;color:var(--muted);">SplashPass commission (20%)</div>
+      <div id="rev-commission" style="font-size:13px;font-weight:700;color:var(--gold);">KSh —</div>
+    </div>
+  </div>
+
   <!-- Quick actions -->
   <div class="action-row">
     <div class="action-card primary" onclick="showScreen('scan')">
@@ -596,6 +628,29 @@ async function getOperatorByEmail(email) {
 async function getTodayBookings(washPoint) {
   var today = new Date().toISOString().split('T')[0];
   return await sbFetch('bookings?date=eq.' + today + '&location=eq.' + encodeURIComponent(washPoint) + '&select=*&order=time.asc');
+}
+
+async function getWeekBookings(washPoint) {
+  var today = new Date();
+  var weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate() - 6);
+  var from = weekAgo.toISOString().split('T')[0];
+  var to   = today.toISOString().split('T')[0];
+  return await sbFetch('bookings?date=gte.' + from + '&date=lte.' + to +
+    '&location=eq.' + encodeURIComponent(washPoint) + '&status=eq.completed&select=*');
+}
+
+async function getMonthBookings(washPoint) {
+  var today = new Date();
+  var from  = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+  var to    = today.toISOString().split('T')[0];
+  return await sbFetch('bookings?date=gte.' + from + '&date=lte.' + to +
+    '&location=eq.' + encodeURIComponent(washPoint) + '&status=eq.completed&select=*');
+}
+
+function sumRevenue(bookings) {
+  return (bookings || []).reduce(function(total, b) {
+    return total + (b.operator_amount || 0);
+  }, 0);
 }
 
 async function getBookingsByPlate(plate) {
@@ -746,10 +801,19 @@ async function renderHome() {
   // Status UI
   updateStatusUI();
 
-  // Load bookings
+  // Load today's bookings + revenue in parallel
   try {
-    var bookings = await getTodayBookings(currentOperator.wash_point);
-    bookings = bookings || [];
+    var [bookings, weekBookings, monthBookings] = await Promise.all([
+      getTodayBookings(currentOperator.wash_point),
+      getWeekBookings(currentOperator.wash_point),
+      getMonthBookings(currentOperator.wash_point)
+    ]);
+
+    bookings      = bookings || [];
+    weekBookings  = weekBookings || [];
+    monthBookings = monthBookings || [];
+
+    // Booking stats
     var done    = bookings.filter(function(b) { return b.status === 'completed'; });
     var pending = bookings.filter(function(b) { return b.status !== 'completed'; });
 
@@ -759,8 +823,20 @@ async function renderHome() {
     document.getElementById('queue-count').textContent  =
       bookings.length + ' booking' + (bookings.length !== 1 ? 's' : '');
 
+    // Revenue
+    var todayRev  = sumRevenue(done);
+    var weekRev   = sumRevenue(weekBookings);
+    var monthRev  = sumRevenue(monthBookings);
+    var todayGross = done.reduce(function(t, b) { return t + (b.amount || 0); }, 0);
+    var commission = todayGross - todayRev;
+
+    document.getElementById('rev-today').textContent      = todayRev.toLocaleString();
+    document.getElementById('rev-week').textContent       = weekRev.toLocaleString();
+    document.getElementById('rev-month').textContent      = monthRev.toLocaleString();
+    document.getElementById('rev-commission').textContent = 'KSh ' + commission.toLocaleString();
+
     renderQueue(bookings);
-  } catch(e) { toast('Error loading bookings: ' + e.message, true); }
+  } catch(e) { toast('Error loading dashboard: ' + e.message, true); }
 }
 
 function renderQueue(bookings) {
