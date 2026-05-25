@@ -1288,6 +1288,15 @@ async function getUserByEmail(email) {
   var rows = await sbFetch('profiles?email=eq.' + encodeURIComponent(email) + '&select=*');
   return rows && rows[0] ? rows[0] : null;
 }
+
+async function fetchOperatorStatuses() {
+  try {
+    var ops = await sbFetch('operators?select=wash_point,status');
+    var map = {};
+    (ops || []).forEach(function(o) { map[o.wash_point] = o.status; });
+    return map;
+  } catch(e) { return {}; }
+}
 async function createUser(data) {
   return await sbFetch('profiles', { method: 'POST', body: JSON.stringify(data), prefer: 'return=representation' });
 }
@@ -1454,26 +1463,35 @@ function distKm(lat1, lng1, lat2, lng2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
-function sortAndRenderPoints() {
+async function sortAndRenderPoints() {
+  var statuses = await fetchOperatorStatuses();
   var sorted = WASH_POINTS.map(function(p) {
-    return Object.assign({}, p, { dist: distKm(userLat, userLng, p.lat, p.lng) });
+    return Object.assign({}, p, {
+      dist: distKm(userLat, userLng, p.lat, p.lng),
+      status: statuses[p.name] || 'open'
+    });
   }).sort(function(a, b) { return a.dist - b.dist; });
 
   var container = document.getElementById('wash-points-list');
   container.innerHTML = sorted.map(function(p, i) {
-    var dist = p.dist < 1 ? Math.round(p.dist*1000)+'m' : p.dist.toFixed(1)+'km';
-    var isFirst = i === 0;
-    return '<div onclick="showPointSheet('+p.id+')" style="' +
+    var dist    = p.dist < 1 ? Math.round(p.dist*1000)+'m' : p.dist.toFixed(1)+'km';
+    var isPaused = p.status === 'paused';
+    var isFirst = i === 0 && !isPaused;
+    return '<div onclick="' + (isPaused ? '' : 'showPointSheet('+p.id+')') + '" style="' +
       'flex-shrink:0;width:150px;' +
+      'opacity:'+(isPaused?'.45':'1')+';' +
       'background:'+(isFirst?'rgba(255,176,32,.08)':'rgba(255,255,255,.04)')+';' +
-      'border:1px solid '+(isFirst?'rgba(255,176,32,.35)':'rgba(255,255,255,.07)')+';' +
-      'border-radius:18px;padding:14px;cursor:pointer;">' +
-      '<div style="font-size:20px;margin-bottom:8px">💧</div>' +
+      'border:1px solid '+(isPaused?'rgba(255,255,255,.04)':(isFirst?'rgba(255,176,32,.35)':'rgba(255,255,255,.07)'))+';' +
+      'border-radius:18px;padding:14px;cursor:'+(isPaused?'default':'pointer')+';">' +
+      '<div style="font-size:20px;margin-bottom:8px">' + (isPaused ? '🔴' : '💧') + '</div>' +
       '<div style="font-size:13px;font-weight:700;color:#f0f4f8;margin-bottom:2px">'+p.name+'</div>' +
-      '<div style="font-size:11px;color:#ffb020;font-weight:600">'+dist+' away</div>' +
+      '<div style="font-size:11px;color:'+(isPaused?'#ef4444':'#ffb020')+';font-weight:600">'+(isPaused?'Temporarily closed':dist+' away')+'</div>' +
       '<div style="font-size:10px;color:#7a90a8;margin-top:1px">'+p.area+'</div>' +
     '</div>';
   }).join('');
+
+  // Also update map markers
+  renderMapMarkers(sorted);
 }
 
 // ── POINT BOTTOM SHEET ────────────────────────────
@@ -1520,6 +1538,28 @@ function showPointSheet(pointId) {
 }
 
 // ── MAP ───────────────────────────────────────────
+var mapStatuses = {};
+
+function renderMapMarkers(sortedPoints) {
+  if (!mapInstance) return;
+  // Remove existing wash point markers and re-add with status
+  sortedPoints.forEach(function(p) {
+    var dist = p.dist < 1 ? Math.round(p.dist*1000)+'m' : p.dist.toFixed(1)+'km';
+    var isPaused = p.status === 'paused';
+    var markerHtml = '<div onclick="'+(isPaused?'':('showPointSheet('+p.id+')'))+'" style="' +
+      'background:'+(isPaused?'rgba(239,68,68,.15)':'#0f1d30')+';' +
+      'border:1.5px solid '+(isPaused?'#ef4444':'#ffb020')+';border-radius:20px;' +
+      'padding:6px 11px;display:flex;align-items:center;gap:5px;' +
+      'opacity:'+(isPaused?'.6':'1')+';' +
+      'box-shadow:0 4px 14px rgba(0,0,0,.5);cursor:'+(isPaused?'default':'pointer')+';white-space:nowrap;' +
+      'font-family:DM Sans,sans-serif;font-size:12px;font-weight:600;color:white">' +
+      '<span style="font-size:13px">'+(isPaused?'🔴':'💧')+'</span>' +
+      '<span>'+(isPaused?'Closed':dist)+'</span></div>';
+    var icon = L.divIcon({ html: markerHtml, iconAnchor:[40,20], className:'' });
+    L.marker([p.lat, p.lng], { icon: icon }).addTo(mapInstance);
+  });
+}
+
 function initMap() {
   if (mapInstance) { mapInstance.remove(); mapInstance = null; }
   mapInstance = L.map('map', { zoomControl:false, attributionControl:false }).setView([userLat, userLng], 14);
@@ -1534,6 +1574,7 @@ function initMap() {
   var userIcon = L.divIcon({ html: pulseHtml, iconSize:[20,20], iconAnchor:[10,10], className:'' });
   L.marker([userLat, userLng], { icon: userIcon }).addTo(mapInstance);
 
+  // Initial markers — statuses loaded by sortAndRenderPoints
   WASH_POINTS.forEach(function(p) {
     var dist = distKm(userLat, userLng, p.lat, p.lng);
     var distLabel = dist < 1 ? Math.round(dist*1000)+'m' : dist.toFixed(1)+'km';
@@ -1551,41 +1592,105 @@ function initMap() {
 // ── BOOKING ───────────────────────────────────────
 function bookPoint(pointId) {
   if (!currentUser) { showScreen('auth'); return; }
-  if (!currentUser.plan || currentUser.sub_status !== 'active') {
-    toast('Please subscribe first to book a wash.');
-    showScreen('plans');
-    return;
-  }
   selectedPoint = WASH_POINTS.find(function(p) { return p.id === pointId; });
   if (!selectedPoint) return;
-  document.getElementById('book-point-name').textContent = selectedPoint.name;
-  document.getElementById('book-point-area').textContent = selectedPoint.area;
-  var today = new Date().toISOString().split('T')[0];
-  document.getElementById('book-date').min = today;
-  document.getElementById('book-date').value = today;
-  selectedSlot = null;
+
+  var hasActivePlan = currentUser.plan && currentUser.sub_status === 'active' && currentUser.credits > 0;
+
+  if (hasActivePlan) {
+    // Subscriber flow — go straight to booking
+    showScreen('booking');
+    loadSlots();
+    updateBookingTotal();
+  } else {
+    // No active plan — offer guest wash
+    showGuestWashPrompt(pointId);
+  }
+}
+
+function showGuestWashPrompt(pointId) {
+  var carType = currentUser.car_type || 'Saloon';
+  var guestPrice = carType === 'SUV' ? 480 : carType === 'Pickup' ? 420 : 360;
+
+  var existing = document.getElementById('guest-prompt-overlay');
+  if (existing) existing.remove();
+
+  var overlay = document.createElement('div');
+  overlay.id = 'guest-prompt-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:300;display:flex;flex-direction:column;justify-content:flex-end;background:rgba(0,0,0,.5);';
+  overlay.innerHTML =
+    '<div onclick="this.parentElement.remove()" style="flex:1"></div>' +
+    '<div style="background:#0f1d30;border-top:1px solid rgba(255,255,255,.07);border-radius:28px 28px 0 0;padding:20px 20px 48px;">' +
+      '<div style="width:36px;height:4px;background:rgba(255,255,255,.15);border-radius:2px;margin:0 auto 20px"></div>' +
+      '<div style="font-size:20px;font-weight:800;font-family:Syne,sans-serif;color:#f0f4f8;margin-bottom:6px;">No active plan</div>' +
+      '<div style="font-size:14px;color:#7a90a8;margin-bottom:20px;line-height:1.5;">You can book a one-off guest wash at ' +
+        selectedPoint.name + ' for <strong style="color:#ffb020">KSh ' + guestPrice + '</strong> ' +
+        '('+carType+' · convenience rate)</div>' +
+      '<div style="background:rgba(255,176,32,.06);border:1px solid rgba(255,176,32,.15);border-radius:16px;padding:14px;margin-bottom:16px;">' +
+        '<div style="font-size:12px;color:#7a90a8;margin-bottom:4px;">vs walk-in price</div>' +
+        '<div style="font-size:13px;color:#f0f4f8;">Walk-in: KSh ' + (carType === 'SUV' ? 400 : carType === 'Pickup' ? 350 : 300) + ' · ' +
+          'Guest wash: KSh ' + guestPrice + '</div>' +
+        '<div style="font-size:12px;color:#ffb020;margin-top:4px;">Guaranteed slot + no queuing included</div>' +
+      '</div>' +
+      '<button onclick="document.getElementById(\'guest-prompt-overlay\').remove(); startGuestBooking()" ' +
+        'style="width:100%;background:linear-gradient(180deg,#ffd166,#ffb020);color:#07111f;border:none;' +
+        'border-radius:16px;padding:15px;font-family:Syne,sans-serif;font-weight:800;font-size:15px;' +
+        'cursor:pointer;margin-bottom:10px;box-shadow:0 8px 24px rgba(255,176,32,.3)">Book Guest Wash — KSh ' + guestPrice + '</button>' +
+      '<button onclick="document.getElementById(\'guest-prompt-overlay\').remove(); showScreen(\'plans\')" ' +
+        'style="width:100%;background:rgba(255,255,255,.05);color:#f0f4f8;border:1px solid rgba(255,255,255,.1);' +
+        'border-radius:16px;padding:14px;font-family:Syne,sans-serif;font-weight:700;font-size:14px;cursor:pointer;">View Subscription Plans</button>' +
+    '</div>';
+  document.body.appendChild(overlay);
+}
+
+function startGuestBooking() {
+  showScreen('booking');
+  // Mark as guest booking
+  document.getElementById('book-btn').setAttribute('data-guest', 'true');
+  var carType = currentUser.car_type || 'Saloon';
+  var guestPrice = carType === 'SUV' ? 480 : carType === 'Pickup' ? 420 : 360;
+  // Show guest badge on booking screen
+  var existingBadge = document.getElementById('guest-booking-badge');
+  if (!existingBadge) {
+    var badge = document.createElement('div');
+    badge.id = 'guest-booking-badge';
+    badge.style.cssText = 'background:rgba(255,176,32,.1);border:1px solid rgba(255,176,32,.2);' +
+      'border-radius:12px;padding:10px 14px;margin:0 0 14px;font-size:13px;color:#ffb020;text-align:center;';
+    badge.textContent = '⚡ Guest Wash — KSh ' + guestPrice + ' · Pay via M-Pesa after booking';
+    var dateGroup = document.getElementById('book-date');
+    if (dateGroup && dateGroup.parentElement) {
+      dateGroup.parentElement.insertBefore(badge, dateGroup.parentElement.firstChild);
+    }
+  }
   loadSlots();
-  selectedExtras = [];
-  renderExtras();
-  showScreen('book');
 }
 
 async function loadSlots() {
   var date = document.getElementById('book-date').value;
   var container = document.getElementById('time-slots');
   if (!date) return;
-  container.innerHTML = '<div style="color:var(--muted);font-size:13px;grid-column:span 3">Loading...</div>';
+  if (!selectedPoint) {
+    container.innerHTML = '<div style="color:var(--muted);font-size:13px;grid-column:span 3">Select a wash point first</div>';
+    return;
+  }
+  container.innerHTML = '<div style="color:var(--muted);font-size:13px;grid-column:span 3">Loading slots...</div>';
   try {
     var bookings = await getBookingsByDate(date);
-    var bookedTimes = bookings.filter(function(b) {
-      return b.location === (selectedPoint ? selectedPoint.name : '');
-    }).map(function(b) { return b.time; });
+    // Count bookings per slot at this wash point (max 2 per slot)
+    var slotCounts = {};
+    bookings.filter(function(b) {
+      return b.location === selectedPoint.name && b.status !== 'cancelled';
+    }).forEach(function(b) {
+      slotCounts[b.time] = (slotCounts[b.time] || 0) + 1;
+    });
     container.innerHTML = SLOTS.map(function(s) {
-      var isBooked = bookedTimes.indexOf(s) > -1;
-      var isSel = selectedSlot === s;
-      var cls = 'slot' + (isBooked ? ' booked' : '') + (isSel ? ' selected' : '');
-      var click = isBooked ? '' : 'onclick="selectSlot(\''+s+'\')"';
-      return '<div class="'+cls+'" '+click+'>'+s+'</div>';
+      var count = slotCounts[s] || 0;
+      var isFull = count >= 2;
+      var isSel  = selectedSlot === s;
+      var cls = 'slot' + (isFull ? ' booked' : '') + (isSel ? ' selected' : '');
+      var click = isFull ? '' : 'onclick="selectSlot(\''+s+'\')"';
+      var label = isFull ? s + ' <span style="font-size:9px;opacity:.6">FULL</span>' : s;
+      return '<div class="'+cls+'" '+click+'>'+label+'</div>';
     }).join('');
   } catch(e) {
     container.innerHTML = '<div style="color:var(--danger);font-size:13px;grid-column:span 3">Could not load slots</div>';
@@ -1635,6 +1740,43 @@ function updateBookingTotal() {
 
 async function confirmBooking() {
   if (!selectedSlot) { toast('Please select a time slot.', true); return; }
+
+  var isGuest = document.getElementById('book-btn').getAttribute('data-guest') === 'true';
+  var date    = document.getElementById('book-date').value;
+  var carType = currentUser.car_type || 'Saloon';
+
+  if (isGuest) {
+    // Guest wash — no credits needed, charge at guest rate
+    var guestPrice      = carType === 'SUV' ? 480 : carType === 'Pickup' ? 420 : 360;
+    var guestOperator   = Math.round(guestPrice * 0.8);
+    setBtn('book-btn', true, 'Confirm Booking');
+    try {
+      var code = 'SP' + Math.random().toString(36).substring(2,8).toUpperCase();
+      var booking = await createBooking({
+        user_email: currentUser.email,
+        user_name:  currentUser.name,
+        date: date, time: selectedSlot,
+        location: selectedPoint.name,
+        status: 'confirmed',
+        plan: 'Guest',
+        car_type: carType,
+        amount: guestPrice,
+        operator_amount: guestOperator,
+        booking_type: 'guest',
+        plate: currentUser.plate || ''
+      });
+      var b = booking[0];
+      // Clean up guest badge and flag
+      var badge = document.getElementById('guest-booking-badge');
+      if (badge) badge.remove();
+      document.getElementById('book-btn').removeAttribute('data-guest');
+      showQR(b, code, date, [], 5);
+    } catch(e) { toast('Booking failed: ' + e.message, true); }
+    finally { setBtn('book-btn', false, 'Confirm Booking'); }
+    return;
+  }
+
+  // Subscription flow
   var totalCredits = 1 + selectedExtras.reduce(function(s, id) {
     var ex = EXTRAS.find(function(e) { return e.id === id; });
     return s + (ex ? ex.credits : 0);
@@ -1644,7 +1786,6 @@ async function confirmBooking() {
     showScreen('plans');
     return;
   }
-  var date = document.getElementById('book-date').value;
   setBtn('book-btn', true, 'Confirm Booking');
   try {
     var code = 'SP' + Math.random().toString(36).substring(2,8).toUpperCase();
@@ -1652,11 +1793,8 @@ async function confirmBooking() {
       return EXTRAS.find(function(e) { return e.id === id; });
     }).filter(Boolean);
 
-    // Calculate wash amount based on car type
-    var carType = currentUser.car_type || 'Saloon';
-    var basePrice = carType === 'SUV' ? 440 : carType === 'Pickup' ? 385 : 330;
-    var grossAmount = basePrice;
-    var operatorAmount = Math.round(grossAmount * 0.8);
+    var basePrice      = carType === 'SUV' ? 440 : carType === 'Pickup' ? 385 : 330;
+    var operatorAmount = Math.round(basePrice * 0.8);
 
     var booking = await createBooking({
       user_email: currentUser.email,
@@ -1667,15 +1805,16 @@ async function confirmBooking() {
       plan: currentUser.plan,
       extras: extrasData,
       car_type: carType,
-      amount: grossAmount,
+      amount: basePrice,
       operator_amount: operatorAmount,
-      booking_type: 'subscription'
+      booking_type: 'subscription',
+      plate: currentUser.plate || ''
     });
     var b = booking[0];
-    var newCredits  = currentUser.credits - totalCredits;
-    var pointsEarned= 10 + (selectedExtras.length * 5);
-    var newPoints   = (currentUser.loyalty_points || 0) + pointsEarned;
-    var newTier     = getTier(newPoints).name;
+    var newCredits   = currentUser.credits - totalCredits;
+    var pointsEarned = 10 + (selectedExtras.length * 5);
+    var newPoints    = (currentUser.loyalty_points || 0) + pointsEarned;
+    var newTier      = getTier(newPoints).name;
     await updateUser(currentUser.email, { credits: newCredits, loyalty_points: newPoints, loyalty_tier: newTier });
     currentUser.credits        = newCredits;
     currentUser.loyalty_points = newPoints;
