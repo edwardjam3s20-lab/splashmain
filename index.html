@@ -1251,7 +1251,12 @@ async function fetchWashPoints() {
   try {
     var rows = await sbFetch('wash_points?select=*&order=name.asc');
     WASH_POINTS = (rows || []).map(function(r) {
-      return { id: r.id, name: r.name, area: r.area, lat: parseFloat(r.lat), lng: parseFloat(r.lng) };
+      return {
+        id: r.id, name: r.name, area: r.area,
+        lat: parseFloat(r.lat), lng: parseFloat(r.lng),
+        description: r.description || null,
+        image_url: r.image_url || null
+      };
     });
   } catch(e) {
     WASH_POINTS = [];
@@ -1482,7 +1487,7 @@ async function sortAndRenderPoints() {
     var dist    = p.dist < 1 ? Math.round(p.dist*1000)+'m' : p.dist.toFixed(1)+'km';
     var isPaused = p.status === 'paused';
     var isFirst = i === 0 && !isPaused;
-    return '<div onclick="' + (isPaused ? '' : 'showPointSheet('+p.id+')') + '" style="' +
+    return '<div onclick="' + (isPaused ? '' : 'showPointSheet(\''+p.id+'\')') + '" style="' +
       'flex-shrink:0;width:150px;' +
       'opacity:'+(isPaused?'.45':'1')+';' +
       'background:'+(isFirst?'rgba(255,176,32,.08)':'rgba(255,255,255,.04)')+';' +
@@ -1501,7 +1506,8 @@ async function sortAndRenderPoints() {
 
 // ── POINT BOTTOM SHEET ────────────────────────────
 function showPointSheet(pointId) {
-  var p = WASH_POINTS.find(function(w) { return w.id === pointId; });
+  pointId = String(pointId); // normalise to string for UUID safety
+  var p = WASH_POINTS.find(function(w) { return String(w.id) === pointId; });
   if (!p) return;
   selectedPoint = p;
 
@@ -1515,26 +1521,36 @@ function showPointSheet(pointId) {
   var overlay = document.createElement('div');
   overlay.id = 'point-sheet-overlay';
   overlay.style.cssText = 'position:fixed;inset:0;z-index:200;display:flex;flex-direction:column;justify-content:flex-end;';
+
+  var imageHtml = p.image_url
+    ? '<img src="'+p.image_url+'" style="width:100%;height:180px;object-fit:cover;border-radius:16px;margin-bottom:16px;border:1px solid rgba(255,255,255,.06);">'
+    : '';
+  var descHtml = p.description
+    ? '<div style="font-size:14px;color:#7a90a8;line-height:1.55;margin-bottom:16px;">'+p.description+'</div>'
+    : '';
+
   overlay.innerHTML =
     '<div onclick="this.parentElement.remove()" style="flex:1"></div>' +
     '<div style="background:rgba(7,17,31,.97);backdrop-filter:blur(24px);' +
       'border-top:1px solid rgba(255,255,255,.07);border-radius:28px 28px 0 0;' +
-      'padding:14px 18px 48px;">' +
+      'padding:14px 18px 48px;max-height:88vh;overflow-y:auto;">' +
       '<div style="width:36px;height:4px;background:rgba(255,255,255,.15);border-radius:2px;margin:0 auto 18px"></div>' +
-      '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px">' +
+      imageHtml +
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">' +
         '<div>' +
           '<div style="font-size:21px;font-weight:800;font-family:Syne,sans-serif;color:#f0f4f8">'+p.name+'</div>' +
           '<div style="font-size:13px;color:#ffb020;font-weight:600;margin-top:3px">📍 '+distLabel+' away · '+p.area+'</div>' +
         '</div>' +
         '<div style="background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.2);' +
-          'border-radius:100px;padding:5px 13px;font-size:11px;font-weight:700;color:#22c55e;">Open</div>' +
+          'border-radius:100px;padding:5px 13px;font-size:11px;font-weight:700;color:#22c55e;flex-shrink:0;">Open</div>' +
       '</div>' +
+      descHtml +
       '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px">' +
         '<div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:100px;padding:5px 13px;font-size:11px;color:#7a90a8">💧 Exterior Wash</div>' +
         '<div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:100px;padding:5px 13px;font-size:11px;color:#7a90a8">✨ Interior</div>' +
         '<div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:100px;padding:5px 13px;font-size:11px;color:#7a90a8">🕐 7am – 6pm</div>' +
       '</div>' +
-      '<button onclick="document.getElementById(\'point-sheet-overlay\').remove(); bookPoint('+p.id+')" ' +
+      '<button onclick="document.getElementById(\'point-sheet-overlay\').remove(); bookPoint(\''+p.id+'\')" ' +
         'style="width:100%;background:linear-gradient(180deg,#ffd166,#ffb020);color:#07111f;border:none;' +
         'border-radius:16px;padding:15px;font-family:Syne,sans-serif;font-weight:800;font-size:15px;' +
         'cursor:pointer;box-shadow:0 8px 24px rgba(255,176,32,.3)">Book a Wash Here →</button>' +
@@ -1544,14 +1560,20 @@ function showPointSheet(pointId) {
 
 // ── MAP ───────────────────────────────────────────
 var mapStatuses = {};
+var washPointMarkers = []; // track markers so we can clear & re-add on refresh
 
 function renderMapMarkers(sortedPoints) {
   if (!mapInstance) return;
-  // Remove existing wash point markers and re-add with status
+  // Clear old wash-point markers before re-adding
+  washPointMarkers.forEach(function(m) { mapInstance.removeLayer(m); });
+  washPointMarkers = [];
+
   sortedPoints.forEach(function(p) {
     var dist = p.dist < 1 ? Math.round(p.dist*1000)+'m' : p.dist.toFixed(1)+'km';
     var isPaused = p.status === 'paused';
-    var markerHtml = '<div onclick="'+(isPaused?'':('showPointSheet('+p.id+')'))+'" style="' +
+    // UUID ids must be quoted as strings in the onclick attribute
+    var clickHandler = isPaused ? '' : ('showPointSheet(\'' + p.id + '\')');
+    var markerHtml = '<div onclick="' + clickHandler + '" style="' +
       'background:'+(isPaused?'rgba(239,68,68,.15)':'#0f1d30')+';' +
       'border:1.5px solid '+(isPaused?'#ef4444':'#ffb020')+';border-radius:20px;' +
       'padding:6px 11px;display:flex;align-items:center;gap:5px;' +
@@ -1561,7 +1583,8 @@ function renderMapMarkers(sortedPoints) {
       '<span style="font-size:13px">'+(isPaused?'🔴':'💧')+'</span>' +
       '<span>'+(isPaused?'Closed':dist)+'</span></div>';
     var icon = L.divIcon({ html: markerHtml, iconAnchor:[40,20], className:'' });
-    L.marker([p.lat, p.lng], { icon: icon }).addTo(mapInstance);
+    var marker = L.marker([p.lat, p.lng], { icon: icon }).addTo(mapInstance);
+    washPointMarkers.push(marker);
   });
 }
 
@@ -1583,7 +1606,8 @@ function initMap() {
 // ── BOOKING ───────────────────────────────────────
 function bookPoint(pointId) {
   if (!currentUser) { showScreen('auth'); return; }
-  selectedPoint = WASH_POINTS.find(function(p) { return p.id === pointId; });
+  pointId = String(pointId);
+  selectedPoint = WASH_POINTS.find(function(p) { return String(p.id) === pointId; });
   if (!selectedPoint) return;
 
   var hasActivePlan = currentUser.plan && currentUser.sub_status === 'active' && currentUser.credits > 0;

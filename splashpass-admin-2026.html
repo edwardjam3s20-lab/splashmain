@@ -183,12 +183,23 @@ label { display: block; font-size: 12px; color: var(--grey); margin-bottom: 6px;
 
 <!-- ADD WASH POINT MODAL -->
 <div class="modal-overlay" id="add-point-modal">
-  <div class="modal">
+  <div class="modal" style="max-height:90vh;overflow-y:auto;">
     <h3>Add Wash Point</h3>
     <div class="form-group"><label>Name</label><input type="text" id="new-point-name" placeholder="SplashPass Nyali"></div>
     <div class="form-group"><label>Area / Suburb</label><input type="text" id="new-point-area" placeholder="Nyali, Mombasa"></div>
     <div class="form-group"><label>Latitude</label><input type="number" step="any" id="new-point-lat" placeholder="-4.0435"></div>
     <div class="form-group"><label>Longitude</label><input type="number" step="any" id="new-point-lng" placeholder="39.7173"></div>
+    <div class="form-group">
+      <label>Description</label>
+      <textarea id="new-point-desc" placeholder="e.g. Located at the Nyali Centre parking lot. Offers full exterior and interior wash." style="width:100%;padding:12px 16px;background:var(--navy2);border:1.5px solid var(--navy3);border-radius:10px;color:var(--white);font-family:'DM Sans',sans-serif;font-size:15px;outline:none;resize:vertical;min-height:80px;transition:border .2s;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--navy3)'"></textarea>
+    </div>
+    <div class="form-group">
+      <label>Photo</label>
+      <input type="file" id="new-point-image" accept="image/*" style="padding:10px 12px;cursor:pointer;">
+      <div id="new-point-image-preview" style="margin-top:10px;display:none;">
+        <img id="new-point-preview-img" style="width:100%;height:160px;object-fit:cover;border-radius:10px;border:1px solid var(--navy3);">
+      </div>
+    </div>
     <div id="add-point-error" class="form-error"></div>
     <div style="display:flex;gap:10px;margin-top:8px">
       <button class="btn btn-gold" id="add-point-btn" onclick="createWashPoint()" style="flex:1">Add Wash Point</button>
@@ -333,10 +344,18 @@ function renderWashPoints(points) {
     return;
   }
   grid.innerHTML = points.map(function(p) {
+    var imgHtml = p.image_url
+      ? '<img src="'+p.image_url+'" style="width:100%;height:110px;object-fit:cover;border-radius:8px;margin-bottom:10px;border:1px solid rgba(255,255,255,.06);">'
+      : '';
+    var descHtml = p.description
+      ? '<div style="font-size:12px;color:var(--grey);margin-bottom:10px;line-height:1.4">'+p.description+'</div>'
+      : '';
     return '<div class="op-card">' +
+      imgHtml +
       '<div class="op-card-name">💧 ' + p.name + '</div>' +
       '<div class="op-card-email">' + p.area + '</div>' +
       '<div class="op-card-point" style="color:var(--grey)">📌 ' + parseFloat(p.lat).toFixed(4) + ', ' + parseFloat(p.lng).toFixed(4) + '</div>' +
+      descHtml +
       '<button class="btn btn-danger" style="padding:6px 14px;font-size:12px;margin-top:4px" onclick="deleteWashPoint(\'' + p.id + '\')">Remove</button>' +
     '</div>';
   }).join('');
@@ -355,14 +374,50 @@ function populatePointDropdown(points) {
   if (current) sel.value = current;
 }
 
-function showAddPointModal() { document.getElementById('add-point-modal').classList.add('show'); }
+function showAddPointModal() {
+  document.getElementById('add-point-modal').classList.add('show');
+  // Wire up image preview
+  var fileInput = document.getElementById('new-point-image');
+  fileInput.onchange = function() {
+    var file = fileInput.files[0];
+    if (!file) return;
+    var preview = document.getElementById('new-point-image-preview');
+    var img = document.getElementById('new-point-preview-img');
+    var reader = new FileReader();
+    reader.onload = function(e) { img.src = e.target.result; preview.style.display = 'block'; };
+    reader.readAsDataURL(file);
+  };
+}
 function hideAddPointModal() {
   document.getElementById('add-point-modal').classList.remove('show');
   document.getElementById('new-point-name').value = '';
   document.getElementById('new-point-area').value = '';
   document.getElementById('new-point-lat').value  = '';
   document.getElementById('new-point-lng').value  = '';
+  document.getElementById('new-point-desc').value = '';
+  document.getElementById('new-point-image').value = '';
+  document.getElementById('new-point-image-preview').style.display = 'none';
   document.getElementById('add-point-error').textContent = '';
+}
+
+async function uploadWashPointImage(file) {
+  var ext      = file.name.split('.').pop();
+  var fileName = 'point-' + Date.now() + '.' + ext;
+  var res = await fetch(SUPABASE_URL + '/storage/v1/object/wash-point-images/' + fileName, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': 'Bearer ' + accessToken,
+      'Content-Type': file.type,
+      'x-upsert': 'true'
+    },
+    body: file
+  });
+  if (!res.ok) {
+    var err = await res.json().catch(function() { return {}; });
+    throw new Error(err.error || 'Image upload failed');
+  }
+  return SUPABASE_URL + '/storage/v1/object/public/wash-point-images/' + fileName;
 }
 
 async function createWashPoint() {
@@ -370,12 +425,23 @@ async function createWashPoint() {
   var area = document.getElementById('new-point-area').value.trim();
   var lat  = document.getElementById('new-point-lat').value.trim();
   var lng  = document.getElementById('new-point-lng').value.trim();
+  var desc = document.getElementById('new-point-desc').value.trim();
+  var file = document.getElementById('new-point-image').files[0];
   var err  = document.getElementById('add-point-error');
-  if (!name || !area || !lat || !lng) { err.textContent = 'All fields are required.'; return; }
+  if (!name || !area || !lat || !lng) { err.textContent = 'Name, area, lat and lng are required.'; return; }
   if (isNaN(parseFloat(lat)) || isNaN(parseFloat(lng))) { err.textContent = 'Latitude and longitude must be valid numbers.'; return; }
   setBtn('add-point-btn', true, 'Add Wash Point');
   try {
-    await sbFetch('wash_points', { method: 'POST', body: JSON.stringify({ name: name, area: area, lat: parseFloat(lat), lng: parseFloat(lng) }), prefer: 'return=representation' });
+    var imageUrl = null;
+    if (file) {
+      err.textContent = '';
+      imageUrl = await uploadWashPointImage(file);
+    }
+    await sbFetch('wash_points', {
+      method: 'POST',
+      body: JSON.stringify({ name: name, area: area, lat: parseFloat(lat), lng: parseFloat(lng), description: desc || null, image_url: imageUrl }),
+      prefer: 'return=representation'
+    });
     toast('Wash point added!');
     hideAddPointModal();
     loadData();
