@@ -115,6 +115,17 @@ label { display: block; font-size: 12px; color: var(--grey); margin-bottom: 6px;
       <div class="stat-card"><div class="stat-num" id="stat-revenue" style="font-size:20px">KSh 0</div><div class="stat-label">Est. Revenue</div></div>
     </div>
 
+    <!-- WASH POINTS -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">Wash Points</div>
+        <button class="btn btn-gold" onclick="showAddPointModal()">+ Add Wash Point</button>
+      </div>
+      <div class="op-grid" id="wash-points-grid">
+        <div style="color:var(--grey);font-size:14px">Loading...</div>
+      </div>
+    </div>
+
     <!-- OPERATORS -->
     <div class="section">
       <div class="section-header">
@@ -155,18 +166,28 @@ label { display: block; font-size: 12px; color: var(--grey); margin-bottom: 6px;
       <label>Assign Wash Point</label>
       <select id="new-op-point">
         <option value="">Select wash point</option>
-        <option value="SplashPass Nyali">SplashPass Nyali</option>
-        <option value="SplashPass CBD">SplashPass CBD</option>
-        <option value="SplashPass Bamburi">SplashPass Bamburi</option>
-        <option value="SplashPass Likoni">SplashPass Likoni</option>
-        <option value="SplashPass Kisauni">SplashPass Kisauni</option>
-        <option value="SplashPass Diani">SplashPass Diani</option>
       </select>
     </div>
     <div id="create-error" class="form-error"></div>
     <div style="display:flex;gap:10px;margin-top:8px">
       <button class="btn btn-gold" id="create-btn" onclick="createOperator()" style="flex:1">Create Operator</button>
       <button class="btn btn-outline" onclick="hideCreateModal()" style="flex:1">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD WASH POINT MODAL -->
+<div class="modal-overlay" id="add-point-modal">
+  <div class="modal">
+    <h3>Add Wash Point</h3>
+    <div class="form-group"><label>Name</label><input type="text" id="new-point-name" placeholder="SplashPass Nyali"></div>
+    <div class="form-group"><label>Area / Suburb</label><input type="text" id="new-point-area" placeholder="Nyali, Mombasa"></div>
+    <div class="form-group"><label>Latitude</label><input type="number" step="any" id="new-point-lat" placeholder="-4.0435"></div>
+    <div class="form-group"><label>Longitude</label><input type="number" step="any" id="new-point-lng" placeholder="39.7173"></div>
+    <div id="add-point-error" class="form-error"></div>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="btn btn-gold" id="add-point-btn" onclick="createWashPoint()" style="flex:1">Add Wash Point</button>
+      <button class="btn btn-outline" onclick="hideAddPointModal()" style="flex:1">Cancel</button>
     </div>
   </div>
 </div>
@@ -228,19 +249,89 @@ function adminLogout() {
 // ── DATA ─────────────────────────────────────────
 async function loadData() {
   try {
-    var operators = await sbFetch('operators?select=*&order=created_at.desc');
+    var operators   = await sbFetch('operators?select=*&order=created_at.desc');
     var subscribers = await sbFetch('profiles?select=*&order=created_at.desc');
-    var bookings = await sbFetch('bookings?select=*');
+    var bookings    = await sbFetch('bookings?select=*');
+    var washPoints  = await sbFetch('wash_points?select=*&order=name.asc');
 
-    document.getElementById('stat-operators').textContent = operators.length;
+    document.getElementById('stat-operators').textContent   = operators.length;
     document.getElementById('stat-subscribers').textContent = subscribers.length;
-    document.getElementById('stat-bookings').textContent = bookings.length;
+    document.getElementById('stat-bookings').textContent    = bookings.length;
     var rev = subscribers.reduce(function(s,u) { return s + (u.plan_price ? parseInt(u.plan_price)*4 : 0); }, 0);
     document.getElementById('stat-revenue').textContent = 'KSh ' + rev.toLocaleString();
 
+    renderWashPoints(washPoints);
     renderOperators(operators);
     renderSubscribers(subscribers);
+    populatePointDropdown(washPoints);
   } catch(e) { toast('Error loading data: ' + e.message, true); }
+}
+
+// ── WASH POINTS ───────────────────────────────────
+function renderWashPoints(points) {
+  var grid = document.getElementById('wash-points-grid');
+  if (!points || !points.length) {
+    grid.innerHTML = '<div style="color:var(--grey);font-size:14px">No wash points yet. Add one above.</div>';
+    return;
+  }
+  grid.innerHTML = points.map(function(p) {
+    return '<div class="op-card">' +
+      '<div class="op-card-name">💧 ' + p.name + '</div>' +
+      '<div class="op-card-email">' + p.area + '</div>' +
+      '<div class="op-card-point" style="color:var(--grey)">📌 ' + parseFloat(p.lat).toFixed(4) + ', ' + parseFloat(p.lng).toFixed(4) + '</div>' +
+      '<button class="btn btn-danger" style="padding:6px 14px;font-size:12px;margin-top:4px" onclick="deleteWashPoint(\'' + p.id + '\')">Remove</button>' +
+    '</div>';
+  }).join('');
+}
+
+function populatePointDropdown(points) {
+  var sel = document.getElementById('new-op-point');
+  var current = sel.value;
+  sel.innerHTML = '<option value="">Select wash point</option>';
+  (points || []).forEach(function(p) {
+    var opt = document.createElement('option');
+    opt.value = p.name;
+    opt.textContent = p.name;
+    sel.appendChild(opt);
+  });
+  if (current) sel.value = current;
+}
+
+function showAddPointModal() { document.getElementById('add-point-modal').classList.add('show'); }
+function hideAddPointModal() {
+  document.getElementById('add-point-modal').classList.remove('show');
+  document.getElementById('new-point-name').value = '';
+  document.getElementById('new-point-area').value = '';
+  document.getElementById('new-point-lat').value  = '';
+  document.getElementById('new-point-lng').value  = '';
+  document.getElementById('add-point-error').textContent = '';
+}
+
+async function createWashPoint() {
+  var name = document.getElementById('new-point-name').value.trim();
+  var area = document.getElementById('new-point-area').value.trim();
+  var lat  = document.getElementById('new-point-lat').value.trim();
+  var lng  = document.getElementById('new-point-lng').value.trim();
+  var err  = document.getElementById('add-point-error');
+  if (!name || !area || !lat || !lng) { err.textContent = 'All fields are required.'; return; }
+  if (isNaN(parseFloat(lat)) || isNaN(parseFloat(lng))) { err.textContent = 'Latitude and longitude must be valid numbers.'; return; }
+  setBtn('add-point-btn', true, 'Add Wash Point');
+  try {
+    await sbFetch('wash_points', { method: 'POST', body: JSON.stringify({ name: name, area: area, lat: parseFloat(lat), lng: parseFloat(lng) }), prefer: 'return=representation' });
+    toast('Wash point added!');
+    hideAddPointModal();
+    loadData();
+  } catch(e) { err.textContent = 'Error: ' + e.message; }
+  finally { setBtn('add-point-btn', false, 'Add Wash Point'); }
+}
+
+async function deleteWashPoint(id) {
+  if (!confirm('Remove this wash point? This will not affect existing bookings.')) return;
+  try {
+    await sbFetch('wash_points?id=eq.' + id, { method: 'DELETE', prefer: 'return=minimal' });
+    toast('Wash point removed.');
+    loadData();
+  } catch(e) { toast('Error: ' + e.message, true); }
 }
 
 function renderOperators(operators) {
