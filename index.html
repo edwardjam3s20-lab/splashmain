@@ -1550,17 +1550,82 @@ function showPointSheet(pointId) {
         '<div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:100px;padding:5px 13px;font-size:11px;color:#7a90a8">✨ Interior</div>' +
         '<div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:100px;padding:5px 13px;font-size:11px;color:#7a90a8">🕐 7am – 6pm</div>' +
       '</div>' +
-      '<button onclick="document.getElementById(\'point-sheet-overlay\').remove(); bookPoint(\''+p.id+'\')" ' +
-        'style="width:100%;background:linear-gradient(180deg,#ffd166,#ffb020);color:#07111f;border:none;' +
-        'border-radius:16px;padding:15px;font-family:Syne,sans-serif;font-weight:800;font-size:15px;' +
-        'cursor:pointer;box-shadow:0 8px 24px rgba(255,176,32,.3)">Book a Wash Here →</button>' +
+      '<div style="display:flex;gap:10px;margin-bottom:0">' +
+        '<button onclick="document.getElementById(\'point-sheet-overlay\').remove(); drawRouteTo('+p.lat+','+p.lng+')" ' +
+          'style="flex:1;background:rgba(255,176,32,.12);color:#ffb020;border:1.5px solid rgba(255,176,32,.35);' +
+          'border-radius:16px;padding:14px;font-family:Syne,sans-serif;font-weight:800;font-size:14px;cursor:pointer;">🗺 Directions</button>' +
+        '<button onclick="document.getElementById(\'point-sheet-overlay\').remove(); bookPoint(\''+p.id+'\')" ' +
+          'style="flex:2;background:linear-gradient(180deg,#ffd166,#ffb020);color:#07111f;border:none;' +
+          'border-radius:16px;padding:14px;font-family:Syne,sans-serif;font-weight:800;font-size:15px;' +
+          'cursor:pointer;box-shadow:0 8px 24px rgba(255,176,32,.3)">Book a Wash Here →</button>' +
+      '</div>' +
     '</div>';
   document.body.appendChild(overlay);
+
+  // Show a persistent "Clear Route" pill on the map while a route might be active
+  var existingClear = document.getElementById('clear-route-btn');
+  if (!existingClear) {
+    var clearBtn = document.createElement('div');
+    clearBtn.id = 'clear-route-btn';
+    clearBtn.onclick = function() { clearRoute(); clearBtn.remove(); };
+    clearBtn.style.cssText = 'position:absolute;top:14px;right:14px;z-index:21;' +
+      'background:rgba(7,17,31,.88);border:1px solid rgba(255,176,32,.4);' +
+      'border-radius:100px;padding:7px 16px;font-size:12px;font-weight:600;' +
+      'color:#ffb020;cursor:pointer;backdrop-filter:blur(10px);display:none;';
+    clearBtn.textContent = '✕ Clear Route';
+    document.getElementById('screen-home').appendChild(clearBtn);
+  }
 }
 
 // ── MAP ───────────────────────────────────────────
 var mapStatuses = {};
 var washPointMarkers = []; // track markers so we can clear & re-add on refresh
+var activeRouteLine  = null; // current drawn route polyline
+
+function clearRoute() {
+  if (activeRouteLine) { mapInstance.removeLayer(activeRouteLine); activeRouteLine = null; }
+}
+
+async function drawRouteTo(destLat, destLng) {
+  if (!mapInstance) return;
+  clearRoute();
+  try {
+    var url = 'https://router.project-osrm.org/route/v1/driving/' +
+      userLng + ',' + userLat + ';' + destLng + ',' + destLat +
+      '?overview=full&geometries=geojson';
+    var res  = await fetch(url);
+    var data = await res.json();
+    if (!data.routes || !data.routes[0]) { toast('Could not find a route.', true); return; }
+    var coords = data.routes[0].geometry.coordinates.map(function(c) { return [c[1], c[0]]; });
+    activeRouteLine = L.polyline(coords, {
+      color: '#ffb020',
+      weight: 5,
+      opacity: 0.85,
+      lineJoin: 'round',
+      lineCap: 'round',
+      dashArray: null
+    }).addTo(mapInstance);
+
+    // Fit map to show full route
+    var bounds = L.latLngBounds([[userLat, userLng], [destLat, destLng]]);
+    mapInstance.fitBounds(bounds, { padding: [60, 60] });
+
+    // Show the clear route button
+    var clearBtn = document.getElementById('clear-route-btn');
+    if (clearBtn) clearBtn.style.display = 'block';
+
+    // Show distance + duration from OSRM
+    var dist = data.routes[0].distance; // metres
+    var dur  = data.routes[0].duration; // seconds
+    var distLabel = dist >= 1000 ? (dist/1000).toFixed(1) + ' km' : Math.round(dist) + ' m';
+    var durLabel  = dur  >= 3600
+      ? Math.floor(dur/3600) + 'h ' + Math.round((dur%3600)/60) + 'min'
+      : Math.round(dur/60) + ' min';
+    toast('🗺 ' + distLabel + ' · ~' + durLabel + ' drive');
+  } catch(e) {
+    toast('Routing error: ' + e.message, true);
+  }
+}
 
 function renderMapMarkers(sortedPoints) {
   if (!mapInstance) return;
