@@ -1447,19 +1447,32 @@ function initApp() {
 }
 
 // ── LOCATION ─────────────────────────────────────
+var userMarker = null; // track the user's location marker so we can move it
+
 function getLocation() {
+  // Draw map immediately with default centre, then update when GPS resolves
+  fetchWashPoints().then(function() {
+    initMap();
+    sortAndRenderPoints();
+  });
+
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(function(pos) {
       userLat = pos.coords.latitude;
       userLng = pos.coords.longitude;
       document.getElementById('map-label').textContent = '📍 Your location';
-      fetchWashPoints().then(function() { initMap(); sortAndRenderPoints(); });
+
+      // Move the user marker to real position
+      if (userMarker && mapInstance) {
+        userMarker.setLatLng([userLat, userLng]);
+        mapInstance.setView([userLat, userLng], 14);
+      }
+
+      // Re-sort and re-render points with real distances
+      sortAndRenderPoints();
     }, function() {
-      fetchWashPoints().then(function() { initMap(); sortAndRenderPoints(); });
       document.getElementById('map-label').textContent = '📍 Mombasa, Kenya';
     });
-  } else {
-    fetchWashPoints().then(function() { initMap(); sortAndRenderPoints(); });
   }
 }
 
@@ -1633,10 +1646,9 @@ function renderMapMarkers(sortedPoints) {
   washPointMarkers.forEach(function(m) { mapInstance.removeLayer(m); });
   washPointMarkers = [];
 
-  sortedPoints.forEach(function(p) {
+  sortedPoints.forEach(function(p, idx) {
     var dist = p.dist < 1 ? Math.round(p.dist*1000)+'m' : p.dist.toFixed(1)+'km';
     var isPaused = p.status === 'paused';
-    // UUID ids must be quoted as strings in the onclick attribute
     var clickHandler = isPaused ? '' : ('showPointSheet(\'' + p.id + '\')');
     var markerHtml = '<div onclick="' + clickHandler + '" style="' +
       'background:'+(isPaused?'rgba(239,68,68,.15)':'#0f1d30')+';' +
@@ -1647,7 +1659,8 @@ function renderMapMarkers(sortedPoints) {
       'font-family:DM Sans,sans-serif;font-size:12px;font-weight:600;color:white">' +
       '<span style="font-size:13px">'+(isPaused?'🔴':'💧')+'</span>' +
       '<span>'+(isPaused?'Closed':dist)+'</span></div>';
-    var icon = L.divIcon({ html: markerHtml, iconAnchor:[40,20], className:'' });
+    // Use a unique className per marker so Leaflet never shares DOM elements
+    var icon = L.divIcon({ html: markerHtml, iconAnchor:[40,20], className:'sp-marker-'+idx });
     var marker = L.marker([p.lat, p.lng], { icon: icon }).addTo(mapInstance);
     washPointMarkers.push(marker);
   });
@@ -1664,8 +1677,8 @@ function initMap() {
     '<div style="position:absolute;inset:0;background:#ffb020;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.4);z-index:2"></div>' +
     '<div style="position:absolute;inset:-6px;background:rgba(255,176,32,.25);border-radius:50%;animation:pulse 2s ease-out infinite;z-index:1"></div>' +
     '</div>';
-  var userIcon = L.divIcon({ html: pulseHtml, iconSize:[20,20], iconAnchor:[10,10], className:'' });
-  L.marker([userLat, userLng], { icon: userIcon }).addTo(mapInstance);
+  var userIcon = L.divIcon({ html: pulseHtml, iconSize:[20,20], iconAnchor:[10,10], className:'splashpass-user-icon' });
+  userMarker = L.marker([userLat, userLng], { icon: userIcon }).addTo(mapInstance);
 }
 
 // ── BOOKING ───────────────────────────────────────
