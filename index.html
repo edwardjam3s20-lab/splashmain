@@ -867,10 +867,10 @@ select option { background:var(--s1); }
 </div>
 
 <!-- MPESA PAYMENT -->
-<div id="screen-mpesa" class="screen">
+<div id="screen-mpesa" class="screen" data-context="subscription">
   <div class="screen-header">
-    <button class="back-btn" onclick="showScreen('plans')">←</button>
-    <h2>Pay via M-Pesa</h2>
+    <button class="back-btn" id="mpesa-back-btn" onclick="mpesaBack()">←</button>
+    <h2 id="mpesa-title">Pay via M-Pesa</h2>
   </div>
   <div class="mpesa-content">
     <div class="amount-box">
@@ -883,7 +883,7 @@ select option { background:var(--s1); }
     </div>
     <div id="mpesa-status" class="mpesa-status hidden"></div>
     <button class="btn btn-gold" id="pay-btn" onclick="triggerSTK()" style="margin-bottom:12px">Pay Now</button>
-    <button class="btn btn-outline" onclick="showScreen('plans')">Change Plan</button>
+    <button class="btn btn-outline" id="mpesa-change-btn" onclick="mpesaBack()">Change Plan</button>
   </div>
 </div>
 
@@ -1244,14 +1244,19 @@ function getTier(points) {
   return LOYALTY_TIERS.find(function(t) { return points >= t.min && points <= t.max; }) || LOYALTY_TIERS[0];
 }
 
-var WASH_POINTS = [
-  { id: 1, name: 'SplashPass Nyali',   area: 'Nyali, Mombasa',    lat: -4.0435, lng: 39.7173 },
-  { id: 2, name: 'SplashPass CBD',     area: 'Mombasa CBD',       lat: -4.0557, lng: 39.6682 },
-  { id: 3, name: 'SplashPass Bamburi', area: 'Bamburi, Mombasa',  lat: -3.9932, lng: 39.7242 },
-  { id: 4, name: 'SplashPass Likoni',  area: 'Likoni, Mombasa',   lat: -4.0817, lng: 39.6629 },
-  { id: 5, name: 'SplashPass Kisauni', area: 'Kisauni, Mombasa',  lat: -4.0162, lng: 39.6981 },
-  { id: 6, name: 'SplashPass Diani',   area: 'Diani Beach Road',  lat: -4.2823, lng: 39.5901 }
-];
+// Wash points loaded live from Supabase — admin manages via admin panel
+var WASH_POINTS = [];
+
+async function fetchWashPoints() {
+  try {
+    var rows = await sbFetch('wash_points?select=*&order=name.asc');
+    WASH_POINTS = (rows || []).map(function(r) {
+      return { id: r.id, name: r.name, area: r.area, lat: parseFloat(r.lat), lng: parseFloat(r.lng) };
+    });
+  } catch(e) {
+    WASH_POINTS = [];
+  }
+}
 
 // ── STATE ─────────────────────────────────────────
 var currentUser    = null;
@@ -1263,6 +1268,8 @@ var selectedExtras = [];
 var mapInstance    = null;
 var nextBooking    = null;
 var nextBookingCode= null;
+var pendingGuestBooking = null;
+var activePoll          = null;
 var userLat        = -4.0435;
 var userLng        = 39.7173;
 
@@ -1340,6 +1347,7 @@ function setBtn(id, loading, label) {
   b.textContent = loading ? 'Please wait...' : label;
 }
 function showScreen(name) {
+  if (activePoll) { clearInterval(activePoll); activePoll = null; }
   document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
   document.getElementById('screen-' + name).classList.add('active');
   var nav = document.getElementById('bottom-nav');
@@ -1440,16 +1448,13 @@ function getLocation() {
       userLat = pos.coords.latitude;
       userLng = pos.coords.longitude;
       document.getElementById('map-label').textContent = '📍 Your location';
-      initMap();
-      sortAndRenderPoints();
+      fetchWashPoints().then(function() { initMap(); sortAndRenderPoints(); });
     }, function() {
-      initMap();
-      sortAndRenderPoints();
+      fetchWashPoints().then(function() { initMap(); sortAndRenderPoints(); });
       document.getElementById('map-label').textContent = '📍 Mombasa, Kenya';
     });
   } else {
-    initMap();
-    sortAndRenderPoints();
+    fetchWashPoints().then(function() { initMap(); sortAndRenderPoints(); });
   }
 }
 
@@ -1473,7 +1478,7 @@ async function sortAndRenderPoints() {
   }).sort(function(a, b) { return a.dist - b.dist; });
 
   var container = document.getElementById('wash-points-list');
-  container.innerHTML = sorted.map(function(p, i) {
+  container.innerHTML = sorted.length ? sorted.map(function(p, i) {
     var dist    = p.dist < 1 ? Math.round(p.dist*1000)+'m' : p.dist.toFixed(1)+'km';
     var isPaused = p.status === 'paused';
     var isFirst = i === 0 && !isPaused;
@@ -1488,7 +1493,7 @@ async function sortAndRenderPoints() {
       '<div style="font-size:11px;color:'+(isPaused?'#ef4444':'#ffb020')+';font-weight:600">'+(isPaused?'Temporarily closed':dist+' away')+'</div>' +
       '<div style="font-size:10px;color:#7a90a8;margin-top:1px">'+p.area+'</div>' +
     '</div>';
-  }).join('');
+  }).join('') : '<div style="color:var(--muted);font-size:14px;padding:12px 0">No wash points available yet.</div>';
 
   // Also update map markers
   renderMapMarkers(sorted);
@@ -1573,20 +1578,6 @@ function initMap() {
     '</div>';
   var userIcon = L.divIcon({ html: pulseHtml, iconSize:[20,20], iconAnchor:[10,10], className:'' });
   L.marker([userLat, userLng], { icon: userIcon }).addTo(mapInstance);
-
-  // Initial markers — statuses loaded by sortAndRenderPoints
-  WASH_POINTS.forEach(function(p) {
-    var dist = distKm(userLat, userLng, p.lat, p.lng);
-    var distLabel = dist < 1 ? Math.round(dist*1000)+'m' : dist.toFixed(1)+'km';
-    var markerHtml = '<div onclick="showPointSheet('+p.id+')" style="' +
-      'background:#0f1d30;border:1.5px solid #ffb020;border-radius:20px;' +
-      'padding:6px 11px;display:flex;align-items:center;gap:5px;' +
-      'box-shadow:0 4px 14px rgba(0,0,0,.5);cursor:pointer;white-space:nowrap;' +
-      'font-family:DM Sans,sans-serif;font-size:12px;font-weight:600;color:white">' +
-      '<span style="font-size:13px">💧</span><span>'+distLabel+'</span></div>';
-    var icon = L.divIcon({ html: markerHtml, iconAnchor:[40,20], className:'' });
-    L.marker([p.lat, p.lng], { icon: icon }).addTo(mapInstance);
-  });
 }
 
 // ── BOOKING ───────────────────────────────────────
@@ -1599,7 +1590,11 @@ function bookPoint(pointId) {
 
   if (hasActivePlan) {
     // Subscriber flow — go straight to booking
-    showScreen('booking');
+    document.getElementById('book-title').textContent = 'Book a Wash';
+    document.getElementById('book-point-name').textContent = selectedPoint.name;
+    document.getElementById('book-point-area').textContent = selectedPoint.area;
+    document.getElementById('book-btn').removeAttribute('data-guest');
+    showScreen('book');
     loadSlots();
     updateBookingTotal();
   } else {
@@ -1622,15 +1617,14 @@ function showGuestWashPrompt(pointId) {
     '<div onclick="this.parentElement.remove()" style="flex:1"></div>' +
     '<div style="background:#0f1d30;border-top:1px solid rgba(255,255,255,.07);border-radius:28px 28px 0 0;padding:20px 20px 48px;">' +
       '<div style="width:36px;height:4px;background:rgba(255,255,255,.15);border-radius:2px;margin:0 auto 20px"></div>' +
-      '<div style="font-size:20px;font-weight:800;font-family:Syne,sans-serif;color:#f0f4f8;margin-bottom:6px;">No active plan</div>' +
-      '<div style="font-size:14px;color:#7a90a8;margin-bottom:20px;line-height:1.5;">You can book a one-off guest wash at ' +
-        selectedPoint.name + ' for <strong style="color:#ffb020">KSh ' + guestPrice + '</strong> ' +
-        '('+carType+' · convenience rate)</div>' +
-      '<div style="background:rgba(255,176,32,.06);border:1px solid rgba(255,176,32,.15);border-radius:16px;padding:14px;margin-bottom:16px;">' +
-        '<div style="font-size:12px;color:#7a90a8;margin-bottom:4px;">vs walk-in price</div>' +
-        '<div style="font-size:13px;color:#f0f4f8;">Walk-in: KSh ' + (carType === 'SUV' ? 400 : carType === 'Pickup' ? 350 : 300) + ' · ' +
-          'Guest wash: KSh ' + guestPrice + '</div>' +
-        '<div style="font-size:12px;color:#ffb020;margin-top:4px;">Guaranteed slot + no queuing included</div>' +
+      '<div style="font-size:20px;font-weight:800;font-family:Syne,sans-serif;color:#f0f4f8;margin-bottom:6px;">Book a Guest Wash</div>' +
+      '<div style="font-size:14px;color:#7a90a8;margin-bottom:20px;line-height:1.5;">No subscription needed — book a one-off wash at ' +
+        selectedPoint.name + '</div>' +
+      '<div style="background:rgba(255,176,32,.08);border:1.5px solid rgba(255,176,32,.25);border-radius:16px;padding:18px;margin-bottom:16px;">' +
+        '<div style="font-size:11px;color:#7a90a8;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Guest wash price · ' + carType + '</div>' +
+        '<div style="font-size:36px;font-weight:800;color:#ffb020;font-family:Syne,sans-serif;line-height:1;">KSh ' + guestPrice + '</div>' +
+        '<div style="font-size:12px;color:#7a90a8;margin-top:6px;">Walk-in rate: KSh ' + (carType === 'SUV' ? 400 : carType === 'Pickup' ? 350 : 300) + ' · Convenience premium applied</div>' +
+        '<div style="font-size:12px;color:#22c55e;margin-top:4px;">✓ Guaranteed slot · No queuing · Pay via M-Pesa</div>' +
       '</div>' +
       '<button onclick="document.getElementById(\'guest-prompt-overlay\').remove(); startGuestBooking()" ' +
         'style="width:100%;background:linear-gradient(180deg,#ffd166,#ffb020);color:#07111f;border:none;' +
@@ -1644,8 +1638,11 @@ function showGuestWashPrompt(pointId) {
 }
 
 function startGuestBooking() {
-  showScreen('booking');
+  showScreen('book');
   // Mark as guest booking
+  document.getElementById('book-title').textContent = 'Guest Wash';
+  document.getElementById('book-point-name').textContent = selectedPoint.name;
+  document.getElementById('book-point-area').textContent = selectedPoint.area;
   document.getElementById('book-btn').setAttribute('data-guest', 'true');
   var carType = currentUser.car_type || 'Saloon';
   var guestPrice = carType === 'SUV' ? 480 : carType === 'Pickup' ? 420 : 360;
@@ -1770,7 +1767,19 @@ async function confirmBooking() {
       var badge = document.getElementById('guest-booking-badge');
       if (badge) badge.remove();
       document.getElementById('book-btn').removeAttribute('data-guest');
-      showQR(b, code, date, [], 5);
+      // Store booking context for post-payment QR
+      pendingGuestBooking = { booking: b, code: code, date: date };
+      // Route to M-Pesa for payment
+      var mpesaScreen = document.getElementById('screen-mpesa');
+      mpesaScreen.setAttribute('data-context', 'guest');
+      document.getElementById('mpesa-title').textContent    = 'Pay for Guest Wash';
+      document.getElementById('mpesa-amount').textContent   = 'KSh ' + guestPrice.toLocaleString();
+      document.getElementById('mpesa-plan-name').textContent = selectedPoint.name + ' · ' + carType + ' · ' + selectedSlot;
+      document.getElementById('mpesa-change-btn').textContent = 'Back to Booking';
+      if (currentUser.phone) document.getElementById('mpesa-phone').value = currentUser.phone;
+      document.getElementById('mpesa-status').className  = 'mpesa-status hidden';
+      document.getElementById('mpesa-status').textContent = '';
+      showScreen('mpesa');
     } catch(e) { toast('Booking failed: ' + e.message, true); }
     finally { setBtn('book-btn', false, 'Confirm Booking'); }
     return;
@@ -1832,7 +1841,13 @@ var pendingQRData = null;
 function showQR(booking, code, date, extras, pointsEarned) {
   extras       = extras || [];
   pointsEarned = pointsEarned || 10;
-  var qrData   = JSON.stringify({ id: booking.id, user: currentUser.name, point: selectedPoint.name, date: date, time: selectedSlot, code: code });
+
+  // Use booking fields as source of truth so guests (no selectedPoint/selectedSlot) work correctly
+  var pointName = (booking && booking.location) ? booking.location : (selectedPoint ? selectedPoint.name : '—');
+  var slotTime  = (booking && booking.time)     ? booking.time     : (selectedSlot  || '—');
+  var planLabel = (booking && booking.plan)     ? booking.plan     : (currentUser.plan || 'Guest');
+
+  var qrData   = JSON.stringify({ id: booking.id, user: currentUser.name, point: pointName, date: date, time: slotTime, code: code });
   pendingQRData = { qrData: qrData, code: code, date: date };
 
   document.getElementById('qr-canvas').innerHTML = '';
@@ -1842,34 +1857,34 @@ function showQR(booking, code, date, extras, pointsEarned) {
   var plateInfo = currentUser.plate || '—';
   var carInfo   = ((currentUser.car_colour || '') + ' ' + (currentUser.car_make || '') + ' ' + (currentUser.car_model || '')).trim();
   document.getElementById('qr-info').innerHTML =
-    '<div class="qr-info-row"><span>Location</span><strong>'+selectedPoint.name+'</strong></div>' +
+    '<div class="qr-info-row"><span>Location</span><strong>'+pointName+'</strong></div>' +
     '<div class="qr-info-row"><span>Date</span><strong>'+date+'</strong></div>' +
-    '<div class="qr-info-row"><span>Time</span><strong>'+selectedSlot+'</strong></div>' +
-    '<div class="qr-info-row"><span>Plan</span><strong>'+currentUser.plan+'</strong></div>' +
+    '<div class="qr-info-row"><span>Time</span><strong>'+slotTime+'</strong></div>' +
+    '<div class="qr-info-row"><span>Plan</span><strong>'+planLabel+'</strong></div>' +
     '<div class="qr-info-row"><span>Plate</span><strong style="color:var(--gold)">'+plateInfo+'</strong></div>' +
     '<div class="qr-info-row"><span>Car</span><strong>'+(carInfo||'—')+'</strong></div>';
 
-  document.getElementById('conf-location').textContent = selectedPoint.name;
+  document.getElementById('conf-location').textContent = pointName;
   document.getElementById('conf-date').textContent     = date;
-  document.getElementById('conf-time').textContent     = selectedSlot;
-  document.getElementById('conf-plan').textContent     = currentUser.plan + ' Plan';
+  document.getElementById('conf-time').textContent     = slotTime;
+  document.getElementById('conf-plan').textContent     = planLabel + ' Plan';
   document.getElementById('conf-sms-note').textContent = '📱 Sending confirmation SMS...';
 
   showScreen('confirmed');
-  sendBookingSMS(date);
+  sendBookingSMS(date, pointName, slotTime, planLabel);
 }
 
 function showQRFromConfirm() { showScreen('qr'); }
 
-async function sendBookingSMS(date) {
+async function sendBookingSMS(date, pointName, slotTime, planLabel) {
   if (!currentUser || !currentUser.phone) {
     document.getElementById('conf-sms-note').textContent = 'No phone number on file';
     return;
   }
   try {
-    var msg = 'SplashPass Booking Confirmed! Location: ' + selectedPoint.name +
-      ' | Date: ' + date + ' | Time: ' + selectedSlot +
-      ' | Plan: ' + currentUser.plan + '. Show QR code to attendant. Drive clean!';
+    var msg = 'SplashPass Booking Confirmed! Location: ' + pointName +
+      ' | Date: ' + date + ' | Time: ' + slotTime +
+      ' | Plan: ' + planLabel + '. Show QR code to attendant. Drive clean!';
     var res  = await fetch('/api/send-sms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -2033,6 +2048,9 @@ async function selectPlan(planId, price, credits) {
   }
   document.getElementById('mpesa-amount').textContent    = 'KSh ' + price.toLocaleString();
   document.getElementById('mpesa-plan-name').textContent = plan.name + ' · ' + plan.washes;
+  document.getElementById('mpesa-title').textContent     = 'Pay via M-Pesa';
+  document.getElementById('mpesa-change-btn').textContent = 'Change Plan';
+  document.getElementById('screen-mpesa').setAttribute('data-context', 'subscription');
   if (currentUser && currentUser.phone) document.getElementById('mpesa-phone').value = currentUser.phone;
   document.getElementById('mpesa-status').className  = 'mpesa-status hidden';
   document.getElementById('mpesa-status').textContent = '';
@@ -2040,10 +2058,78 @@ async function selectPlan(planId, price, credits) {
 }
 
 // ── MPESA ─────────────────────────────────────────
+function mpesaBack() {
+  var ctx = document.getElementById('screen-mpesa').getAttribute('data-context');
+  if (ctx === 'guest') {
+    showScreen('book');
+  } else {
+    showScreen('plans');
+  }
+}
+
 async function triggerSTK() {
   var phone    = document.getElementById('mpesa-phone').value.trim();
   var statusEl = document.getElementById('mpesa-status');
+  var ctx      = document.getElementById('screen-mpesa').getAttribute('data-context');
+
   if (!phone) { statusEl.className = 'mpesa-status error'; statusEl.textContent = 'Please enter your M-Pesa number.'; return; }
+
+  if (ctx === 'guest') {
+    if (!pendingGuestBooking) { statusEl.className = 'mpesa-status error'; statusEl.textContent = 'Booking data missing. Please re-book.'; return; }
+    var guestAmount = pendingGuestBooking.booking.amount;
+    setBtn('pay-btn', true, 'Pay Now');
+    statusEl.className   = 'mpesa-status pending';
+    statusEl.textContent = 'Sending prompt to your phone...';
+    try {
+      var res  = await fetch('/api/mpesa-stk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: phone, amount: guestAmount })
+      });
+      var data = await res.json();
+      if (data.success) {
+        statusEl.className   = 'mpesa-status pending';
+        statusEl.textContent = 'Enter your M-Pesa PIN on your phone to confirm.';
+        toast('M-Pesa prompt sent!');
+        // Poll for payment confirmation on booking row
+        var attempts = 0;
+        activePoll = setInterval(async function() {
+          attempts++;
+          try {
+            var rows = await sbFetch('bookings?id=eq.' + pendingGuestBooking.booking.id + '&select=payment_status');
+            var row  = rows && rows[0];
+            if (row && row.payment_status === 'paid') {
+              clearInterval(activePoll); activePoll = null;
+              statusEl.className   = 'mpesa-status success';
+              statusEl.textContent = 'Payment confirmed! Loading your wash pass...';
+              toast('Payment confirmed!');
+              setTimeout(function() {
+                var pgb = pendingGuestBooking;
+                pendingGuestBooking = null;
+                showQR(pgb.booking, pgb.code, pgb.date, [], 5);
+              }, 1500);
+            }
+          } catch(e) {}
+          if (attempts >= 12) {
+            clearInterval(activePoll); activePoll = null;
+            statusEl.className   = 'mpesa-status pending';
+            statusEl.textContent = 'Payment pending. Check your M-Pesa messages and try again if needed.';
+          }
+        }, 5000);
+      } else {
+        statusEl.className   = 'mpesa-status error';
+        statusEl.textContent = data.message || 'Payment failed. Try again.';
+      }
+    } catch(e) {
+      statusEl.className   = 'mpesa-status error';
+      statusEl.textContent = 'Error: ' + e.message;
+    } finally {
+      setBtn('pay-btn', false, 'Pay Now');
+    }
+    return;
+  }
+
+  // ── Subscription payment flow ──────────────────
   var activePlan = selectedPlanData || selectedPlan;
   if (!activePlan) { statusEl.className = 'mpesa-status error'; statusEl.textContent = 'No plan selected.'; return; }
 
@@ -2063,12 +2149,12 @@ async function triggerSTK() {
       statusEl.textContent = 'Enter your M-Pesa PIN on your phone to confirm payment.';
       toast('M-Pesa prompt sent!');
       var attempts = 0;
-      var poll = setInterval(async function() {
+      activePoll = setInterval(async function() {
         attempts++;
         try {
           var updated = await getUserByEmail(currentUser.email);
           if (updated && updated.sub_status === 'active') {
-            clearInterval(poll);
+            clearInterval(activePoll); activePoll = null;
             currentUser.sub_status = 'active';
             localStorage.setItem('splashpass_user', JSON.stringify(currentUser));
             statusEl.className   = 'mpesa-status success';
@@ -2078,7 +2164,7 @@ async function triggerSTK() {
           }
         } catch(e) {}
         if (attempts >= 12) {
-          clearInterval(poll);
+          clearInterval(activePoll); activePoll = null;
           statusEl.className   = 'mpesa-status pending';
           statusEl.textContent = 'Payment pending. Dashboard updates once confirmed.';
         }
@@ -2320,6 +2406,9 @@ async function acceptRecommendation() {
     localStorage.setItem('splashpass_user', JSON.stringify(currentUser));
     document.getElementById('mpesa-amount').textContent    = 'KSh ' + plan.price.toLocaleString();
     document.getElementById('mpesa-plan-name').textContent = plan.name + ' · ' + plan.washes;
+    document.getElementById('mpesa-title').textContent     = 'Pay via M-Pesa';
+    document.getElementById('mpesa-change-btn').textContent = 'Change Plan';
+    document.getElementById('screen-mpesa').setAttribute('data-context', 'subscription');
     if (currentUser.phone) document.getElementById('mpesa-phone').value = currentUser.phone;
     document.getElementById('mpesa-status').className  = 'mpesa-status hidden';
     document.getElementById('mpesa-status').textContent = '';
