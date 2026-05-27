@@ -772,10 +772,10 @@ select option { background:var(--s1); }
   </div>
 
   <!-- Bottom drawer -->
-  <div style="position:absolute;bottom:0;left:0;right:0;z-index:20;">
+  <div id="home-bottom-drawer" style="position:absolute;bottom:0;left:0;right:0;z-index:20;transition:transform .35s cubic-bezier(.4,0,.2,1);">
     <div style="background:rgba(7,17,31,.94);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
       border-top:1px solid rgba(255,255,255,.07);border-radius:26px 26px 0 0;padding:10px 14px 100px;">
-      <div style="width:34px;height:4px;background:rgba(255,255,255,.15);border-radius:2px;margin:0 auto 12px;"></div>
+      <div id="drawer-handle" onclick="toggleDrawer()" style="width:34px;height:4px;background:rgba(255,255,255,.15);border-radius:2px;margin:0 auto 12px;cursor:pointer;"></div>
       <div class="section-title" style="margin-bottom:10px;">Nearby Wash Points</div>
       <div id="wash-points-list" style="display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px;margin-bottom:14px;">
         <div style="color:var(--muted);font-size:14px;padding:12px 0">Finding nearby locations...</div>
@@ -1279,8 +1279,8 @@ var nextBooking    = null;
 var nextBookingCode= null;
 var pendingGuestBooking = null;
 var activePoll          = null;
-var userLat        = -4.0435;
-var userLng        = 39.7173;
+var userLat        = -4.0547;
+var userLng        = 39.6636;
 var gpsConfirmed   = false;
 
 // ── SUPABASE ──────────────────────────────────────
@@ -1367,7 +1367,7 @@ function showScreen(name) {
     var el = document.getElementById('nav-' + n);
     if (el) el.classList.toggle('active', n === name);
   });
-  if (name === 'home')    { renderHome(); setTimeout(function() { if (mapInstance) mapInstance.invalidateSize(); }, 100); }
+  if (name === 'home')    renderHome();
   if (name === 'profile') renderProfile();
   if (name === 'plans')   renderPlans();
 }
@@ -1455,11 +1455,9 @@ function initApp() {
 var userMarker = null; // track the user's location marker so we can move it
 
 function getLocation() {
-  // Init map immediately with default centre
-  initMap();
-
-  // Then fetch wash points and plot markers
+  // Draw map immediately with default centre, then update when GPS resolves
   fetchWashPoints().then(function() {
+    initMap();
     sortAndRenderPoints();
   });
 
@@ -1476,14 +1474,11 @@ function getLocation() {
     document.getElementById('map-label').textContent = '📍 Your location';
     if (userMarker && mapInstance) {
       userMarker.setLatLng([userLat, userLng]);
-      // invalidateSize forces Leaflet to recalculate container dimensions
-      mapInstance.invalidateSize();
       mapInstance.setView([userLat, userLng], 14);
     }
     sortAndRenderPoints();
   }, function() {
     document.getElementById('map-label').textContent = '📍 Mombasa, Kenya';
-    if (mapInstance) mapInstance.invalidateSize();
   }, { enableHighAccuracy: true, timeout: 8000 });
 
   // Watch for ongoing movement
@@ -1585,7 +1580,7 @@ function showPointSheet(pointId) {
         '<div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:100px;padding:5px 13px;font-size:11px;color:#7a90a8">🕐 7am – 6pm</div>' +
       '</div>' +
       '<div style="display:flex;gap:10px;margin-bottom:0">' +
-        '<button onclick="document.getElementById(\'point-sheet-overlay\').remove(); drawRouteTo('+p.lat+','+p.lng+')" ' +
+        '<button onclick="document.getElementById(\'point-sheet-overlay\').remove(); collapseDrawer(); drawRouteTo('+p.lat+','+p.lng+')" ' +
           'style="flex:1;background:rgba(255,176,32,.12);color:#ffb020;border:1.5px solid rgba(255,176,32,.35);' +
           'border-radius:16px;padding:14px;font-family:Syne,sans-serif;font-weight:800;font-size:14px;cursor:pointer;">🗺 Directions</button>' +
         '<button onclick="document.getElementById(\'point-sheet-overlay\').remove(); bookPoint(\''+p.id+'\')" ' +
@@ -1618,6 +1613,31 @@ var activeRouteLine  = null; // current drawn route polyline
 
 function clearRoute() {
   if (activeRouteLine) { mapInstance.removeLayer(activeRouteLine); activeRouteLine = null; }
+  expandDrawer();
+}
+
+var drawerCollapsed = false;
+
+function collapseDrawer() {
+  var drawer = document.getElementById('home-bottom-drawer');
+  if (drawer) {
+    drawer.style.transform = 'translateY(calc(100% - 28px))';
+    drawerCollapsed = true;
+  }
+  if (mapInstance) setTimeout(function() { mapInstance.invalidateSize(); }, 350);
+}
+
+function expandDrawer() {
+  var drawer = document.getElementById('home-bottom-drawer');
+  if (drawer) {
+    drawer.style.transform = 'translateY(0)';
+    drawerCollapsed = false;
+  }
+  if (mapInstance) setTimeout(function() { mapInstance.invalidateSize(); }, 350);
+}
+
+function toggleDrawer() {
+  if (drawerCollapsed) { expandDrawer(); } else { collapseDrawer(); }
 }
 
 async function drawRouteTo(destLat, destLng) {
@@ -1652,6 +1672,7 @@ async function drawRouteTo(destLat, destLng) {
 
   if (navigator.geolocation) {
     toast('Getting your location...');
+    collapseDrawer();
     navigator.geolocation.getCurrentPosition(function(pos) {
       userLat = pos.coords.latitude;
       userLng = pos.coords.longitude;
