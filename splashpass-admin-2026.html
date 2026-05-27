@@ -370,7 +370,26 @@ function generateSecret() {
 // ── 2FA STATE ─────────────────────────────────────────────────────
 var tfa = { secret: null, pendingToken: null, pendingEmail: null, countdownTimer: null };
 
-function tfaStorageKey(email) { return 'splashpass_tfa_' + btoa(email); }
+async function getTfaSecret(email) {
+  var res = await fetch(SUPABASE_URL + '/rest/v1/admin_2fa?email=eq.' + encodeURIComponent(email) + '&select=secret', {
+    headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY }
+  });
+  var data = await res.json();
+  return (data && data.length) ? data[0].secret : null;
+}
+
+async function saveTfaSecret(email, secret) {
+  await fetch(SUPABASE_URL + '/rest/v1/admin_2fa', {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'resolution=merge-duplicates'
+    },
+    body: JSON.stringify({ email: email, secret: secret })
+  });
+}
 
 function setupOTPInputs(rowId, onComplete) {
   var inputs = document.querySelectorAll('#' + rowId + ' .otp-digit');
@@ -450,15 +469,19 @@ async function verifySetupOTP() {
   if (code.length < 6) { err.textContent = 'Enter the full 6-digit code.'; return; }
   var expected = await generateTOTP(tfa.secret);
   if (code !== expected) { err.textContent = 'Incorrect code. Try again.'; return; }
-  // Save secret for this email
-  localStorage.setItem(tfaStorageKey(tfa.pendingEmail), tfa.secret);
+  // Save secret to Supabase
+  setBtn('setup-verify-btn', true, 'Confirm & Enable 2FA');
+  try {
+    await saveTfaSecret(tfa.pendingEmail, tfa.secret);
+  } catch(e) { err.textContent = 'Failed to save 2FA secret: ' + e.message; setBtn('setup-verify-btn', false, 'Confirm & Enable 2FA'); return; }
   err.textContent = '';
   completeTfaLogin();
 }
 
-async function showTfaVerify(email, token) {
+async function showTfaVerify(email, token, secret) {
   tfa.pendingToken = token;
   tfa.pendingEmail = email;
+  tfa.secret = secret;
   showScreen('screen-2fa-verify');
   document.getElementById('verify-otp-error').textContent = '';
   setupOTPInputs('verify-otp-row', function() { verifyLoginOTP(); });
@@ -469,7 +492,7 @@ async function verifyLoginOTP() {
   var code = getOTPValue('verify-otp-row');
   var err = document.getElementById('verify-otp-error');
   if (code.length < 6) { err.textContent = 'Enter the full 6-digit code.'; return; }
-  var storedSecret = localStorage.getItem(tfaStorageKey(tfa.pendingEmail));
+  var storedSecret = tfa.secret;
   var expected = await generateTOTP(storedSecret);
   if (code !== expected) {
     err.textContent = 'Incorrect code. Check your authenticator app.';
@@ -502,10 +525,10 @@ async function adminLogin() {
   try {
     var data = await authFetch('token?grant_type=password', { email: email, password: pass });
     var token = data.access_token;
-    var storedSecret = localStorage.getItem(tfaStorageKey(email));
+    var storedSecret = await getTfaSecret(email);
     if (storedSecret) {
       // 2FA already set up — verify
-      await showTfaVerify(email, token);
+      await showTfaVerify(email, token, storedSecret);
     } else {
       // First time — trigger setup
       await showTfaSetup(email, token);
