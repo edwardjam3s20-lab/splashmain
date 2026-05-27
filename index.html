@@ -1367,7 +1367,7 @@ function showScreen(name) {
     var el = document.getElementById('nav-' + n);
     if (el) el.classList.toggle('active', n === name);
   });
-  if (name === 'home')    renderHome();
+  if (name === 'home')    { renderHome(); setTimeout(function() { if (mapInstance) mapInstance.invalidateSize(); }, 100); }
   if (name === 'profile') renderProfile();
   if (name === 'plans')   renderPlans();
 }
@@ -1455,9 +1455,11 @@ function initApp() {
 var userMarker = null; // track the user's location marker so we can move it
 
 function getLocation() {
-  // Draw map immediately with default centre, then update when GPS resolves
+  // Init map immediately with default centre
+  initMap();
+
+  // Then fetch wash points and plot markers
   fetchWashPoints().then(function() {
-    initMap();
     sortAndRenderPoints();
   });
 
@@ -1474,11 +1476,14 @@ function getLocation() {
     document.getElementById('map-label').textContent = '📍 Your location';
     if (userMarker && mapInstance) {
       userMarker.setLatLng([userLat, userLng]);
+      // invalidateSize forces Leaflet to recalculate container dimensions
+      mapInstance.invalidateSize();
       mapInstance.setView([userLat, userLng], 14);
     }
     sortAndRenderPoints();
   }, function() {
     document.getElementById('map-label').textContent = '📍 Mombasa, Kenya';
+    if (mapInstance) mapInstance.invalidateSize();
   }, { enableHighAccuracy: true, timeout: 8000 });
 
   // Watch for ongoing movement
