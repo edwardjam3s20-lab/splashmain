@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SplashPass Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 :root {
   --navy: #0d1b2a;
@@ -75,6 +76,21 @@ label { display: block; font-size: 12px; color: var(--grey); margin-bottom: 6px;
 
 #toast { position: fixed; bottom: 24px; right: 24px; background: var(--navy2); border: 1px solid var(--navy3); border-left: 4px solid var(--gold); padding: 12px 20px; border-radius: 10px; font-size: 14px; z-index: 999; transform: translateY(80px); opacity: 0; transition: all .3s; }
 #toast.show { transform: translateY(0); opacity: 1; }
+
+/* 2FA */
+#screen-2fa { display: none; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+#screen-2fa.active { display: flex; }
+.tfa-card { background: var(--navy2); border-radius: 16px; padding: 40px; width: 100%; max-width: 420px; border: 1px solid var(--navy3); }
+.tfa-card h2 { font-size: 20px; margin-bottom: 6px; }
+.tfa-subtitle { font-size: 13px; color: var(--grey); margin-bottom: 24px; line-height: 1.5; }
+.qr-wrap { background: white; border-radius: 12px; padding: 16px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+.secret-box { background: var(--navy3); border-radius: 8px; padding: 10px 14px; font-family: monospace; font-size: 15px; letter-spacing: 2px; color: var(--gold); text-align: center; margin-bottom: 20px; word-break: break-all; }
+.otp-input-row { display: flex; gap: 8px; justify-content: center; margin-bottom: 8px; }
+.otp-digit { width: 44px; height: 52px; background: var(--navy2); border: 1.5px solid var(--navy3); border-radius: 10px; color: var(--white); font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; text-align: center; outline: none; transition: border .2s; }
+.otp-digit:focus { border-color: var(--gold); }
+.tfa-timer { font-size: 12px; color: var(--grey); text-align: center; margin-bottom: 16px; }
+.tfa-timer span { color: var(--gold); font-weight: 700; }
+.tfa-lock { font-size: 36px; margin-bottom: 12px; }
 </style>
 </head>
 <body>
@@ -93,6 +109,54 @@ label { display: block; font-size: 12px; color: var(--grey); margin-bottom: 6px;
     <div class="form-group"><label>Password</label><input type="password" id="admin-pass" placeholder="Your password" onkeydown="if(event.key==='Enter')adminLogin()"></div>
     <div id="admin-error" class="form-error"></div>
     <button class="btn btn-gold btn-full" id="admin-login-btn" onclick="adminLogin()">Access Admin Panel</button>
+  </div>
+</div>
+
+<!-- 2FA SETUP -->
+<div id="screen-2fa-setup" style="display:none;align-items:center;justify-content:center;min-height:100vh;padding:24px;">
+  <div class="tfa-card">
+    <div class="tfa-lock">🔐</div>
+    <h2>Set Up Two-Factor Auth</h2>
+    <p class="tfa-subtitle">Scan this QR code with Google Authenticator or Authy, then enter the 6-digit code to confirm setup.</p>
+    <div class="qr-wrap" id="qr-container"></div>
+    <div style="font-size:12px;color:var(--grey);margin-bottom:8px;text-align:center">Or enter this key manually:</div>
+    <div class="secret-box" id="secret-display"></div>
+    <div class="otp-input-row" id="setup-otp-row">
+      <input class="otp-digit" maxlength="1" type="text" inputmode="numeric">
+      <input class="otp-digit" maxlength="1" type="text" inputmode="numeric">
+      <input class="otp-digit" maxlength="1" type="text" inputmode="numeric">
+      <input class="otp-digit" maxlength="1" type="text" inputmode="numeric">
+      <input class="otp-digit" maxlength="1" type="text" inputmode="numeric">
+      <input class="otp-digit" maxlength="1" type="text" inputmode="numeric">
+    </div>
+    <div id="setup-otp-error" class="form-error" style="text-align:center;margin-bottom:12px"></div>
+    <button class="btn btn-gold btn-full" id="setup-verify-btn" onclick="verifySetupOTP()">Confirm &amp; Enable 2FA</button>
+    <div style="margin-top:12px;text-align:center">
+      <button class="btn btn-outline" onclick="cancelTfa()" style="padding:8px 20px;font-size:13px">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- 2FA VERIFY -->
+<div id="screen-2fa-verify" style="display:none;align-items:center;justify-content:center;min-height:100vh;padding:24px;">
+  <div class="tfa-card">
+    <div class="tfa-lock">🔒</div>
+    <h2>Two-Factor Verification</h2>
+    <p class="tfa-subtitle">Enter the 6-digit code from your authenticator app to continue.</p>
+    <div class="otp-input-row" id="verify-otp-row">
+      <input class="otp-digit" maxlength="1" type="text" inputmode="numeric">
+      <input class="otp-digit" maxlength="1" type="text" inputmode="numeric">
+      <input class="otp-digit" maxlength="1" type="text" inputmode="numeric">
+      <input class="otp-digit" maxlength="1" type="text" inputmode="numeric">
+      <input class="otp-digit" maxlength="1" type="text" inputmode="numeric">
+      <input class="otp-digit" maxlength="1" type="text" inputmode="numeric">
+    </div>
+    <div class="tfa-timer">Code refreshes in <span id="otp-countdown">30</span>s</div>
+    <div id="verify-otp-error" class="form-error" style="text-align:center;margin-bottom:12px"></div>
+    <button class="btn btn-gold btn-full" id="verify-btn" onclick="verifyLoginOTP()">Verify</button>
+    <div style="margin-top:12px;text-align:center">
+      <button class="btn btn-outline" onclick="cancelTfa()" style="padding:8px 20px;font-size:13px">Back to Login</button>
+    </div>
   </div>
 </div>
 
@@ -267,6 +331,166 @@ function setBtn(id, loading, label) {
   b.textContent = loading ? 'Please wait...' : label;
 }
 
+// ── TOTP HELPERS ──────────────────────────────────────────────────
+function base32ToBytes(base32) {
+  var alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  var bits = 0, value = 0, index = 0;
+  var output = new Uint8Array(Math.floor((base32.length * 5) / 8));
+  for (var i = 0; i < base32.length; i++) {
+    var c = alphabet.indexOf(base32[i].toUpperCase());
+    if (c < 0) continue;
+    value = (value << 5) | c;
+    bits += 5;
+    if (bits >= 8) { bits -= 8; output[index++] = (value >> bits) & 0xff; }
+  }
+  return output.slice(0, index);
+}
+
+async function generateTOTP(secret) {
+  var key = base32ToBytes(secret);
+  var epoch = Math.floor(Date.now() / 1000);
+  var counter = Math.floor(epoch / 30);
+  var buf = new ArrayBuffer(8);
+  var view = new DataView(buf);
+  view.setUint32(4, counter, false);
+  var cryptoKey = await crypto.subtle.importKey('raw', key, { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']);
+  var sig = new Uint8Array(await crypto.subtle.sign('HMAC', cryptoKey, buf));
+  var offset = sig[sig.length - 1] & 0x0f;
+  var code = ((sig[offset] & 0x7f) << 24) | (sig[offset+1] << 16) | (sig[offset+2] << 8) | sig[offset+3];
+  return String(code % 1000000).padStart(6, '0');
+}
+
+function generateSecret() {
+  var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  var s = '';
+  for (var i = 0; i < 32; i++) s += chars[Math.floor(Math.random() * chars.length)];
+  return s;
+}
+
+// ── 2FA STATE ─────────────────────────────────────────────────────
+var tfa = { secret: null, pendingToken: null, pendingEmail: null, countdownTimer: null };
+
+function tfaStorageKey(email) { return 'splashpass_tfa_' + btoa(email); }
+
+function setupOTPInputs(rowId, onComplete) {
+  var inputs = document.querySelectorAll('#' + rowId + ' .otp-digit');
+  inputs.forEach(function(inp, i) {
+    inp.value = '';
+    inp.addEventListener('input', function() {
+      this.value = this.value.replace(/\D/g, '').slice(-1);
+      if (this.value && i < inputs.length - 1) inputs[i + 1].focus();
+      if (Array.from(inputs).every(function(d) { return d.value; })) {
+        if (onComplete) onComplete();
+      }
+    });
+    inp.addEventListener('keydown', function(e) {
+      if (e.key === 'Backspace' && !this.value && i > 0) inputs[i - 1].focus();
+    });
+    inp.addEventListener('paste', function(e) {
+      var text = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
+      if (text.length === 6) {
+        text.split('').forEach(function(ch, j) { inputs[j].value = ch; });
+        inputs[5].focus();
+        e.preventDefault();
+        if (onComplete) onComplete();
+      }
+    });
+  });
+  inputs[0].focus();
+}
+
+function getOTPValue(rowId) {
+  return Array.from(document.querySelectorAll('#' + rowId + ' .otp-digit')).map(function(d) { return d.value; }).join('');
+}
+
+function startCountdown() {
+  clearInterval(tfa.countdownTimer);
+  function tick() {
+    var remaining = 30 - (Math.floor(Date.now() / 1000) % 30);
+    var el = document.getElementById('otp-countdown');
+    if (el) el.textContent = remaining;
+  }
+  tick();
+  tfa.countdownTimer = setInterval(tick, 1000);
+}
+
+function showScreen(id) {
+  ['screen-login','screen-2fa-setup','screen-2fa-verify','screen-admin'].forEach(function(s) {
+    var el = document.getElementById(s);
+    if (!el) return;
+    if (s === id) { el.style.display = (s === 'screen-admin') ? 'block' : 'flex'; }
+    else { el.style.display = 'none'; }
+  });
+}
+
+function cancelTfa() {
+  clearInterval(tfa.countdownTimer);
+  tfa.secret = null; tfa.pendingToken = null; tfa.pendingEmail = null;
+  showScreen('screen-login');
+}
+
+async function showTfaSetup(email, token) {
+  tfa.secret = generateSecret();
+  tfa.pendingToken = token;
+  tfa.pendingEmail = email;
+  var issuer = 'SplashPass Admin';
+  var uri = 'otpauth://totp/' + encodeURIComponent(issuer + ':' + email) + '?secret=' + tfa.secret + '&issuer=' + encodeURIComponent(issuer);
+  document.getElementById('secret-display').textContent = tfa.secret.match(/.{1,4}/g).join(' ');
+  var qrDiv = document.getElementById('qr-container');
+  qrDiv.innerHTML = '';
+  new QRCode(qrDiv, { text: uri, width: 180, height: 180, colorDark: '#000', colorLight: '#fff', correctLevel: QRCode.CorrectLevel.M });
+  showScreen('screen-2fa-setup');
+  document.getElementById('setup-otp-error').textContent = '';
+  setupOTPInputs('setup-otp-row', null);
+}
+
+async function verifySetupOTP() {
+  var code = getOTPValue('setup-otp-row');
+  var err = document.getElementById('setup-otp-error');
+  if (code.length < 6) { err.textContent = 'Enter the full 6-digit code.'; return; }
+  var expected = await generateTOTP(tfa.secret);
+  if (code !== expected) { err.textContent = 'Incorrect code. Try again.'; return; }
+  // Save secret for this email
+  localStorage.setItem(tfaStorageKey(tfa.pendingEmail), tfa.secret);
+  err.textContent = '';
+  completeTfaLogin();
+}
+
+async function showTfaVerify(email, token) {
+  tfa.pendingToken = token;
+  tfa.pendingEmail = email;
+  showScreen('screen-2fa-verify');
+  document.getElementById('verify-otp-error').textContent = '';
+  setupOTPInputs('verify-otp-row', function() { verifyLoginOTP(); });
+  startCountdown();
+}
+
+async function verifyLoginOTP() {
+  var code = getOTPValue('verify-otp-row');
+  var err = document.getElementById('verify-otp-error');
+  if (code.length < 6) { err.textContent = 'Enter the full 6-digit code.'; return; }
+  var storedSecret = localStorage.getItem(tfaStorageKey(tfa.pendingEmail));
+  var expected = await generateTOTP(storedSecret);
+  if (code !== expected) {
+    err.textContent = 'Incorrect code. Check your authenticator app.';
+    // clear inputs for retry
+    Array.from(document.querySelectorAll('#verify-otp-row .otp-digit')).forEach(function(d) { d.value = ''; });
+    document.querySelector('#verify-otp-row .otp-digit').focus();
+    return;
+  }
+  clearInterval(tfa.countdownTimer);
+  completeTfaLogin();
+}
+
+function completeTfaLogin() {
+  accessToken = tfa.pendingToken;
+  document.getElementById('admin-nav-email').textContent = tfa.pendingEmail;
+  tfa.secret = null; tfa.pendingToken = null;
+  showScreen('screen-admin');
+  loadData();
+  toast('Logged in securely ✓');
+}
+
 // ── AUTH ──────────────────────────────────────────────────────────
 async function adminLogin() {
   var email = document.getElementById('admin-email').value.trim().toLowerCase();
@@ -277,11 +501,15 @@ async function adminLogin() {
   setBtn('admin-login-btn', true, 'Access Admin Panel');
   try {
     var data = await authFetch('token?grant_type=password', { email: email, password: pass });
-    accessToken = data.access_token;
-    document.getElementById('admin-nav-email').textContent = email;
-    document.getElementById('screen-login').style.display = 'none';
-    document.getElementById('screen-admin').style.display = 'block';
-    loadData();
+    var token = data.access_token;
+    var storedSecret = localStorage.getItem(tfaStorageKey(email));
+    if (storedSecret) {
+      // 2FA already set up — verify
+      await showTfaVerify(email, token);
+    } else {
+      // First time — trigger setup
+      await showTfaSetup(email, token);
+    }
   } catch(e) {
     err.textContent = e.message === 'Invalid login credentials'
       ? 'Incorrect email or password.'
@@ -292,7 +520,6 @@ async function adminLogin() {
 }
 
 async function adminLogout() {
-  // Revoke the session server-side
   try {
     await fetch(SUPABASE_URL + '/auth/v1/logout', {
       method: 'POST',
@@ -300,11 +527,11 @@ async function adminLogout() {
     });
   } catch(e) { /* ignore */ }
   accessToken = null;
-  document.getElementById('screen-login').style.display = 'flex';
-  document.getElementById('screen-admin').style.display = 'none';
+  clearInterval(tfa.countdownTimer);
   document.getElementById('admin-email').value = '';
   document.getElementById('admin-pass').value = '';
   document.getElementById('admin-nav-email').textContent = '';
+  showScreen('screen-login');
 }
 
 // ── DATA ──────────────────────────────────────────────────────────
@@ -356,7 +583,10 @@ function renderWashPoints(points) {
       '<div class="op-card-email">' + p.area + '</div>' +
       '<div class="op-card-point" style="color:var(--grey)">📌 ' + parseFloat(p.lat).toFixed(4) + ', ' + parseFloat(p.lng).toFixed(4) + '</div>' +
       descHtml +
-      '<button class="btn btn-danger" style="padding:6px 14px;font-size:12px;margin-top:4px" onclick="deleteWashPoint(\'' + p.id + '\')">Remove</button>' +
+      '<div style="display:flex;gap:8px;margin-top:4px">' +
+        '<button class="btn btn-outline" style="padding:6px 14px;font-size:12px;flex:1" onclick="showEditPointModal(\'' + p.id + '\')">Edit</button>' +
+        '<button class="btn btn-danger" style="padding:6px 14px;font-size:12px;flex:1" onclick="deleteWashPoint(\'' + p.id + '\')">Remove</button>' +
+      '</div>' +
     '</div>';
   }).join('');
 }
@@ -467,7 +697,10 @@ function renderOperators(operators) {
       '<div class="op-card-name">' + (op.full_name || op.name || '—') + '</div>' +
       '<div class="op-card-email">' + op.email + '</div>' +
       '<div class="op-card-point">📍 ' + op.wash_point + '</div>' +
-      '<button class="btn btn-danger" style="padding:6px 14px;font-size:12px" onclick="deleteOperator(\'' + op.id + '\')">Remove</button>' +
+      '<div style="display:flex;gap:8px">' +
+        '<button class="btn btn-outline" style="padding:6px 14px;font-size:12px;flex:1" onclick="showEditOperatorModal(\'' + op.id + '\')">Edit</button>' +
+        '<button class="btn btn-danger" style="padding:6px 14px;font-size:12px;flex:1" onclick="deleteOperator(\'' + op.id + '\')">Remove</button>' +
+      '</div>' +
     '</div>';
   }).join('');
 }
