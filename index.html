@@ -772,10 +772,10 @@ select option { background:var(--s1); }
   </div>
 
   <!-- Bottom drawer -->
-  <div id="home-bottom-drawer" style="position:absolute;bottom:0;left:0;right:0;z-index:20;transition:transform .35s cubic-bezier(.4,0,.2,1);">
+  <div style="position:absolute;bottom:0;left:0;right:0;z-index:20;">
     <div style="background:rgba(7,17,31,.94);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
       border-top:1px solid rgba(255,255,255,.07);border-radius:26px 26px 0 0;padding:10px 14px 100px;">
-      <div id="drawer-handle" onclick="toggleDrawer()" style="width:34px;height:4px;background:rgba(255,255,255,.15);border-radius:2px;margin:0 auto 12px;cursor:pointer;"></div>
+      <div style="width:34px;height:4px;background:rgba(255,255,255,.15);border-radius:2px;margin:0 auto 12px;"></div>
       <div class="section-title" style="margin-bottom:10px;">Nearby Wash Points</div>
       <div id="wash-points-list" style="display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px;margin-bottom:14px;">
         <div style="color:var(--muted);font-size:14px;padding:12px 0">Finding nearby locations...</div>
@@ -1279,8 +1279,8 @@ var nextBooking    = null;
 var nextBookingCode= null;
 var pendingGuestBooking = null;
 var activePoll          = null;
-var userLat        = -4.0547;
-var userLng        = 39.6636;
+var userLat        = -4.0435;
+var userLng        = 39.7173;
 var gpsConfirmed   = false;
 
 // ── SUPABASE ──────────────────────────────────────
@@ -1580,7 +1580,7 @@ function showPointSheet(pointId) {
         '<div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:100px;padding:5px 13px;font-size:11px;color:#7a90a8">🕐 7am – 6pm</div>' +
       '</div>' +
       '<div style="display:flex;gap:10px;margin-bottom:0">' +
-        '<button onclick="document.getElementById(\'point-sheet-overlay\').remove(); collapseDrawer(); drawRouteTo('+p.lat+','+p.lng+')" ' +
+        '<button onclick="document.getElementById(\'point-sheet-overlay\').remove(); drawRouteTo('+p.lat+','+p.lng+')" ' +
           'style="flex:1;background:rgba(255,176,32,.12);color:#ffb020;border:1.5px solid rgba(255,176,32,.35);' +
           'border-radius:16px;padding:14px;font-family:Syne,sans-serif;font-weight:800;font-size:14px;cursor:pointer;">🗺 Directions</button>' +
         '<button onclick="document.getElementById(\'point-sheet-overlay\').remove(); bookPoint(\''+p.id+'\')" ' +
@@ -1613,31 +1613,6 @@ var activeRouteLine  = null; // current drawn route polyline
 
 function clearRoute() {
   if (activeRouteLine) { mapInstance.removeLayer(activeRouteLine); activeRouteLine = null; }
-  expandDrawer();
-}
-
-var drawerCollapsed = false;
-
-function collapseDrawer() {
-  var drawer = document.getElementById('home-bottom-drawer');
-  if (drawer) {
-    drawer.style.transform = 'translateY(calc(100% - 28px))';
-    drawerCollapsed = true;
-  }
-  if (mapInstance) setTimeout(function() { mapInstance.invalidateSize(); }, 350);
-}
-
-function expandDrawer() {
-  var drawer = document.getElementById('home-bottom-drawer');
-  if (drawer) {
-    drawer.style.transform = 'translateY(0)';
-    drawerCollapsed = false;
-  }
-  if (mapInstance) setTimeout(function() { mapInstance.invalidateSize(); }, 350);
-}
-
-function toggleDrawer() {
-  if (drawerCollapsed) { expandDrawer(); } else { collapseDrawer(); }
 }
 
 async function drawRouteTo(destLat, destLng) {
@@ -1672,7 +1647,6 @@ async function drawRouteTo(destLat, destLng) {
 
   if (navigator.geolocation) {
     toast('Getting your location...');
-    collapseDrawer();
     navigator.geolocation.getCurrentPosition(function(pos) {
       userLat = pos.coords.latitude;
       userLng = pos.coords.longitude;
@@ -2242,7 +2216,30 @@ async function triggerSTK() {
         statusEl.className   = 'mpesa-status pending';
         statusEl.textContent = 'Enter your M-Pesa PIN on your phone to confirm.';
         toast('M-Pesa prompt sent!');
-        // Poll for payment confirmation on booking row
+
+        // Sandbox: show manual confirm button since Daraja callback won't fire
+        var manualBtn = document.getElementById('mpesa-manual-confirm');
+        if (!manualBtn) {
+          manualBtn = document.createElement('button');
+          manualBtn.id        = 'mpesa-manual-confirm';
+          manualBtn.className = 'btn btn-outline';
+          manualBtn.style.cssText = 'margin-top:10px;width:100%;border-color:rgba(255,176,32,.4);color:#ffb020;font-size:13px;padding:12px;';
+          manualBtn.textContent   = '✓ I\'ve paid — continue to wash pass';
+          manualBtn.onclick = function() {
+            clearInterval(activePoll); activePoll = null;
+            manualBtn.remove();
+            statusEl.className   = 'mpesa-status success';
+            statusEl.textContent = 'Payment confirmed! Loading your wash pass...';
+            setTimeout(function() {
+              var pgb = pendingGuestBooking;
+              pendingGuestBooking = null;
+              showQR(pgb.booking, pgb.code, pgb.date, [], 5);
+            }, 800);
+          };
+          statusEl.parentNode.insertBefore(manualBtn, statusEl.nextSibling);
+        }
+
+        // Also poll for real Daraja callback (for when go-live happens)
         var attempts = 0;
         activePoll = setInterval(async function() {
           attempts++;
@@ -2251,6 +2248,8 @@ async function triggerSTK() {
             var row  = rows && rows[0];
             if (row && row.payment_status === 'paid') {
               clearInterval(activePoll); activePoll = null;
+              var mb = document.getElementById('mpesa-manual-confirm');
+              if (mb) mb.remove();
               statusEl.className   = 'mpesa-status success';
               statusEl.textContent = 'Payment confirmed! Loading your wash pass...';
               toast('Payment confirmed!');
