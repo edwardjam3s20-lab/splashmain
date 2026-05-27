@@ -1250,6 +1250,9 @@ var WASH_POINTS = [];
 async function fetchWashPoints() {
   try {
     var rows = await sbFetch('wash_points?select=*&order=name.asc');
+    if (!rows || rows.length === 0) {
+      console.warn('SplashPass: wash_points returned empty — check Supabase RLS policy allows anon reads.');
+    }
     WASH_POINTS = (rows || []).map(function(r) {
       return {
         id: r.id, name: r.name, area: r.area,
@@ -1259,6 +1262,7 @@ async function fetchWashPoints() {
       };
     });
   } catch(e) {
+    console.error('SplashPass: fetchWashPoints failed —', e.message, '— check Supabase RLS.');
     WASH_POINTS = [];
   }
 }
@@ -1277,6 +1281,7 @@ var pendingGuestBooking = null;
 var activePoll          = null;
 var userLat        = -4.0435;
 var userLng        = 39.7173;
+var gpsConfirmed   = false;
 
 // ── SUPABASE ──────────────────────────────────────
 async function sbFetch(path, options) {
@@ -1456,24 +1461,35 @@ function getLocation() {
     sortAndRenderPoints();
   });
 
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(function(pos) {
-      userLat = pos.coords.latitude;
-      userLng = pos.coords.longitude;
-      document.getElementById('map-label').textContent = '📍 Your location';
-
-      // Move the user marker to real position
-      if (userMarker && mapInstance) {
-        userMarker.setLatLng([userLat, userLng]);
-        mapInstance.setView([userLat, userLng], 14);
-      }
-
-      // Re-sort and re-render points with real distances
-      sortAndRenderPoints();
-    }, function() {
-      document.getElementById('map-label').textContent = '📍 Mombasa, Kenya';
-    });
+  if (!navigator.geolocation) {
+    document.getElementById('map-label').textContent = '📍 Mombasa, Kenya';
+    return;
   }
+
+  // One-shot to get position fast
+  navigator.geolocation.getCurrentPosition(function(pos) {
+    userLat = pos.coords.latitude;
+    userLng = pos.coords.longitude;
+    gpsConfirmed = true;
+    document.getElementById('map-label').textContent = '📍 Your location';
+    if (userMarker && mapInstance) {
+      userMarker.setLatLng([userLat, userLng]);
+      mapInstance.setView([userLat, userLng], 14);
+    }
+    sortAndRenderPoints();
+  }, function() {
+    document.getElementById('map-label').textContent = '📍 Mombasa, Kenya';
+  }, { enableHighAccuracy: true, timeout: 8000 });
+
+  // Watch for ongoing movement
+  navigator.geolocation.watchPosition(function(pos) {
+    userLat = pos.coords.latitude;
+    userLng = pos.coords.longitude;
+    gpsConfirmed = true;
+    if (userMarker && mapInstance) {
+      userMarker.setLatLng([userLat, userLng]);
+    }
+  }, function() {}, { enableHighAccuracy: true });
 }
 
 function distKm(lat1, lng1, lat2, lng2) {
@@ -1602,41 +1618,48 @@ function clearRoute() {
 async function drawRouteTo(destLat, destLng) {
   if (!mapInstance) return;
   clearRoute();
-  try {
+
+  // Always get fresh GPS before routing
+  function doRoute(originLat, originLng) {
     var url = 'https://router.project-osrm.org/route/v1/driving/' +
-      userLng + ',' + userLat + ';' + destLng + ',' + destLat +
+      originLng + ',' + originLat + ';' + destLng + ',' + destLat +
       '?overview=full&geometries=geojson';
-    var res  = await fetch(url);
-    var data = await res.json();
-    if (!data.routes || !data.routes[0]) { toast('Could not find a route.', true); return; }
-    var coords = data.routes[0].geometry.coordinates.map(function(c) { return [c[1], c[0]]; });
-    activeRouteLine = L.polyline(coords, {
-      color: '#ffb020',
-      weight: 5,
-      opacity: 0.85,
-      lineJoin: 'round',
-      lineCap: 'round',
-      dashArray: null
-    }).addTo(mapInstance);
+    fetch(url).then(function(res) { return res.json(); }).then(function(data) {
+      if (!data.routes || !data.routes[0]) { toast('Could not find a route.', true); return; }
+      var coords = data.routes[0].geometry.coordinates.map(function(c) { return [c[1], c[0]]; });
+      activeRouteLine = L.polyline(coords, {
+        color: '#ffb020', weight: 5, opacity: 0.85,
+        lineJoin: 'round', lineCap: 'round'
+      }).addTo(mapInstance);
+      var bounds = L.latLngBounds([[originLat, originLng], [destLat, destLng]]);
+      mapInstance.fitBounds(bounds, { padding: [60, 60] });
+      var clearBtn = document.getElementById('clear-route-btn');
+      if (clearBtn) clearBtn.style.display = 'block';
+      var dist = data.routes[0].distance;
+      var dur  = data.routes[0].duration;
+      var distLabel = dist >= 1000 ? (dist/1000).toFixed(1) + ' km' : Math.round(dist) + ' m';
+      var durLabel  = dur >= 3600
+        ? Math.floor(dur/3600) + 'h ' + Math.round((dur%3600)/60) + 'min'
+        : Math.round(dur/60) + ' min';
+      toast('🗺 ' + distLabel + ' · ~' + durLabel + ' drive');
+    }).catch(function(e) { toast('Routing error: ' + e.message, true); });
+  }
 
-    // Fit map to show full route
-    var bounds = L.latLngBounds([[userLat, userLng], [destLat, destLng]]);
-    mapInstance.fitBounds(bounds, { padding: [60, 60] });
-
-    // Show the clear route button
-    var clearBtn = document.getElementById('clear-route-btn');
-    if (clearBtn) clearBtn.style.display = 'block';
-
-    // Show distance + duration from OSRM
-    var dist = data.routes[0].distance; // metres
-    var dur  = data.routes[0].duration; // seconds
-    var distLabel = dist >= 1000 ? (dist/1000).toFixed(1) + ' km' : Math.round(dist) + ' m';
-    var durLabel  = dur  >= 3600
-      ? Math.floor(dur/3600) + 'h ' + Math.round((dur%3600)/60) + 'min'
-      : Math.round(dur/60) + ' min';
-    toast('🗺 ' + distLabel + ' · ~' + durLabel + ' drive');
-  } catch(e) {
-    toast('Routing error: ' + e.message, true);
+  if (navigator.geolocation) {
+    toast('Getting your location...');
+    navigator.geolocation.getCurrentPosition(function(pos) {
+      userLat = pos.coords.latitude;
+      userLng = pos.coords.longitude;
+      gpsConfirmed = true;
+      if (userMarker) userMarker.setLatLng([userLat, userLng]);
+      doRoute(userLat, userLng);
+    }, function() {
+      // GPS denied or failed — use last known
+      toast('Using last known location for directions.', true);
+      doRoute(userLat, userLng);
+    }, { enableHighAccuracy: true, timeout: 6000 });
+  } else {
+    doRoute(userLat, userLng);
   }
 }
 
