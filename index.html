@@ -729,8 +729,8 @@ select option { background:var(--s1); }
         box-shadow:0 4px 14px rgba(0,0,0,.4);display:flex;align-items:center;gap:8px;">
         <div style="font-size:16px;">💧</div>
         <div>
-          <div style="font-size:10px;color:#7a90a8;font-weight:600;text-transform:uppercase;letter-spacing:.4px;">Washes left</div>
-          <div id="home-credits" style="font-size:13px;font-weight:700;color:#ffb020;font-family:'Syne',sans-serif;">—</div>
+          <div style="font-size:10px;color:#7a90a8;font-weight:600;text-transform:uppercase;letter-spacing:.4px;">Access</div>
+          <div id="home-credits" style="font-size:13px;font-weight:700;font-family:'Syne',sans-serif;">—</div>
           <div style="width:60px;height:3px;background:rgba(255,255,255,.08);border-radius:2px;margin-top:4px;overflow:hidden;">
             <div id="home-credits-bar" style="height:100%;border-radius:2px;background:linear-gradient(90deg,#ffd166,#ffb020);width:0%"></div>
           </div>
@@ -860,7 +860,9 @@ select option { background:var(--s1); }
   </div>
   <div class="plans-content">
     <div class="plans-intro">
-      <p style="color:var(--muted);font-size:14px">Weekly subscription · Cancel anytime</p>
+      <h2 style="font-size:24px;font-weight:800;margin-bottom:6px;">SplashPass Plans</h2>
+      <p style="color:var(--muted);font-size:14px;margin-bottom:4px;">Monthly subscription · Cancel anytime</p>
+      <p style="color:var(--muted);font-size:13px;">Wash point prices vary per location. A KSh 30 booking fee applies per booking.</p>
     </div>
     <div id="plans-content"></div>
   </div>
@@ -919,10 +921,11 @@ select option { background:var(--s1); }
     <div class="profile-card">
       <div class="profile-card-title">Subscription</div>
       <div class="profile-row"><span>Plan</span><strong id="prof-plan">—</strong></div>
-      <div class="profile-row"><span>Credits</span><strong id="prof-credits" style="color:var(--gold)">—</strong></div>
       <div class="profile-row"><span>Status</span><strong id="prof-status">—</strong></div>
-      <div class="profile-row"><span>Started</span><strong id="prof-start">—</strong></div>
+      <div class="profile-row"><span>Trial days left</span><strong id="prof-credits" style="color:var(--gold)">—</strong></div>
+      <div class="profile-row"><span>Subscribed</span><strong id="prof-start">—</strong></div>
       <div class="profile-row"><span>Renews</span><strong id="prof-renew">—</strong></div>
+      <div class="profile-row" style="border-bottom:none;"><span>Booking fee</span><strong style="color:var(--gold)">KSh 30 / booking</strong></div>
     </div>
 
     <!-- Menu rows -->
@@ -1213,24 +1216,31 @@ var SUPABASE_URL = 'https://msdvyiqjoogafzyaoycg.supabase.co';
 var SUPABASE_KEY = 'sb_publishable_N_g24aU7TLHLNeu72gnfeg_1d7OleFW';
 var SLOTS = ['7:00 AM','8:00 AM','9:00 AM','10:00 AM','11:00 AM','12:00 PM','1:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM'];
 
+// ── SUBSCRIPTION PLANS (Spotify-style access model) ──
 var PLANS = [
-  { id: 'saloon-3x', name: 'Saloon 3x',  price: 810,  credits: 3, car: 'Saloon',  washes: '3 washes/week', basePrice: 300 },
-  { id: 'saloon-6x', name: 'Saloon 6x',  price: 1620, credits: 6, car: 'Saloon',  washes: '6 washes/week', basePrice: 300 },
-  { id: 'pickup-3x', name: 'Pickup 3x',  price: 945,  credits: 3, car: 'Pickup',  washes: '3 washes/week', basePrice: 350 },
-  { id: 'pickup-6x', name: 'Pickup 6x',  price: 1890, credits: 6, car: 'Pickup',  washes: '6 washes/week', basePrice: 350 },
-  { id: 'suv-3x',    name: 'SUV 3x',     price: 1080, credits: 3, car: 'SUV',     washes: '3 washes/week', basePrice: 400 },
-  { id: 'suv-6x',    name: 'SUV 6x',     price: 2160, credits: 6, car: 'SUV',     washes: '6 washes/week', basePrice: 400 }
+  { id: 'individual', name: 'Individual', price: 999, cars: 1,
+    desc: 'Perfect for a single vehicle',
+    features: ['1 car registered','Unlimited bookings','Priority queue access','Cashless booking via app','Loyalty points on every wash'] },
+  { id: 'duo', name: 'Duo', price: 1799, cars: 2,
+    desc: 'For couples or two vehicles',
+    features: ['2 cars registered','Unlimited bookings','Priority queue access','Cashless booking via app','Loyalty points on every wash'] },
+  { id: 'family', name: 'Family', price: 2999, cars: 5,
+    desc: 'For the whole household',
+    features: ['Up to 5 cars','Unlimited bookings','Priority queue access','Cashless booking via app','Loyalty points on every wash'] }
 ];
 
+var BOOKING_FEE = 30;   // KSh per booking (pilot phase)
+var PILOT_DAYS  = 30;   // Free trial length
+
 var EXTRAS = [
-  { id: 'engine-wash',   name: 'Engine Wash',           credits: 1, price: 300 },
-  { id: 'vacuum',        name: 'Vacuum Only',            credits: 1, price: 200 },
-  { id: 'roof-cleaning', name: 'Roof Cleaning',          credits: 1, price: 250 },
-  { id: 'polish-outside',name: 'Polish Outside',         credits: 1, price: 100 },
-  { id: 'underwash',     name: 'Underwash',              credits: 1, price: 300 },
-  { id: 'detailing',     name: 'Full Detailing',         credits: 5, price: 2500 },
-  { id: 'buffing',       name: 'Buffing',                credits: 4, price: 2000 },
-  { id: 'outwash-wipe',  name: 'Outwash Full Body Wipe', credits: 1, price: 200 }
+  { id: 'engine-wash',   name: 'Engine Wash',           price: 300 },
+  { id: 'vacuum',        name: 'Vacuum Only',            price: 200 },
+  { id: 'roof-cleaning', name: 'Roof Cleaning',          price: 250 },
+  { id: 'polish-outside',name: 'Polish Outside',         price: 100 },
+  { id: 'underwash',     name: 'Underwash',              price: 300 },
+  { id: 'detailing',     name: 'Full Detailing',         price: 2500 },
+  { id: 'buffing',       name: 'Buffing',                price: 2000 },
+  { id: 'outwash-wipe',  name: 'Outwash Full Body Wipe', price: 200 }
 ];
 
 var LOYALTY_TIERS = [
@@ -1258,7 +1268,10 @@ async function fetchWashPoints() {
         id: r.id, name: r.name, area: r.area,
         lat: parseFloat(r.lat), lng: parseFloat(r.lng),
         description: r.description || null,
-        image_url: r.image_url || null
+        image_url: r.image_url || null,
+        price_saloon: r.price_saloon || null,
+        price_suv: r.price_suv || null,
+        price_pickup: r.price_pickup || null
       };
     });
   } catch(e) {
@@ -1574,7 +1587,22 @@ function showPointSheet(pointId) {
           'border-radius:100px;padding:5px 13px;font-size:11px;font-weight:700;color:#22c55e;flex-shrink:0;">Open</div>' +
       '</div>' +
       descHtml +
-      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px">' +
+      '<div style="margin-bottom:18px;">' +
+        '<div style="font-size:10px;color:#7a90a8;font-weight:700;text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;">Wash Prices</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">' +
+          '<div style="background:rgba(255,176,32,.07);border:1px solid rgba(255,176,32,.18);border-radius:12px;padding:10px;text-align:center;">' +
+            '<div style="font-size:10px;color:#7a90a8;margin-bottom:4px;">Saloon</div>' +
+            '<div style="font-size:16px;font-weight:800;color:#ffb020;font-family:Syne,sans-serif;">'+(p.price_saloon ? 'KSh '+p.price_saloon : 'KSh 350')+'</div></div>' +
+          '<div style="background:rgba(255,176,32,.07);border:1px solid rgba(255,176,32,.18);border-radius:12px;padding:10px;text-align:center;">' +
+            '<div style="font-size:10px;color:#7a90a8;margin-bottom:4px;">SUV</div>' +
+            '<div style="font-size:16px;font-weight:800;color:#ffb020;font-family:Syne,sans-serif;">'+(p.price_suv ? 'KSh '+p.price_suv : 'KSh 500')+'</div></div>' +
+          '<div style="background:rgba(255,176,32,.07);border:1px solid rgba(255,176,32,.18);border-radius:12px;padding:10px;text-align:center;">' +
+            '<div style="font-size:10px;color:#7a90a8;margin-bottom:4px;">Pickup</div>' +
+            '<div style="font-size:16px;font-weight:800;color:#ffb020;font-family:Syne,sans-serif;">'+(p.price_pickup ? 'KSh '+p.price_pickup : 'KSh 450')+'</div></div>' +
+        '</div>' +
+        '<div style="font-size:11px;color:#7a90a8;margin-top:8px;">+ KSh 30 SplashPass booking fee applies</div>' +
+      '</div>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">' +
         '<div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:100px;padding:5px 13px;font-size:11px;color:#7a90a8">💧 Exterior Wash</div>' +
         '<div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:100px;padding:5px 13px;font-size:11px;color:#7a90a8">✨ Interior</div>' +
         '<div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:100px;padding:5px 13px;font-size:11px;color:#7a90a8">🕐 7am – 6pm</div>' +
@@ -1704,6 +1732,27 @@ function initMap() {
   userMarker = L.marker([userLat, userLng], { icon: userIcon }).addTo(mapInstance);
 }
 
+// ── PILOT HELPERS ────────────────────────────────
+function getPilotStart() {
+  if (currentUser && currentUser.pilot_start) return new Date(currentUser.pilot_start);
+  return null;
+}
+function trialDaysLeft() {
+  var start = getPilotStart();
+  if (!start) return PILOT_DAYS; // never started
+  var elapsed = Math.floor((Date.now() - start.getTime()) / 86400000);
+  return Math.max(0, PILOT_DAYS - elapsed);
+}
+function isInTrial() {
+  return trialDaysLeft() > 0;
+}
+function hasActiveSubscription() {
+  return currentUser && currentUser.plan && currentUser.sub_status === 'active';
+}
+function canBook() {
+  return isInTrial() || hasActiveSubscription();
+}
+
 // ── BOOKING ───────────────────────────────────────
 function bookPoint(pointId) {
   if (!currentUser) { showScreen('auth'); return; }
@@ -1711,21 +1760,49 @@ function bookPoint(pointId) {
   selectedPoint = WASH_POINTS.find(function(p) { return String(p.id) === pointId; });
   if (!selectedPoint) return;
 
-  var hasActivePlan = currentUser.plan && currentUser.sub_status === 'active' && currentUser.credits > 0;
-
-  if (hasActivePlan) {
-    // Subscriber flow — go straight to booking
-    document.getElementById('book-title').textContent = 'Book a Wash';
-    document.getElementById('book-point-name').textContent = selectedPoint.name;
-    document.getElementById('book-point-area').textContent = selectedPoint.area;
-    document.getElementById('book-btn').removeAttribute('data-guest');
-    showScreen('book');
-    loadSlots();
-    updateBookingTotal();
-  } else {
-    // No active plan — offer guest wash
-    showGuestWashPrompt(pointId);
+  if (!canBook()) {
+    // Trial expired, no subscription — prompt to subscribe
+    showSubscribeWall();
+    return;
   }
+
+  // Trial or active subscriber — go to booking
+  document.getElementById('book-title').textContent = 'Book a Wash';
+  document.getElementById('book-point-name').textContent = selectedPoint.name;
+  document.getElementById('book-point-area').textContent = selectedPoint.area;
+  document.getElementById('book-btn').removeAttribute('data-guest');
+  showScreen('book');
+  loadSlots();
+  updateBookingTotal();
+}
+
+function showSubscribeWall() {
+  var existing = document.getElementById('subscribe-wall-overlay');
+  if (existing) existing.remove();
+  var overlay = document.createElement('div');
+  overlay.id = 'subscribe-wall-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:300;display:flex;flex-direction:column;justify-content:flex-end;background:rgba(0,0,0,.6);';
+  overlay.innerHTML =
+    '<div onclick="this.parentElement.remove()" style="flex:1"></div>' +
+    '<div style="background:#0f1d30;border-top:1px solid rgba(255,255,255,.07);border-radius:28px 28px 0 0;padding:28px 22px 48px;">' +
+      '<div style="width:36px;height:4px;background:rgba(255,255,255,.15);border-radius:2px;margin:0 auto 20px"></div>' +
+      '<div style="font-size:32px;text-align:center;margin-bottom:12px">🔒</div>' +
+      '<div style="font-size:22px;font-weight:800;font-family:Syne,sans-serif;text-align:center;margin-bottom:8px;">Trial Ended</div>' +
+      '<div style="font-size:14px;color:#7a90a8;text-align:center;margin-bottom:24px;line-height:1.5;">Your 30-day free trial has ended.<br>Subscribe to continue booking washes.</div>' +
+      '<div style="background:rgba(255,176,32,.07);border:1px solid rgba(255,176,32,.2);border-radius:16px;padding:16px;margin-bottom:20px;text-align:center;">' +
+        '<div style="font-size:11px;color:#7a90a8;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Starting from</div>' +
+        '<div style="font-size:34px;font-weight:800;color:#ffb020;font-family:Syne,sans-serif;">KSh 999<span style="font-size:14px;color:#7a90a8;font-weight:400;">/month</span></div>' +
+        '<div style="font-size:12px;color:#7a90a8;margin-top:4px;">Individual plan · 1 car</div>' +
+      '</div>' +
+      '<button onclick="var el=document.getElementById(\'subscribe-wall-overlay\');if(el)el.remove();showScreen(\'plans\')" ' +
+        'style="width:100%;background:linear-gradient(180deg,#ffd166,#ffb020);color:#07111f;border:none;' +
+        'border-radius:16px;padding:15px;font-family:Syne,sans-serif;font-weight:800;font-size:15px;cursor:pointer;' +
+        'box-shadow:0 8px 24px rgba(255,176,32,.3);margin-bottom:10px;">View Subscription Plans →</button>' +
+      '<button onclick="var el=document.getElementById(\'subscribe-wall-overlay\');if(el)el.remove();" ' +
+        'style="width:100%;background:rgba(255,255,255,.05);color:#f0f4f8;border:1px solid rgba(255,255,255,.1);' +
+        'border-radius:16px;padding:14px;font-family:Syne,sans-serif;font-weight:700;font-size:14px;cursor:pointer;">Maybe Later</button>' +
+    '</div>';
+  document.body.appendChild(overlay);
 }
 
 function showGuestWashPrompt(pointId) {
@@ -1834,7 +1911,7 @@ function renderExtras() {
     var bc  = sel ? 'rgba(255,176,32,.4)' : 'rgba(255,255,255,.07)';
     html += '<div data-extra="'+e.id+'" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:'+bg+';border-radius:14px;margin-bottom:8px;border:1px solid '+bc+';cursor:pointer;transition:all .15s">';
     html += '<div><div style="font-size:14px;font-weight:600">'+e.name+'</div>';
-    html += '<div style="font-size:12px;color:var(--muted);margin-top:2px">KSh '+e.price+' · '+e.credits+' credit'+(e.credits>1?'s':'')+'</div></div>';
+    html += '<div style="font-size:12px;color:var(--muted);margin-top:2px">KSh '+e.price+' · Pay at wash point</div></div>';
     html += '<div style="width:26px;height:26px;border-radius:50%;background:'+(sel?'var(--gold)':'rgba(255,255,255,.08)')+';display:flex;align-items:center;justify-content:center;font-size:14px;color:'+(sel?'#07111f':'var(--muted)')+';">'+(sel?'✓':'+')+'</div></div>';
   });
   container.innerHTML = html;
@@ -1851,111 +1928,69 @@ function toggleExtra(id) {
 }
 
 function updateBookingTotal() {
-  var total = 1;
-  selectedExtras.forEach(function(id) {
-    var ex = EXTRAS.find(function(e) { return e.id === id; });
-    if (ex) total += ex.credits;
-  });
   var el = document.getElementById('booking-total');
-  if (el) el.textContent = total + ' credit' + (total !== 1 ? 's' : '');
+  if (el) el.innerHTML = 'KSh <strong style="color:var(--gold)">30</strong> booking fee · Pay via M-Pesa';
 }
 
 async function confirmBooking() {
   if (!selectedSlot) { toast('Please select a time slot.', true); return; }
-
-  var isGuest = document.getElementById('book-btn').getAttribute('data-guest') === 'true';
   var date    = document.getElementById('book-date').value;
   var carType = currentUser.car_type || 'Saloon';
 
-  if (isGuest) {
-    // Guest wash — no credits needed, charge at guest rate
-    var guestPrice      = carType === 'SUV' ? 480 : carType === 'Pickup' ? 420 : 360;
-    var guestOperator   = Math.round(guestPrice * 0.8);
-    setBtn('book-btn', true, 'Confirm Booking');
+  // Set pilot_start on first ever booking
+  if (!currentUser.pilot_start) {
     try {
-      var code = 'SP' + Math.random().toString(36).substring(2,8).toUpperCase();
-      var booking = await createBooking({
-        user_email: currentUser.email,
-        user_name:  currentUser.name,
-        date: date, time: selectedSlot,
-        location: selectedPoint.name,
-        status: 'confirmed',
-        plan: 'Guest',
-        car_type: carType,
-        amount: guestPrice,
-        operator_amount: guestOperator,
-        booking_type: 'guest',
-        plate: currentUser.plate || ''
-      });
-      var b = booking[0];
-      // Clean up guest badge and flag
-      var badge = document.getElementById('guest-booking-badge');
-      if (badge) badge.remove();
-      document.getElementById('book-btn').removeAttribute('data-guest');
-      // Store booking context for post-payment QR
-      pendingGuestBooking = { booking: b, code: code, date: date };
-      // Route to M-Pesa for payment
-      var mpesaScreen = document.getElementById('screen-mpesa');
-      mpesaScreen.setAttribute('data-context', 'guest');
-      document.getElementById('mpesa-title').textContent    = 'Pay for Guest Wash';
-      document.getElementById('mpesa-amount').textContent   = 'KSh ' + guestPrice.toLocaleString();
-      document.getElementById('mpesa-plan-name').textContent = selectedPoint.name + ' · ' + carType + ' · ' + selectedSlot;
-      document.getElementById('mpesa-change-btn').textContent = 'Back to Booking';
-      if (currentUser.phone) document.getElementById('mpesa-phone').value = currentUser.phone;
-      document.getElementById('mpesa-status').className  = 'mpesa-status hidden';
-      document.getElementById('mpesa-status').textContent = '';
-      showScreen('mpesa');
-    } catch(e) { toast('Booking failed: ' + e.message, true); }
-    finally { setBtn('book-btn', false, 'Confirm Booking'); }
-    return;
+      var now = new Date().toISOString();
+      await updateUser(currentUser.email, { pilot_start: now });
+      currentUser.pilot_start = now;
+      localStorage.setItem('splashpass_user', JSON.stringify(currentUser));
+    } catch(e) {}
   }
 
-  // Subscription flow
-  var totalCredits = 1 + selectedExtras.reduce(function(s, id) {
-    var ex = EXTRAS.find(function(e) { return e.id === id; });
-    return s + (ex ? ex.credits : 0);
-  }, 0);
-  if (!currentUser.credits || currentUser.credits < totalCredits) {
-    toast('Not enough credits. Need '+totalCredits+', have '+(currentUser.credits||0)+'.', true);
-    showScreen('plans');
-    return;
-  }
   setBtn('book-btn', true, 'Confirm Booking');
   try {
-    var code = 'SP' + Math.random().toString(36).substring(2,8).toUpperCase();
-    var extrasData = selectedExtras.map(function(id) {
+    var code        = 'SP' + Math.random().toString(36).substring(2,8).toUpperCase();
+    var extrasData  = selectedExtras.map(function(id) {
       return EXTRAS.find(function(e) { return e.id === id; });
     }).filter(Boolean);
-
-    var basePrice      = carType === 'SUV' ? 440 : carType === 'Pickup' ? 385 : 330;
-    var operatorAmount = Math.round(basePrice * 0.8);
-
+    var planLabel   = currentUser.plan || 'Trial';
     var booking = await createBooking({
-      user_email: currentUser.email,
-      user_name:  currentUser.name,
+      user_email:      currentUser.email,
+      user_name:       currentUser.name,
       date: date, time: selectedSlot,
-      location: selectedPoint.name,
-      status: 'confirmed',
-      plan: currentUser.plan,
-      extras: extrasData,
-      car_type: carType,
-      amount: basePrice,
-      operator_amount: operatorAmount,
-      booking_type: 'subscription',
-      plate: currentUser.plate || ''
+      location:        selectedPoint.name,
+      status:          'confirmed',
+      plan:            planLabel,
+      extras:          extrasData,
+      car_type:        carType,
+      amount:          BOOKING_FEE,
+      operator_amount: 0,
+      booking_type:    hasActiveSubscription() ? 'subscription' : 'trial',
+      plate:           currentUser.plate || ''
     });
     var b = booking[0];
-    var newCredits   = currentUser.credits - totalCredits;
-    var pointsEarned = 10 + (selectedExtras.length * 5);
+
+    // Update loyalty points
+    var pointsEarned = 10;
     var newPoints    = (currentUser.loyalty_points || 0) + pointsEarned;
     var newTier      = getTier(newPoints).name;
-    await updateUser(currentUser.email, { credits: newCredits, loyalty_points: newPoints, loyalty_tier: newTier });
-    currentUser.credits        = newCredits;
+    await updateUser(currentUser.email, { loyalty_points: newPoints, loyalty_tier: newTier });
     currentUser.loyalty_points = newPoints;
     currentUser.loyalty_tier   = newTier;
     localStorage.setItem('splashpass_user', JSON.stringify(currentUser));
     selectedExtras = [];
-    showQR(b, code, date, extrasData, pointsEarned);
+
+    // Route to M-Pesa for KSh 30 booking fee
+    pendingGuestBooking = { booking: b, code: code, date: date };
+    document.getElementById('screen-mpesa').setAttribute('data-context', 'booking');
+    document.getElementById('mpesa-title').textContent     = 'Booking Fee';
+    document.getElementById('mpesa-amount').textContent    = 'KSh 30';
+    document.getElementById('mpesa-plan-name').textContent = selectedPoint.name + ' · ' + selectedSlot + ' · ' + date;
+    document.getElementById('mpesa-change-btn').textContent = 'Back to Booking';
+    if (currentUser.phone) document.getElementById('mpesa-phone').value = currentUser.phone;
+    document.getElementById('mpesa-status').className  = 'mpesa-status hidden';
+    document.getElementById('mpesa-status').textContent = '';
+    showScreen('mpesa');
   } catch(e) { toast('Booking failed: ' + e.message, true); }
   finally { setBtn('book-btn', false, 'Confirm Booking'); }
 }
@@ -2042,27 +2077,38 @@ function renderHome() {
 
   // Badge
   var badgeEl = document.getElementById('home-badge');
-  if (currentUser.plan && currentUser.sub_status === 'active') {
-    badgeEl.textContent = 'Active'; badgeEl.className = 'sub-badge badge-active';
-  } else if (currentUser.plan && currentUser.sub_status === 'pending') {
-    badgeEl.textContent = 'Pending'; badgeEl.className = 'sub-badge badge-pending';
+  if (hasActiveSubscription()) {
+    badgeEl.textContent = 'Subscribed'; badgeEl.className = 'sub-badge badge-active';
+  } else if (isInTrial()) {
+    badgeEl.textContent = trialDaysLeft() + 'd trial'; badgeEl.className = 'sub-badge badge-pending';
   } else {
-    badgeEl.textContent = 'Get Plan'; badgeEl.className = 'sub-badge badge-none';
+    badgeEl.textContent = 'Subscribe'; badgeEl.className = 'sub-badge badge-none';
+    badgeEl.onclick = function() { showScreen('plans'); };
+    badgeEl.style.cursor = 'pointer';
   }
 
   // Plan chip
   var planEl = document.getElementById('home-plan');
-  if (planEl) planEl.textContent = currentUser.plan || 'No plan';
+  if (planEl) planEl.textContent = currentUser.plan || (isInTrial() ? 'Trial' : 'No Plan');
 
-  // Credits chip
+  // Trial/subscription status chip
   var creditsEl = document.getElementById('home-credits');
   var creditsBar = document.getElementById('home-credits-bar');
   if (creditsEl) {
-    var plan = PLANS.find(function(p) { return p.name === currentUser.plan; });
-    var total = plan ? plan.credits : 0;
-    var left  = currentUser.credits || 0;
-    creditsEl.textContent = total ? left + ' / ' + total : '—';
-    if (creditsBar && total) creditsBar.style.width = Math.min((left / total) * 100, 100) + '%';
+    if (hasActiveSubscription()) {
+      creditsEl.textContent = 'Active';
+      creditsEl.style.color = 'var(--success)';
+      if (creditsBar) creditsBar.style.width = '100%';
+    } else if (isInTrial()) {
+      var dLeft = trialDaysLeft();
+      creditsEl.textContent = dLeft + ' day' + (dLeft !== 1 ? 's' : '') + ' left';
+      creditsEl.style.color = dLeft <= 5 ? 'var(--danger)' : 'var(--gold)';
+      if (creditsBar) creditsBar.style.width = Math.round((dLeft / PILOT_DAYS) * 100) + '%';
+    } else {
+      creditsEl.textContent = 'Expired';
+      creditsEl.style.color = 'var(--danger)';
+      if (creditsBar) creditsBar.style.width = '0%';
+    }
   }
 
   // Loyalty chip
@@ -2101,12 +2147,13 @@ function renderProfile() {
   document.getElementById('prof-colour').textContent  = currentUser.car_colour || 'Not set';
   document.getElementById('prof-plate').textContent   = currentUser.plate    || 'Not set';
   document.getElementById('prof-cartype').textContent = currentUser.car_type  || 'Not set';
-  document.getElementById('prof-plan').textContent    = currentUser.plan     || 'None';
-  document.getElementById('prof-credits').textContent = currentUser.plan === 'Fleet' ? 'Unlimited' : (currentUser.credits || 0) + ' washes';
-  document.getElementById('prof-status').textContent  = currentUser.sub_status || 'pending';
+  document.getElementById('prof-plan').textContent    = currentUser.plan || (isInTrial() ? 'Trial (Free)' : 'None');
+  document.getElementById('prof-status').textContent  = hasActiveSubscription() ? 'Active' : (isInTrial() ? 'Free Trial' : 'Trial Expired');
+  var dLeft = trialDaysLeft();
+  document.getElementById('prof-credits').textContent = hasActiveSubscription() ? 'N/A (subscriber)' : (dLeft + ' day' + (dLeft !== 1 ? 's' : '') + ' remaining');
   if (currentUser.sub_start) {
     var start = new Date(currentUser.sub_start);
-    var renew = new Date(start); renew.setDate(renew.getDate() + 7);
+    var renew = new Date(start); renew.setMonth(renew.getMonth() + 1);
     document.getElementById('prof-start').textContent = start.toLocaleDateString('en-KE');
     document.getElementById('prof-renew').textContent = renew.toLocaleDateString('en-KE');
   } else {
@@ -2128,52 +2175,54 @@ function renderPlans() {
   if (!container) return;
   var html = '';
   PLANS.forEach(function(p) {
-    var isPopular = p.id === 'saloon-3x';
-    html += '<div class="plan-card'+(isPopular?' popular':'')+'">';
+    var isPopular = p.id === 'duo';
+    var isCurrent = currentUser && currentUser.plan === p.name && currentUser.sub_status === 'active';
+    html += '<div class="plan-card'+(isPopular?' popular':'')+'" style="margin-bottom:16px;">';
     if (isPopular) html += '<div class="popular-badge">Most Popular</div>';
-    html += '<div class="plan-name">'+p.name+'</div>';
-    html += '<div class="plan-price">KSh '+p.price.toLocaleString()+'<span>/week</span></div>';
-    html += '<ul class="plan-features">';
-    html += '<li>'+p.washes+'</li>';
-    html += '<li>'+p.car+' body wash included</li>';
-    html += '<li>10% off walk-in price</li>';
-    html += '<li>Guaranteed slot — no queuing</li>';
-    html += '<li>Digital wash pass + QR</li>';
-    html += '<li>10 loyalty points per wash</li>';
+    html += '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;">';
+    html += '<div><div class="plan-name">'+p.name+'</div>';
+    html += '<div style="font-size:13px;color:var(--muted);margin-top:2px;">'+p.desc+'</div></div>';
+    html += '<div style="text-align:right;"><div class="plan-price" style="font-size:28px;">KSh '+p.price.toLocaleString()+'<span>/mo</span></div>';
+    html += '<div style="font-size:11px;color:var(--muted);margin-top:2px;">'+p.cars+' car'+(p.cars>1?'s':'')+'</div></div></div>';
+    html += '<ul class="plan-features" style="margin-bottom:16px;">';
+    p.features.forEach(function(f) { html += '<li style="color:var(--text);">'+f+'</li>'; });
     html += '</ul>';
-    html += '<button class="btn '+(isPopular?'btn-gold':'btn-outline')+'" data-plan="'+p.id+'" data-price="'+p.price+'" data-credits="'+p.credits+'">Choose '+p.name+'</button>';
+    if (isCurrent) {
+      html += '<div style="text-align:center;padding:13px;border-radius:14px;background:rgba(34,197,94,.1);color:var(--success);font-weight:700;font-size:14px;">✓ Current Plan</div>';
+    } else {
+      html += '<button class="btn '+(isPopular?'btn-gold':'btn-outline')+'" data-plan="'+p.id+'" data-price="'+p.price+'">Subscribe to '+p.name+' →</button>';
+    }
     html += '</div>';
   });
   container.innerHTML = html;
   container.querySelectorAll('[data-plan]').forEach(function(btn) {
     btn.addEventListener('click', function() {
-      selectPlan(btn.getAttribute('data-plan'), parseInt(btn.getAttribute('data-price')), parseInt(btn.getAttribute('data-credits')));
+      selectPlan(btn.getAttribute('data-plan'), parseInt(btn.getAttribute('data-price')));
     });
   });
 }
 
-async function selectPlan(planId, price, credits) {
+async function selectPlan(planId, price) {
   var plan = PLANS.find(function(p) { return p.id === planId; });
   if (!plan) return;
-  selectedPlanData = { id: planId, name: plan.name, price: price, credits: credits, washes: plan.washes };
-  if (currentUser && currentUser.role === 'customer') {
+  selectedPlanData = { id: planId, name: plan.name, price: price };
+  if (currentUser) {
     try {
       await updateUser(currentUser.email, {
         plan: plan.name, plan_price: price,
         sub_start: new Date().toISOString(),
-        sub_status: 'pending', credits: credits
+        sub_status: 'pending'
       });
       currentUser.plan       = plan.name;
       currentUser.plan_price = price;
       currentUser.sub_start  = new Date().toISOString();
       currentUser.sub_status = 'pending';
-      currentUser.credits    = credits;
       localStorage.setItem('splashpass_user', JSON.stringify(currentUser));
     } catch(e) { toast('Error saving plan: ' + e.message, true); return; }
   }
   document.getElementById('mpesa-amount').textContent    = 'KSh ' + price.toLocaleString();
-  document.getElementById('mpesa-plan-name').textContent = plan.name + ' · ' + plan.washes;
-  document.getElementById('mpesa-title').textContent     = 'Pay via M-Pesa';
+  document.getElementById('mpesa-plan-name').textContent = plan.name + ' · ' + plan.cars + ' car'+(plan.cars>1?'s':'')+' · Monthly';
+  document.getElementById('mpesa-title').textContent     = 'Subscribe via M-Pesa';
   document.getElementById('mpesa-change-btn').textContent = 'Change Plan';
   document.getElementById('screen-mpesa').setAttribute('data-context', 'subscription');
   if (currentUser && currentUser.phone) document.getElementById('mpesa-phone').value = currentUser.phone;
@@ -2185,7 +2234,7 @@ async function selectPlan(planId, price, credits) {
 // ── MPESA ─────────────────────────────────────────
 function mpesaBack() {
   var ctx = document.getElementById('screen-mpesa').getAttribute('data-context');
-  if (ctx === 'guest') {
+  if (ctx === 'booking' || ctx === 'guest') {
     showScreen('book');
   } else {
     showScreen('plans');
@@ -2199,9 +2248,9 @@ async function triggerSTK() {
 
   if (!phone) { statusEl.className = 'mpesa-status error'; statusEl.textContent = 'Please enter your M-Pesa number.'; return; }
 
-  if (ctx === 'guest') {
+  if (ctx === 'guest' || ctx === 'booking') {
     if (!pendingGuestBooking) { statusEl.className = 'mpesa-status error'; statusEl.textContent = 'Booking data missing. Please re-book.'; return; }
-    var guestAmount = pendingGuestBooking.booking.amount;
+    var guestAmount = BOOKING_FEE;
     setBtn('pay-btn', true, 'Pay Now');
     statusEl.className   = 'mpesa-status pending';
     statusEl.textContent = 'Sending prompt to your phone...';
@@ -2485,39 +2534,37 @@ function obNext(step) {
 function obBack(step) { obGoTo(step - 1); }
 
 function buildRecommendation() {
-  var carType   = obAnswers.carType;
-  var frequency = parseInt(obAnswers.frequency); // 3 or 6
   var profile   = obAnswers.profile;
-
-  var carKey = carType === 'Saloon' ? 'saloon' : carType === 'Pickup' ? 'pickup' : 'suv';
-  var freqKey = frequency >= 6 ? '6x' : '3x';
-  var planId  = carKey + '-' + freqKey;
+  // Recommend Individual for most, Duo for couples/family, Family for company
+  var planId = 'individual';
+  if (profile === 'Family')        planId = 'duo';
+  if (profile === 'Company')       planId = 'family';
+  if (profile === 'Ride-hailing')  planId = 'individual';
 
   var plan = PLANS.find(function(p) { return p.id === planId; });
+  var carType = obAnswers.carType || 'Saloon';
 
   var profileLabel = profile === 'Ride-hailing' ? 'ride-hailing drivers' :
-                     profile === 'Company'       ? 'company vehicles' :
-                     profile === 'Family'        ? 'family cars' : 'personal drivers';
+                     profile === 'Company'       ? 'company fleets' :
+                     profile === 'Family'        ? 'families' : 'personal drivers';
 
-  var saving = Math.round(plan.basePrice * plan.credits * 0.1);
-  var whyText = 'KSh ' + plan.basePrice + '/wash × ' + plan.credits + ' washes = KSh ' +
-                (plan.basePrice * plan.credits).toLocaleString() + ' walk-in price. ' +
-                'You save KSh ' + saving + '/week with your SplashPass subscription. Ideal for ' + profileLabel + '.';
+  var whyText = 'The ' + plan.name + ' plan gives you booking access for up to ' + plan.cars + ' car' + (plan.cars>1?'s':'') +
+                ' at KSh 30 per booking. Wash point prices are set per location. Ideal for ' + profileLabel + '.';
 
   document.getElementById('ob-reco-name').textContent  = plan.name;
-  document.getElementById('ob-reco-price').innerHTML   = 'KSh ' + plan.price.toLocaleString() + '<span>/week</span>';
+  document.getElementById('ob-reco-price').innerHTML   = 'KSh ' + plan.price.toLocaleString() + '<span>/month</span>';
   document.getElementById('ob-reco-why').textContent   = whyText;
   document.getElementById('ob-reco-features').innerHTML =
-    '<li>' + plan.washes + '</li>' +
-    '<li>' + plan.car + ' body wash included</li>' +
-    '<li>' + plan.credits + ' wash credits per week</li>' +
-    '<li>10% off walk-in price</li>' +
-    '<li>Guaranteed slot — no queuing</li>' +
+    '<li>' + plan.cars + ' car' + (plan.cars>1?'s':'') + ' registered</li>' +
+    '<li>Unlimited bookings</li>' +
+    '<li>Priority queue access</li>' +
+    '<li>KSh 30 booking fee per wash</li>' +
+    '<li>Wash point prices shown in-app</li>' +
     '<li>Digital wash pass + QR code</li>' +
-    '<li>10 loyalty points per wash</li>';
+    '<li>10 loyalty points per booking</li>';
 
   var firstName = currentUser && currentUser.name ? currentUser.name.split(' ')[0] : 'you';
-  document.getElementById('ob-reco-title').textContent = 'Perfect for your ' + carType + ', ' + firstName + '!';
+  document.getElementById('ob-reco-title').textContent = 'Great choice for your ' + carType + ', ' + firstName + '!';
 
   obAnswers.recommendedPlan = plan;
   saveOnboardingProfile();
@@ -2546,16 +2593,15 @@ async function acceptRecommendation() {
     await updateUser(currentUser.email, {
       plan: plan.name, plan_price: plan.price,
       sub_start: new Date().toISOString(),
-      sub_status: 'pending', credits: plan.credits
+      sub_status: 'pending'
     });
     currentUser.plan       = plan.name;
     currentUser.plan_price = plan.price;
     currentUser.sub_start  = new Date().toISOString();
     currentUser.sub_status = 'pending';
-    currentUser.credits    = plan.credits;
     localStorage.setItem('splashpass_user', JSON.stringify(currentUser));
     document.getElementById('mpesa-amount').textContent    = 'KSh ' + plan.price.toLocaleString();
-    document.getElementById('mpesa-plan-name').textContent = plan.name + ' · ' + plan.washes;
+    document.getElementById('mpesa-plan-name').textContent = plan.name + ' · ' + plan.cars + ' car' + (plan.cars>1?'s':'') + ' · Monthly';
     document.getElementById('mpesa-title').textContent     = 'Pay via M-Pesa';
     document.getElementById('mpesa-change-btn').textContent = 'Change Plan';
     document.getElementById('screen-mpesa').setAttribute('data-context', 'subscription');
