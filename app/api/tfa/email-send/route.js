@@ -42,7 +42,7 @@ export async function POST(request) {
 
   // Send email via Resend
   const { error: emailError } = await resend.emails.send({
-    from: 'SplashPass Admin <noreply@splashpass.co.ke>',
+    from: 'SplashPass Admin <onboarding@resend.dev>',
     to: email,
     subject: 'Your SplashPass Admin Login Code',
     html: `
