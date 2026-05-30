@@ -29,19 +29,10 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Incorrect email or password.' }, { status: 401 })
   }
 
-  // Check if 2FA is set up for this user
-  const { data: tfaRow } = await supabase
-    .from('admin_2fa')
-    .select('secret')
-    .eq('email', email)
-    .single()
-
-  // Store the access token temporarily (not in cookie yet — must pass 2FA first)
-  // We use a short-lived pending token stored server-side
   const pendingToken = authData.session.access_token
 
+  // Always send an email 2FA code — no TOTP setup needed
   return NextResponse.json({
-    hasTfa: !!tfaRow,
     pendingToken,
     email
   })

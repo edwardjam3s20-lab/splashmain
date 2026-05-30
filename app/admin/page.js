@@ -52,23 +52,17 @@ export default function AdminPage() {
       const json = await res.json()
       if (!res.ok) { setLoginError(json.error || 'Login failed.'); return }
       setPending({ email: json.email, token: json.pendingToken })
-      if (json.hasTfa) {
-        setScreen('tfa-verify')
-        startCountdown()
-        setTimeout(() => verifyRefs.current[0]?.focus(), 100)
-      } else {
-        // First time — generate 2FA setup
-        const setupRes = await fetch('/api/tfa/setup', {
-          method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ action:'generate', email:json.email, pendingToken:json.pendingToken })
-        })
-        const setupJson = await setupRes.json()
-        if (!setupRes.ok) { setLoginError(setupJson.error || 'Failed to generate 2FA.'); return }
-        setTfaSetup({ qrDataUrl: setupJson.qrDataUrl, secret: setupJson.secret })
-        setSetupCode(['','','','','',''])
-        setScreen('tfa-setup')
-        setTimeout(() => setupRefs.current[0]?.focus(), 100)
-      }
+
+      // Send email 2FA code
+      const sendRes = await fetch('/api/tfa/email-send', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ email: json.email, pendingToken: json.pendingToken })
+      })
+      const sendJson = await sendRes.json()
+      if (!sendRes.ok) { setLoginError(sendJson.error || 'Failed to send code.'); return }
+
+      setScreen('tfa-verify')
+      setTimeout(() => verifyRefs.current[0]?.focus(), 100)
     } catch(e) { setLoginError('Network error. Please try again.') }
     finally { setLoginLoading(false) }
   }
@@ -99,7 +93,7 @@ export default function AdminPage() {
     if (code.length < 6) { setVerifyError('Enter the full 6-digit code.'); return }
     setVerifyLoading(true); setVerifyError('')
     try {
-      const res = await fetch('/api/tfa/verify', {
+      const res = await fetch('/api/tfa/email-verify', {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ email:pending.email, pendingToken:pending.token, code })
       })
@@ -310,45 +304,15 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* 2FA SETUP */}
-      {screen === 'tfa-setup' && (
-        <div className="center-screen">
-          <div className="tfa-card">
-            <div style={{fontSize:36,marginBottom:12}}>🔐</div>
-            <h2>Set Up Two-Factor Auth</h2>
-            <p className="tfa-subtitle">Scan this QR code with Google Authenticator or Authy, then enter the 6-digit code to confirm setup.</p>
-            {tfaSetup.qrDataUrl && (
-              <div className="qr-wrap"><img src={tfaSetup.qrDataUrl} alt="QR Code" /></div>
-            )}
-            <div style={{fontSize:12,color:'var(--grey)',marginBottom:8,textAlign:'center'}}>Or enter this key manually:</div>
-            <div className="secret-box">{tfaSetup.secret.match(/.{1,4}/g)?.join(' ')}</div>
-            <div className="otp-input-row">
-              {setupCode.map((d,i) => (
-                <input key={i} className="otp-digit" maxLength={1} type="text" inputMode="numeric" value={d}
-                  ref={el=>setupRefs.current[i]=el}
-                  onChange={e=>handleOtpInput(i,e.target.value,setupCode,setSetupCode,setupRefs,handleSetupConfirm)}
-                  onKeyDown={e=>handleOtpKeyDown(e,i,setupRefs,setupCode,setSetupCode)}
-                  onPaste={e=>handleOtpPaste(e,setSetupCode,setupRefs,handleSetupConfirm)} />
-              ))}
-            </div>
-            {setupError && <div className="form-error" style={{textAlign:'center',marginBottom:12}}>{setupError}</div>}
-            <button className="btn btn-gold btn-full" disabled={setupLoading} onClick={handleSetupConfirm}>
-              {setupLoading ? 'Please wait...' : 'Confirm & Enable 2FA'}
-            </button>
-            <div style={{marginTop:12,textAlign:'center'}}>
-              <button className="btn btn-outline" onClick={cancelTfa} style={{padding:'8px 20px',fontSize:13}}>Cancel</button>
-            </div>
-          </div>
-        </div>
-      )}
+
 
       {/* 2FA VERIFY */}
       {screen === 'tfa-verify' && (
         <div className="center-screen">
           <div className="tfa-card">
-            <div style={{fontSize:36,marginBottom:12}}>🔒</div>
-            <h2>Two-Factor Verification</h2>
-            <p className="tfa-subtitle">Enter the 6-digit code from your authenticator app to continue.</p>
+            <div style={{fontSize:36,marginBottom:12}}>📧</div>
+            <h2>Check Your Email</h2>
+            <p className="tfa-subtitle">We sent a 6-digit code to <strong style={{color:'var(--gold)'}}>{pending.email}</strong>. Enter it below to continue.</p>
             <div className="otp-input-row">
               {verifyCode.map((d,i) => (
                 <input key={i} className="otp-digit" maxLength={1} type="text" inputMode="numeric" value={d}
@@ -358,7 +322,7 @@ export default function AdminPage() {
                   onPaste={e=>handleOtpPaste(e,setVerifyCode,verifyRefs,handleVerify)} />
               ))}
             </div>
-            <div className="tfa-timer">Code refreshes in <span>{countdown}</span>s</div>
+            <div className="tfa-timer">Code expires in <span>10</span> minutes</div>
             {verifyError && <div className="form-error" style={{textAlign:'center',marginBottom:12}}>{verifyError}</div>}
             <button className="btn btn-gold btn-full" disabled={verifyLoading} onClick={handleVerify}>
               {verifyLoading ? 'Please wait...' : 'Verify'}
