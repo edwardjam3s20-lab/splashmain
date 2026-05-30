@@ -710,6 +710,10 @@ select option { background:var(--s1); }
     <div class="section-label">Select Car</div>
     <div class="car-selector" id="book-car-selector"></div>
 
+    <!-- Service selector — operator-defined menu -->
+    <div class="section-label">Select Service</div>
+    <div id="book-service-menu" style="margin-bottom:18px"></div>
+
     <div class="form-group">
       <label>Select Date</label>
       <input type="date" id="book-date" onchange="loadSlots()">
@@ -722,7 +726,7 @@ select option { background:var(--s1); }
     <!-- Booking cost summary -->
     <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:14px 18px;margin-bottom:18px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-        <div style="font-size:13px;color:var(--muted);">Wash price</div>
+        <div style="font-size:13px;color:var(--muted);">Service</div>
         <div style="font-size:16px;font-weight:700;color:var(--gold);" id="book-wash-price">—</div>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;" id="book-app-fee-row">
@@ -735,7 +739,7 @@ select option { background:var(--s1); }
         <div style="font-size:20px;font-weight:800;color:var(--gold);font-family:Syne,sans-serif;" id="booking-total">—</div>
       </div>
     </div>
-    <button class="btn btn-gold" id="book-btn" onclick="confirmBooking()">Confirm Booking</button>
+    <button class="btn btn-gold" id="book-btn" onclick="confirmBooking()">Confirm & Pay via M-Pesa</button>
   </div>
 </div>
 
@@ -932,12 +936,6 @@ select option { background:var(--s1); }
   <div class="sheet-point-area" id="sheet-area">—</div>
   <div class="sheet-point-dist" id="sheet-dist">—</div>
   <div class="sheet-prices" id="sheet-prices"></div>
-  <div class="sheet-services">
-    <div class="sheet-service-tag">💧 Exterior Wash</div>
-    <div class="sheet-service-tag">✨ Interior</div>
-    <div class="sheet-service-tag">🔘 Tyre Shine</div>
-    <div class="sheet-service-tag">🕐 Open 7am–6pm</div>
-  </div>
   <button class="btn btn-gold" id="sheet-book-btn" onclick="bookFromSheet()">Book This Wash Point</button>
 </div>
 
@@ -954,9 +952,20 @@ var WASH_POINT_CUT  = 0.20; // 20% app commission on every wash
 // ── SUBSCRIPTION TIERS ───────────────────────────
 var SUB_PLANS = [
   {
+    id: 'mini',
+    name: 'Mini',
+    price: 199,
+    billing: 'week',
+    car_limit: 1,
+    icon: '🚿',
+    tagline: 'Get started — 1 car',
+    popular: false
+  },
+  {
     id: 'individual',
     name: 'Individual',
-    price: 'TBD', // placeholder — to be set
+    price: 499,
+    billing: 'month',
     car_limit: 1,
     icon: '👤',
     tagline: 'Perfect for personal use',
@@ -965,7 +974,8 @@ var SUB_PLANS = [
   {
     id: 'duo',
     name: 'Duo',
-    price: 'TBD',
+    price: 999,
+    billing: 'month',
     car_limit: 2,
     icon: '👫',
     tagline: 'Great for couples or two cars',
@@ -974,7 +984,8 @@ var SUB_PLANS = [
   {
     id: 'family',
     name: 'Family',
-    price: 'TBD',
+    price: 1999,
+    billing: 'month',
     car_limit: 5,
     icon: '👨‍👩‍👧‍👦',
     tagline: 'Covers the whole household',
@@ -999,17 +1010,18 @@ var WASH_POINTS = [];
 async function fetchWashPoints() {
   try {
     var rows = await sbFetch('wash_points?select=*&order=name.asc');
+    // Load operator-defined services for all wash points in one call
+    var services = [];
+    try { services = await sbFetch('wash_point_extras?select=*&order=price.asc') || []; } catch(e) {}
     WASH_POINTS = (rows || []).map(function(r) {
       return {
         id: r.id, name: r.name, area: r.area,
         lat: parseFloat(r.lat), lng: parseFloat(r.lng),
         description: r.description || null,
         image_url: r.image_url || null,
-        // per-wash prices set by wash point (fallback to defaults)
-        price_saloon:   r.price_saloon   || 300,
-        price_suv:      r.price_suv      || 400,
-        price_pickup:   r.price_pickup   || 350,
-        price_hatchback:r.price_hatchback|| 280
+        status: r.status || 'open',
+        // Services this wash point offers (set by operator in admin panel)
+        services: services.filter(function(s) { return s.wash_point_id === r.id; })
       };
     });
   } catch(e) {
@@ -1018,20 +1030,16 @@ async function fetchWashPoints() {
   }
 }
 
-function getWashPrice(point, carType) {
-  if (!point) return 300;
-  var map = { 'Saloon': point.price_saloon, 'SUV': point.price_suv, 'Pickup': point.price_pickup, 'Hatchback': point.price_hatchback, 'Van': point.price_pickup, 'Coupe': point.price_hatchback };
-  return map[carType] || point.price_saloon || 300;
-}
 
 // ── STATE ─────────────────────────────────────────
 var currentUser    = null;
-var userCars       = [];       // array of car objects for this user
-var selectedCar    = null;     // car chosen in booking flow
+var userCars       = [];
+var selectedCar    = null;
 var selectedPoint  = null;
 var selectedSlot   = null;
-var selectedSubPlan= null;     // SUB_PLANS entry
-var pendingBooking = null;     // booking awaiting payment
+var selectedService= null;     // service chosen from wash point menu
+var selectedSubPlan= null;
+var pendingBooking = null;
 var activePoll     = null;
 var mapInstance    = null;
 var nextBooking    = null;
@@ -1403,18 +1411,20 @@ async function sortAndRenderPoints() {
     var dist     = p.dist < 1 ? Math.round(p.dist*1000)+'m' : p.dist.toFixed(1)+'km';
     var isPaused = p.status === 'paused';
     var isFirst  = i === 0 && !isPaused;
-    // Show price for user's first car type or saloon fallback
-    var carType  = (userCars[0] && userCars[0].car_type) || 'Saloon';
-    var price    = getWashPrice(p, carType);
-    return '<div onclick="'+(isPaused?'':'showPointSheet(\''+p.id+'\')')+'" style="'+
-      'flex-shrink:0;width:160px;opacity:'+(isPaused?'.45':'1')+';'+
-      'background:'+(isFirst?'rgba(255,176,32,.08)':'rgba(255,255,255,.04)')+';'+
-      'border:1px solid '+(isPaused?'rgba(255,255,255,.04)':(isFirst?'rgba(255,176,32,.35)':'rgba(255,255,255,.07)'))+';'+
+    // Show cheapest service price or fallback
+    var services = p.services || [];
+    var minPrice = services.length
+      ? Math.min.apply(null, services.map(function(s) { return Number(s.price); }))
+      : null;
+    return '<div onclick="'+(isPaused?'':'showPointSheet(\''+p.id+'\')')+'" style="' +
+      'flex-shrink:0;width:160px;opacity:'+(isPaused?'.45':'1')+';' +
+      'background:'+(isFirst?'rgba(255,176,32,.08)':'rgba(255,255,255,.04)')+';' +
+      'border:1px solid '+(isPaused?'rgba(255,255,255,.04)':(isFirst?'rgba(255,176,32,.35)':'rgba(255,255,255,.07)'))+';' +
       'border-radius:18px;padding:14px;cursor:'+(isPaused?'default':'pointer')+';">' +
       '<div style="font-size:20px;margin-bottom:8px">'+(isPaused?'🔴':'💧')+'</div>' +
       '<div style="font-size:13px;font-weight:700;color:#f0f4f8;margin-bottom:2px">'+p.name+'</div>' +
       '<div style="font-size:11px;color:'+(isPaused?'#ef4444':'#ffb020')+';font-weight:600">'+(isPaused?'Temporarily closed':dist+' away')+'</div>' +
-      '<div style="font-size:11px;color:#7a90a8;margin-top:2px">From KSh '+price+'</div>' +
+      '<div style="font-size:11px;color:#7a90a8;margin-top:2px">'+(minPrice ? 'From KSh '+minPrice.toLocaleString() : 'Tap to see prices')+'</div>' +
     '</div>';
   }).join('') : '<div style="color:var(--muted);font-size:14px;padding:12px 0">No wash points available.</div>';
   renderMapMarkers(sorted);
@@ -1434,11 +1444,16 @@ function showPointSheet(pointId) {
   document.getElementById('sheet-area').textContent = p.area;
   document.getElementById('sheet-dist').textContent = distLabel;
 
-  // Show prices
-  document.getElementById('sheet-prices').innerHTML =
-    '<div class="sheet-price-tag">🚗 Saloon KSh '+p.price_saloon+'</div>' +
-    '<div class="sheet-price-tag">🚙 SUV KSh '+p.price_suv+'</div>' +
-    '<div class="sheet-price-tag">🛻 Pickup KSh '+p.price_pickup+'</div>';
+  // Live services set by operator
+  var services = p.services || [];
+  var pricesEl = document.getElementById('sheet-prices');
+  if (services.length) {
+    pricesEl.innerHTML = services.map(function(s) {
+      return '<div class="sheet-price-tag">💧 ' + s.name + ' — KSh ' + Number(s.price).toLocaleString() + '</div>';
+    }).join('');
+  } else {
+    pricesEl.innerHTML = '<div class="sheet-price-tag" style="color:var(--muted)">Services loading…</div>';
+  }
 
   document.getElementById('sheet-overlay').classList.add('show');
   document.getElementById('bottom-sheet').classList.add('show');
@@ -1463,19 +1478,19 @@ function handleBookCTA() {
 
 function openBookingScreen(point) {
   if (!hasActiveAccess(currentUser)) { showScreen('sub-wall'); return; }
-  selectedPoint = point;
-  selectedSlot  = null;
-  selectedCar   = userCars.length > 0 ? userCars[0] : null;
+  selectedPoint   = point;
+  selectedSlot    = null;
+  selectedService = null;
+  selectedCar     = userCars.length > 0 ? userCars[0] : null;
 
-  document.getElementById('book-title').textContent    = 'Book a Wash';
+  document.getElementById('book-title').textContent      = point.name;
   document.getElementById('book-point-name').textContent = point.name;
   document.getElementById('book-point-area').textContent = point.area;
 
-  // Render car selector
   renderBookCarSelector();
+  renderServiceMenu();
   updateBookingCost();
 
-  // Set min date to today
   var today = new Date().toISOString().split('T')[0];
   document.getElementById('book-date').min   = today;
   document.getElementById('book-date').value = today;
@@ -1511,20 +1526,62 @@ function selectBookCar(carId) {
   updateBookingCost();
 }
 
+function renderServiceMenu() {
+  var container = document.getElementById('book-service-menu');
+  if (!container) return;
+  var services = selectedPoint ? (selectedPoint.services || []) : [];
+  if (!services.length) {
+    container.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:10px 0">No services listed yet — ask at the wash point.</div>';
+    updateBookingCost();
+    return;
+  }
+  container.innerHTML = services.map(function(s) {
+    var isSel = selectedService && selectedService.id === s.id;
+    return '<div onclick="selectService(\'' + s.id + '\')" style="' +
+      'display:flex;align-items:center;justify-content:space-between;' +
+      'padding:14px 16px;border-radius:16px;margin-bottom:8px;cursor:pointer;' +
+      'background:' + (isSel ? 'rgba(255,176,32,.1)' : 'rgba(255,255,255,.04)') + ';' +
+      'border:1.5px solid ' + (isSel ? 'rgba(255,176,32,.5)' : 'rgba(255,255,255,.07)') + ';' +
+      'transition:all .15s;">' +
+      '<div>' +
+        '<div style="font-size:14px;font-weight:700;color:var(--text)">' + s.name + '</div>' +
+        (s.description ? '<div style="font-size:12px;color:var(--muted);margin-top:2px">' + s.description + '</div>' : '') +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:10px;">' +
+        '<div style="font-size:15px;font-weight:800;color:' + (isSel ? '#ffb020' : 'var(--text)') + '">KSh ' + Number(s.price).toLocaleString() + '</div>' +
+        '<div style="width:22px;height:22px;border-radius:50%;flex-shrink:0;' +
+          'background:' + (isSel ? 'var(--gold)' : 'rgba(255,255,255,.08)') + ';' +
+          'display:flex;align-items:center;justify-content:center;font-size:12px;' +
+          'color:' + (isSel ? '#07111f' : 'var(--muted)') + '">' + (isSel ? '✓' : '') + '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+  updateBookingCost();
+}
+
+function selectService(serviceId) {
+  if (!selectedPoint) return;
+  selectedService = (selectedPoint.services || []).find(function(s) { return s.id === serviceId; }) || null;
+  renderServiceMenu();
+  updateBookingCost();
+}
+
 function updateBookingCost() {
-  var washPrice    = selectedCar && selectedPoint ? getWashPrice(selectedPoint, selectedCar.car_type) : 0;
-  var onTrial      = isOnTrial(currentUser);
-  var total        = onTrial ? washPrice + APP_BOOKING_FEE : washPrice;
-  var feeRow       = document.getElementById('book-app-fee-row');
-  var divider      = document.getElementById('book-divider');
-  if (feeRow)  feeRow.style.display  = onTrial ? 'flex' : 'none';
-  if (divider) divider.style.display = onTrial ? 'block' : 'none';
+  var washPrice = selectedService ? Number(selectedService.price) : 0;
+  var onTrial   = isOnTrial(currentUser);
+  var total     = onTrial ? washPrice + APP_BOOKING_FEE : washPrice;
+
+  var feeRow  = document.getElementById('book-app-fee-row');
+  var divider = document.getElementById('book-divider');
+  if (feeRow)  feeRow.style.display  = onTrial && washPrice > 0 ? 'flex' : 'none';
+  if (divider) divider.style.display = onTrial && washPrice > 0 ? 'block' : 'none';
+
   var wp = document.getElementById('book-wash-price');
   var bt = document.getElementById('booking-total');
   var pp = document.getElementById('book-point-price');
-  if (wp) wp.textContent = washPrice ? 'KSh ' + washPrice : '—';
-  if (bt) bt.textContent = total ? 'KSh ' + total : '—';
-  if (pp) pp.textContent = washPrice ? 'KSh ' + washPrice + ' (' + (selectedCar ? selectedCar.car_type : '—') + ')' : '—';
+  if (wp) wp.textContent = washPrice ? 'KSh ' + washPrice.toLocaleString() : '—';
+  if (bt) bt.textContent = total     ? 'KSh ' + total.toLocaleString()     : '—';
+  if (pp) pp.textContent = selectedService ? selectedService.name + ' · KSh ' + washPrice.toLocaleString() : '—';
 }
 
 async function loadSlots() {
@@ -1552,12 +1609,13 @@ async function loadSlots() {
 function selectSlot(s) { selectedSlot = s; loadSlots(); }
 
 async function confirmBooking() {
-  if (!selectedCar)  { toast('Please select a car.', true); return; }
-  if (!selectedSlot) { toast('Please select a time slot.', true); return; }
-  var date  = document.getElementById('book-date').value;
+  if (!selectedCar)     { toast('Please select a car.', true); return; }
+  if (!selectedService) { toast('Please select a service.', true); return; }
+  if (!selectedSlot)    { toast('Please select a time slot.', true); return; }
+  var date = document.getElementById('book-date').value;
   if (!date) { toast('Please select a date.', true); return; }
 
-  var washPrice  = getWashPrice(selectedPoint, selectedCar.car_type);
+  var washPrice  = Number(selectedService.price);
   var onTrial    = isOnTrial(currentUser);
   var totalAmount= onTrial ? washPrice + APP_BOOKING_FEE : washPrice;
   var opAmount   = Math.round(washPrice * (1 - WASH_POINT_CUT));
@@ -1566,31 +1624,31 @@ async function confirmBooking() {
   try {
     var code = 'SP' + Math.random().toString(36).substring(2,8).toUpperCase();
     var booking = await createBooking({
-      user_email:       currentUser.email,
-      user_name:        currentUser.name,
-      date:             date,
-      time:             selectedSlot,
-      location:         selectedPoint.name,
-      status:           'confirmed',
-      car_plate:        selectedCar.plate,
-      car_type:         selectedCar.car_type,
-      car_make:         selectedCar.make,
-      car_model:        selectedCar.model,
-      wash_price:       washPrice,
-      app_fee:          onTrial ? APP_BOOKING_FEE : 0,
-      total_amount:     totalAmount,
-      operator_amount:  opAmount,
-      booking_type:     onTrial ? 'trial' : 'subscription',
-      booking_code:     code
+      user_email:      currentUser.email,
+      user_name:       currentUser.name,
+      date:            date,
+      time:            selectedSlot,
+      location:        selectedPoint.name,
+      status:          'confirmed',
+      car_plate:       selectedCar.plate,
+      car_type:        selectedCar.car_type,
+      car_make:        selectedCar.make,
+      car_model:       selectedCar.model,
+      service_name:    selectedService.name,
+      wash_price:      washPrice,
+      app_fee:         onTrial ? APP_BOOKING_FEE : 0,
+      total_amount:    totalAmount,
+      operator_amount: opAmount,
+      booking_type:    onTrial ? 'trial' : 'subscription',
+      booking_code:    code
     });
     var b = booking[0];
     pendingBooking = { booking: b, code: code, date: date };
 
-    // Route to M-Pesa
     document.getElementById('screen-mpesa').setAttribute('data-context', 'booking');
     document.getElementById('mpesa-title').textContent     = 'Pay for Wash';
     document.getElementById('mpesa-amount').textContent    = 'KSh ' + totalAmount.toLocaleString();
-    document.getElementById('mpesa-plan-name').textContent = selectedPoint.name + ' · ' + selectedCar.car_type + (onTrial ? ' (incl. KSh 30 app fee)' : '');
+    document.getElementById('mpesa-plan-name').textContent = selectedPoint.name + ' · ' + selectedService.name + (onTrial ? ' (incl. KSh 30 app fee)' : '');
     document.getElementById('mpesa-change-btn').textContent= 'Back to Booking';
     if (currentUser.phone) document.getElementById('mpesa-phone').value = currentUser.phone;
     document.getElementById('mpesa-status').className  = 'mpesa-status hidden';
@@ -1823,7 +1881,7 @@ function renderPlans() {
     html += '<div style="font-size:28px;">'+p.icon+'</div>';
     html += '<div><div class="plan-name">'+p.name+'</div><div class="plan-cars">Up to '+p.car_limit+' car'+(p.car_limit>1?'s':'')+'</div></div>';
     html += '</div>';
-    html += '<div class="plan-price">KSh '+p.price+'<span>/month</span></div>';
+    html += '<div class="plan-price">KSh '+p.price+'<span>/'+p.billing+'</span></div>';
     html += '<ul class="plan-features">';
     html += '<li>'+p.car_limit+' car'+(p.car_limit>1?'s':'')+' registered</li>';
     html += '<li>Book at any SplashPass wash point</li>';
@@ -1836,7 +1894,7 @@ function renderPlans() {
     if (isCurrentPlan) {
       html += '<button class="btn btn-outline" disabled style="opacity:.5;">Current Plan</button>';
     } else {
-      html += '<button class="btn '+(p.popular?'btn-gold':'btn-outline')+'" onclick="selectSubPlan(\''+p.id+'\')">Subscribe — KSh '+p.price+'/mo</button>';
+      html += '<button class="btn '+(p.popular?'btn-gold':'btn-outline')+'" onclick="selectSubPlan(\''+p.id+'\')">Subscribe — KSh '+p.price+'/'+p.billing+'</button>';
     }
     html += '</div>';
   });
@@ -1851,7 +1909,7 @@ async function selectSubPlan(planId) {
   document.getElementById('screen-mpesa').setAttribute('data-context', 'subscription');
   document.getElementById('mpesa-title').textContent     = 'Subscribe · ' + plan.name;
   document.getElementById('mpesa-amount').textContent    = 'KSh ' + plan.price;
-  document.getElementById('mpesa-plan-name').textContent = plan.name + ' · ' + plan.car_limit + ' car' + (plan.car_limit>1?'s':'') + ' · Monthly auto-renew';
+  document.getElementById('mpesa-plan-name').textContent = plan.name + ' · ' + plan.car_limit + ' car' + (plan.car_limit>1?'s':'') + ' · Auto-renews ' + plan.billing + 'ly';
   document.getElementById('mpesa-change-btn').textContent= 'Back to Plans';
   if (currentUser && currentUser.phone) document.getElementById('mpesa-phone').value = currentUser.phone;
   document.getElementById('mpesa-status').className  = 'mpesa-status hidden';
