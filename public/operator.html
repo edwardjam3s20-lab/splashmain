@@ -2,1024 +2,1127 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#07111f">
-
-<!-- PWA Android -->
-<meta name="mobile-web-app-capable" content="yes">
-<link rel="manifest" href="/operator-manifest.json">
-
-<!-- PWA iOS -->
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<meta name="theme-color" content="#06101c">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="SplashPass Ops">
-
-<meta name="description" content="SplashPass Operator Console">
 <title>SplashPass Ops</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg:      #07111f;
-  --s1:      #0f1d30;
-  --s2:      #162338;
-  --s3:      #1d2d45;
-  --gold:    #ffb020;
-  --gold2:   #ffd166;
-  --text:    #f0f4f8;
-  --muted:   #7a90a8;
-  --success: #22c55e;
-  --danger:  #ef4444;
-  --radius:  20px;
-  --radius-lg: 28px;
+:root{
+  --bg:#06101c;--s1:#0c1a2b;--s2:#112238;--s3:#172d48;--s4:#1d3458;
+  --gold:#ffb020;--gold2:#ffd166;--gold3:#fff0c0;
+  --text:#eef2f7;--muted:#6b84a0;--dim:#3a5068;
+  --green:#22c55e;--red:#ef4444;--blue:#3b82f6;--amber:#f59e0b;
+  --r:18px;--rlg:24px;--rsm:10px;
 }
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4,.syne{font-family:'Syne',sans-serif}
+.hidden{display:none!important}
 
-* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+/* SCREENS */
+.screen{position:fixed;inset:0;overflow-y:auto;display:none;flex-direction:column;-webkit-overflow-scrolling:touch}
+.screen.active{display:flex}
 
-html, body {
-  height:100%; overflow:hidden;
-  background: radial-gradient(ellipse at 80% 0%, rgba(255,176,32,.12) 0%, transparent 50%),
-              radial-gradient(ellipse at 10% 90%, rgba(255,176,32,.05) 0%, transparent 40%),
-              var(--bg);
-  color:var(--text);
-  font-family:'DM Sans', sans-serif;
-  -webkit-font-smoothing:antialiased;
-}
+/* SPLASH */
+#scr-splash{align-items:center;justify-content:center;background:radial-gradient(ellipse at 65% 25%,rgba(255,176,32,.14),transparent 55%),var(--bg)}
+.splash-mark{width:86px;height:86px;background:linear-gradient(150deg,var(--gold2),var(--gold));border-radius:24px;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:38px;color:#06101c;margin:0 auto 20px;box-shadow:0 24px 56px rgba(255,176,32,.3)}
+.splash-title{font-size:28px;font-weight:800;text-align:center}.splash-title span{color:var(--gold)}
+.splash-sub{text-align:center;color:var(--muted);font-size:12px;letter-spacing:1.8px;text-transform:uppercase;margin-top:5px}
+.spin{width:32px;height:32px;border:3px solid rgba(255,176,32,.15);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;margin:36px auto 0}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-h1,h2,h3,h4 { font-family:'Syne', sans-serif; }
-.hidden { display:none !important; }
+/* AUTH */
+#scr-auth{padding:28px;justify-content:center}
+.auth-chip{display:inline-flex;align-items:center;gap:8px;background:rgba(255,176,32,.08);border:1px solid rgba(255,176,32,.2);border-radius:100px;padding:5px 14px 5px 5px;margin-bottom:28px}
+.auth-chip-dot{width:28px;height:28px;background:linear-gradient(135deg,var(--gold2),var(--gold));border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#06101c;font-family:'Syne',sans-serif}
+.auth-chip-txt{font-size:12px;font-weight:600;color:var(--gold);letter-spacing:.5px}
+.auth-h{font-size:26px;font-weight:800;margin-bottom:6px}
+.auth-sub{color:var(--muted);font-size:13px;margin-bottom:28px}
 
-.screen { position:fixed; inset:0; overflow-y:auto; display:none; flex-direction:column; }
-.screen.active { display:flex; }
+/* FORMS */
+.fg{margin-bottom:14px}
+label{display:block;font-size:10px;color:var(--muted);margin-bottom:7px;font-weight:600;text-transform:uppercase;letter-spacing:.8px}
+input,select,textarea{width:100%;padding:13px 16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:13px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;outline:none;transition:border .2s,box-shadow .2s}
+input:focus,select:focus{border-color:rgba(255,176,32,.45);box-shadow:0 0 0 4px rgba(255,176,32,.07)}
+input::placeholder{color:rgba(107,132,160,.5)}
+select option{background:var(--s1)}
+.ferr{color:var(--red);font-size:12px;margin-bottom:10px}
 
-/* ── SPLASH ── */
-#screen-splash {
-  align-items:center; justify-content:center;
-  background: radial-gradient(ellipse at 60% 30%, rgba(255,176,32,.16) 0%, transparent 55%), var(--bg);
-}
-.splash-logo { text-align:center; }
-.splash-icon {
-  width:88px; height:88px;
-  background:linear-gradient(145deg, var(--gold2), var(--gold));
-  border-radius:26px;
-  display:flex; align-items:center; justify-content:center;
-  font-family:'Syne',sans-serif; font-weight:800; font-size:40px; color:#07111f;
-  margin:0 auto 20px;
-  box-shadow:0 20px 50px rgba(255,176,32,.35);
-}
-.splash-title { font-size:30px; font-weight:800; }
-.splash-title span { color:var(--gold); }
-.splash-sub { color:var(--muted); font-size:13px; margin-top:6px; text-transform:uppercase; letter-spacing:1.5px; font-weight:600; }
-.splash-spinner {
-  width:36px; height:36px;
-  border:3px solid rgba(255,176,32,.15);
-  border-top-color:var(--gold);
-  border-radius:50%;
-  animation:spin .75s linear infinite;
-  margin:36px auto 0;
-}
-@keyframes spin { to { transform:rotate(360deg); } }
-@keyframes pulse {
-  0% { transform:scale(1); opacity:.6; }
-  70% { transform:scale(2.2); opacity:0; }
-  100% { opacity:0; }
-}
+/* BUTTONS */
+.btn{display:block;width:100%;padding:15px;border-radius:15px;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;cursor:pointer;border:none;transition:transform .12s,opacity .15s;text-align:center}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn:active:not(:disabled){transform:scale(.97)}
+.btn-gold{background:linear-gradient(175deg,var(--gold2),var(--gold));color:#06101c;box-shadow:0 10px 26px rgba(255,176,32,.25)}
+.btn-green{background:linear-gradient(175deg,#4ade80,var(--green));color:#06101c;box-shadow:0 8px 20px rgba(34,197,94,.22)}
+.btn-outline{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);color:var(--text)}
+.btn-red{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.2);color:var(--red)}
+.btn-blue{background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.2);color:#7eb4ff}
+.btn-sm{width:auto;display:inline-block;padding:8px 16px;font-size:12px;border-radius:9px}
+.btn-xs{width:auto;display:inline-flex;align-items:center;gap:4px;padding:7px 13px;font-size:11px;border-radius:8px}
 
-/* ── AUTH ── */
-#screen-auth { padding:0 28px; justify-content:center; }
-.auth-logo { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
-.auth-logo-icon {
-  width:44px; height:44px;
-  background:linear-gradient(145deg, var(--gold2), var(--gold));
-  border-radius:14px;
-  display:flex; align-items:center; justify-content:center;
-  font-family:'Syne',sans-serif; font-weight:800; font-size:20px; color:#07111f;
-}
-.auth-logo-text { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; }
-.auth-tag { color:var(--gold); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:32px; }
-.auth-title { font-size:26px; font-weight:800; margin-bottom:6px; }
-.auth-sub { color:var(--muted); font-size:14px; margin-bottom:28px; }
+/* NAV */
+.nav{position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(8,16,28,.96);border-top:1px solid rgba(255,255,255,.06);backdrop-filter:blur(20px);display:none;flex-direction:row}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px calc(8px + env(safe-area-inset-bottom));cursor:pointer;border:none;background:none;transition:opacity .15s}
+.nav-icon{font-size:21px;line-height:1}
+.nav-lbl{font-size:9px;font-weight:700;color:var(--muted);font-family:'Syne',sans-serif;text-transform:uppercase;letter-spacing:.6px;transition:color .15s}
+.nav-btn.on .nav-lbl{color:var(--gold)}
 
-/* ── FORMS ── */
-.form-group { margin-bottom:16px; }
-label { display:block; font-size:11px; color:var(--muted); margin-bottom:8px; font-weight:600; text-transform:uppercase; letter-spacing:.7px; }
-input, select {
-  width:100%; padding:16px 18px;
-  background:rgba(255,255,255,.05);
-  border:1px solid rgba(255,255,255,.07);
-  border-radius:16px;
-  color:var(--text);
-  font-family:'DM Sans',sans-serif; font-size:15px;
-  outline:none;
-  transition:border .2s, box-shadow .2s;
-}
-input:focus { border-color:rgba(255,176,32,.5); box-shadow:0 0 0 4px rgba(255,176,32,.08); }
-input::placeholder { color:var(--muted); }
-select option { background:var(--s1); }
-.form-error { color:var(--danger); font-size:13px; margin-bottom:10px; }
+/* SCREEN SHELLS */
+.hdr{display:flex;align-items:center;gap:10px;padding:52px 16px 14px;background:rgba(6,16,28,.94);border-bottom:1px solid rgba(255,255,255,.05);backdrop-filter:blur(14px);position:sticky;top:0;z-index:100}
+.hdr h2{font-size:19px;font-weight:800;flex:1}
+.hdr-right{margin-left:auto}
+.back-btn{width:34px;height:34px;background:rgba(255,255,255,.06);border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px;flex-shrink:0;border:none;color:var(--text)}
+.body{padding:14px 14px calc(90px + env(safe-area-inset-bottom))}
 
-/* ── BUTTONS ── */
-.btn {
-  display:block; width:100%; padding:17px;
-  border-radius:18px;
-  font-family:'Syne',sans-serif; font-weight:700; font-size:15px;
-  cursor:pointer; border:none;
-  transition:transform .15s, box-shadow .15s;
-  text-align:center;
-}
-.btn:disabled { opacity:.45; cursor:not-allowed; }
-.btn-gold {
-  background:linear-gradient(180deg, var(--gold2) 0%, var(--gold) 100%);
-  color:#07111f;
-  box-shadow:0 12px 28px rgba(255,176,32,.28);
-}
-.btn-gold:active { transform:scale(.97); }
-.btn-success {
-  background:linear-gradient(180deg, #4ade80, var(--success));
-  color:#07111f;
-  box-shadow:0 10px 24px rgba(34,197,94,.25);
-}
-.btn-success:active { transform:scale(.97); }
-.btn-outline {
-  background:rgba(255,255,255,.05);
-  color:var(--text);
-  border:1px solid rgba(255,255,255,.1);
-}
-.btn-outline:active { transform:scale(.97); }
-.btn-danger { background:var(--danger); color:white; }
-.btn-sm { width:auto; display:inline-block; padding:10px 20px; font-size:13px; border-radius:12px; }
+/* ══ BOOKINGS TAB ══════════════════════════════════════════════ */
+.bkgs-top{padding:50px 14px 12px;background:rgba(6,16,28,.94);border-bottom:1px solid rgba(255,255,255,.05);backdrop-filter:blur(14px);position:sticky;top:0;z-index:100}
+.bkgs-row1{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px}
+.wp-name{font-size:20px;font-weight:800}
+.wp-loc{font-size:12px;color:var(--gold);margin-top:2px;font-weight:600}
+.wp-date{font-size:11px;color:var(--muted);margin-top:1px}
+.logout-btn{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.18);color:var(--red);font-size:11px;font-weight:700;padding:7px 12px;border-radius:9px;cursor:pointer;font-family:'Syne',sans-serif}
 
-/* ── SCREEN HEADER ── */
-.screen-header {
-  display:flex; align-items:center; gap:14px;
-  padding:54px 20px 18px;
-  background:rgba(7,17,31,.9);
-  position:sticky; top:0; z-index:50;
-  border-bottom:1px solid rgba(255,255,255,.05);
-  backdrop-filter:blur(12px);
-}
-.back-btn {
-  width:38px; height:38px;
-  background:rgba(255,255,255,.07);
-  border-radius:12px;
-  display:flex; align-items:center; justify-content:center;
-  cursor:pointer; font-size:20px; flex-shrink:0;
-  border:none; color:var(--text);
-  transition:background .15s;
-}
-.back-btn:active { background:rgba(255,255,255,.12); }
-.screen-header h2 { font-size:20px; font-weight:800; flex:1; }
+/* Free/Busy – BIG prominent toggle */
+.fb-toggle{display:flex;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:16px;overflow:hidden;margin-bottom:12px}
+.fb-btn{flex:1;padding:13px 8px;border:none;cursor:pointer;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;transition:background .2s,color .2s;background:none;color:var(--muted)}
+.fb-btn.free-on{background:rgba(34,197,94,.15);color:var(--green);border-right:1px solid rgba(255,255,255,.06)}
+.fb-btn.busy-on{background:rgba(239,68,68,.15);color:var(--red)}
+.fb-status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}
 
-/* ── HOME HEADER ── */
-#screen-home { padding:0; }
-.home-header {
-  padding:54px 20px 16px;
-  background:rgba(7,17,31,.88);
-  border-bottom:1px solid rgba(255,255,255,.05);
-  backdrop-filter:blur(12px);
-  position:sticky; top:0; z-index:50;
-}
-.home-top { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:14px; }
-.home-name { font-size:22px; font-weight:800; }
-.home-point { font-size:13px; color:var(--gold); font-weight:600; margin-top:2px; }
-.home-date { font-size:12px; color:var(--muted); margin-top:2px; }
-.logout-btn {
-  background:rgba(239,68,68,.12);
-  border:1px solid rgba(239,68,68,.2);
-  color:var(--danger);
-  font-size:12px; font-weight:700;
-  padding:8px 14px; border-radius:12px;
-  cursor:pointer;
-  font-family:'Syne',sans-serif;
-  transition:background .15s;
-}
-.logout-btn:active { background:rgba(239,68,68,.2); }
+/* Capacity bar */
+.cap-bar-wrap{margin-bottom:4px}
+.cap-bar-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.cap-bar-lbl{font-size:11px;color:var(--muted);font-weight:600}
+.cap-bar-val{font-size:12px;font-weight:700;color:var(--gold)}
+.cap-bar-track{height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden}
+.cap-bar-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--green),#a3e635);transition:width .4s}
+.cap-bar-fill.warn{background:linear-gradient(90deg,var(--amber),#fbbf24)}
+.cap-bar-fill.full{background:linear-gradient(90deg,var(--red),#f87171)}
 
-/* ── STATUS TOGGLE ── */
-.status-bar {
-  display:flex; align-items:center; justify-content:space-between;
-  background:rgba(255,255,255,.03);
-  border:1px solid rgba(255,255,255,.06);
-  border-radius:18px;
-  padding:14px 16px;
-}
-.status-left { display:flex; align-items:center; gap:10px; }
-.status-dot {
-  width:10px; height:10px; border-radius:50%;
-  background:var(--success);
-  box-shadow:0 0 0 3px rgba(34,197,94,.2);
-  flex-shrink:0;
-  transition:background .3s, box-shadow .3s;
-}
-.status-dot.paused { background:var(--danger); box-shadow:0 0 0 3px rgba(239,68,68,.2); }
-.status-label { font-size:14px; font-weight:700; font-family:'Syne',sans-serif; }
-.status-sub { font-size:11px; color:var(--muted); margin-top:1px; }
+/* Stats strip */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:10px 14px}
+.stat{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:15px;padding:12px 8px;text-align:center}
+.stat-n{font-size:24px;font-weight:800;color:var(--gold);font-family:'Syne',sans-serif;line-height:1}
+.stat-l{font-size:9px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.5px;font-weight:600}
 
-.toggle-switch {
-  position:relative; width:52px; height:28px;
-  cursor:pointer; flex-shrink:0;
-}
-.toggle-switch input { opacity:0; width:0; height:0; position:absolute; }
-.toggle-track {
-  position:absolute; inset:0;
-  background:rgba(239,68,68,.3);
-  border-radius:14px;
-  border:1px solid rgba(239,68,68,.3);
-  transition:background .3s, border-color .3s;
-}
-.toggle-track.on { background:rgba(34,197,94,.25); border-color:rgba(34,197,94,.35); }
-.toggle-thumb {
-  position:absolute;
-  top:3px; left:3px;
-  width:20px; height:20px;
-  background:var(--danger);
-  border-radius:50%;
-  transition:transform .3s, background .3s;
-  box-shadow:0 2px 6px rgba(0,0,0,.3);
-}
-.toggle-thumb.on { transform:translateX(24px); background:var(--success); }
+/* Pipeline lane headers */
+.lane-head{display:flex;align-items:center;justify-content:space-between;padding:6px 14px 8px}
+.lane-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted)}
+.lane-count{font-size:11px;font-weight:700}
+.lc-new{color:var(--amber)}
+.lc-confirmed{color:var(--blue)}
+.lc-arrived{color:var(--gold)}
+.lc-washing{color:var(--green)}
+.lc-done{color:var(--muted)}
 
-/* ── STATS ── */
-.stats-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; padding:14px 16px; }
-.stat-card {
-  background:rgba(255,255,255,.04);
-  border:1px solid rgba(255,255,255,.06);
-  border-radius:20px;
-  padding:16px 12px;
-  text-align:center;
-}
-.stat-num { font-size:30px; font-weight:800; color:var(--gold); font-family:'Syne',sans-serif; line-height:1; }
-.stat-label { font-size:10px; color:var(--muted); margin-top:6px; text-transform:uppercase; letter-spacing:.6px; font-weight:600; }
+/* Booking cards */
+.bcard{border-radius:18px;padding:15px;margin:0 14px 10px;position:relative;overflow:hidden}
+.bcard.new{background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.22)}
+.bcard.confirmed{background:rgba(59,130,246,.05);border:1px solid rgba(59,130,246,.18)}
+.bcard.arrived{background:rgba(255,176,32,.07);border:1px solid rgba(255,176,32,.25)}
+.bcard.washing{background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2)}
+.bcard.done{background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.05);opacity:.55}
+.bcard-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.bcard-name{font-size:15px;font-weight:700}
+.bcard-time{font-size:13px;font-weight:800;font-family:'Syne',sans-serif;color:var(--gold)}
+.bcard-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:11px}
+.plate{background:rgba(255,176,32,.12);border:1px solid rgba(255,176,32,.25);border-radius:6px;padding:3px 10px;font-size:12px;font-weight:800;color:var(--gold);letter-spacing:1.5px;font-family:'Syne',sans-serif}
+.badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:100px}
+.b-new{background:rgba(245,158,11,.15);color:var(--amber)}
+.b-confirmed{background:rgba(59,130,246,.15);color:#7eb4ff}
+.b-arrived{background:rgba(255,176,32,.15);color:var(--gold)}
+.b-washing{background:rgba(34,197,94,.15);color:var(--green)}
+.b-done{background:rgba(255,255,255,.07);color:var(--muted)}
+.b-guest{background:rgba(255,176,32,.1);color:var(--gold2);border:1px solid rgba(255,176,32,.15)}
+.qnum{position:absolute;top:13px;right:14px;width:22px;height:22px;border-radius:6px;background:rgba(255,255,255,.07);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--muted);font-family:'Syne',sans-serif}
 
-/* ── ACTIONS ── */
-.action-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:0 16px 14px; }
-.action-card {
-  background:rgba(255,255,255,.04);
-  border:1px solid rgba(255,255,255,.06);
-  border-radius:22px;
-  padding:20px 16px;
-  text-align:center;
-  cursor:pointer;
-  transition:transform .15s, background .15s, border-color .15s;
-}
-.action-card:active { transform:scale(.97); background:rgba(255,255,255,.07); border-color:rgba(255,176,32,.3); }
-.action-card.primary { border-color:rgba(255,176,32,.25); background:rgba(255,176,32,.06); }
-.action-icon { font-size:32px; margin-bottom:10px; }
-.action-label { font-size:14px; font-weight:700; font-family:'Syne',sans-serif; color:var(--text); }
-.action-sub { font-size:11px; color:var(--muted); margin-top:4px; }
+/* Washer row on card */
+.w-row{display:flex;align-items:center;gap:9px;background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.14);border-radius:11px;padding:9px 11px;margin-bottom:9px}
+.w-ava{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;font-family:'Syne',sans-serif;flex-shrink:0}
+.w-ava.c0{background:linear-gradient(135deg,#3b82f6,#1d4ed8)}
+.w-ava.c1{background:linear-gradient(135deg,#8b5cf6,#6d28d9)}
+.w-ava.c2{background:linear-gradient(135deg,#ec4899,#be185d)}
+.w-ava.c3{background:linear-gradient(135deg,#f59e0b,#d97706)}
+.w-ava.c4{background:linear-gradient(135deg,#10b981,#047857)}
+.w-info{flex:1}.w-nm{font-size:13px;font-weight:700}.w-st{font-size:10px;color:var(--muted)}
+.w-timer{font-size:12px;font-weight:700;color:#7eb4ff;font-family:'Syne',sans-serif}
 
-/* ── QUEUE ── */
-.queue-header {
-  display:flex; align-items:center; justify-content:space-between;
-  padding:4px 16px 10px;
-}
-.queue-title { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.7px; font-weight:600; }
-.queue-count { font-size:12px; color:var(--gold); font-weight:700; }
+.card-actions{display:flex;gap:8px}
+.act-accept{flex:1;background:linear-gradient(175deg,#4ade80,var(--green));color:#06101c;border:none;border-radius:11px;padding:11px;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:transform .12s}
+.act-accept:active{transform:scale(.97)}
+.act-reject{flex:1;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.18);color:var(--red);border-radius:11px;padding:11px;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:transform .12s}
+.act-reject:active{transform:scale(.97)}
+.act-assign{flex:1;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.18);color:#7eb4ff;border-radius:11px;padding:11px;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:transform .12s}
+.act-assign:active{transform:scale(.97)}
+.act-start{flex:1;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.18);color:var(--amber);border-radius:11px;padding:11px;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:transform .12s}
+.act-start:active{transform:scale(.97)}
+.act-done{flex:1;background:linear-gradient(175deg,#4ade80,var(--green));color:#06101c;border:none;border-radius:11px;padding:11px;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 4px 14px rgba(34,197,94,.22);transition:transform .12s}
+.act-done:active{transform:scale(.97)}
 
-/* ── BOOKING CARDS ── */
-.booking-card {
-  background:rgba(255,255,255,.04);
-  border:1px solid rgba(255,255,255,.06);
-  border-radius:20px;
-  padding:18px;
-  margin:0 16px 10px;
-  transition:transform .15s;
-}
-.booking-card.pending { border-color:rgba(255,176,32,.2); background:rgba(255,176,32,.04); }
-.booking-card.done { opacity:.55; }
-.booking-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
-.booking-name { font-size:16px; font-weight:700; }
-.booking-time { font-size:14px; color:var(--gold); font-weight:800; font-family:'Syne',sans-serif; }
-.booking-meta { display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
-.booking-plate {
-  background:rgba(255,176,32,.12);
-  border:1px solid rgba(255,176,32,.25);
-  border-radius:8px;
-  padding:4px 12px;
-  font-size:13px; font-weight:800; color:var(--gold);
-  letter-spacing:1.5px; font-family:'Syne',sans-serif;
-}
-.booking-plan { font-size:12px; color:var(--muted); }
-.booking-type-badge {
-  font-size:10px; font-weight:700; padding:3px 9px; border-radius:100px;
-  background:rgba(255,255,255,.06); color:var(--muted);
-}
-.booking-type-badge.guest { background:rgba(255,176,32,.12); color:var(--gold); }
-.status-badge { font-size:11px; font-weight:700; padding:4px 10px; border-radius:100px; }
-.badge-confirmed { background:rgba(255,176,32,.12); color:var(--gold); }
-.badge-completed { background:rgba(34,197,94,.12); color:var(--success); }
+/* ══ SCAN TAB ══════════════════════════════════════════════════ */
+.scan-zone{background:rgba(255,255,255,.03);border:1.5px dashed rgba(255,176,32,.22);border-radius:var(--rlg);padding:30px 20px;text-align:center;margin-bottom:14px}
+.scan-zone-icon{font-size:46px;margin-bottom:12px}
+#qr-video-wrap{display:none;border-radius:20px;overflow:hidden;margin-bottom:14px;border:2px solid rgba(255,176,32,.28);position:relative}
+#qr-video{width:100%;display:block}
+.scan-frame-ov{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.scan-frame{width:170px;height:170px;border:3px solid var(--gold);border-radius:14px;box-shadow:0 0 0 2000px rgba(0,0,0,.4)}
+.divider{display:flex;align-items:center;gap:10px;margin:16px 0}
+.div-line{flex:1;height:1px;background:rgba(255,255,255,.07)}
+.div-txt{font-size:11px;color:var(--muted);font-weight:600}
 
-.mark-done-btn {
-  width:100%;
-  background:linear-gradient(180deg,#4ade80,var(--success));
-  color:#07111f;
-  border:none; border-radius:14px;
-  padding:12px;
-  font-family:'Syne',sans-serif; font-weight:700; font-size:14px;
-  cursor:pointer;
-  box-shadow:0 6px 18px rgba(34,197,94,.25);
-  transition:transform .15s;
-}
-.mark-done-btn:active { transform:scale(.97); }
+/* Scan result */
+.res-card{background:rgba(255,176,32,.06);border:1.5px solid rgba(255,176,32,.22);border-radius:var(--rlg);padding:18px;margin-bottom:14px;display:none}
+.res-name{font-size:19px;font-weight:800;margin-bottom:5px}
+.res-plate{display:inline-block;background:var(--gold);color:#06101c;border-radius:7px;padding:4px 12px;font-size:14px;font-weight:800;letter-spacing:2px;margin-bottom:14px;font-family:'Syne',sans-serif}
+.res-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:13px}
+.res-row:last-child{border-bottom:none}
+.res-row span{color:var(--muted);font-size:12px}
 
-/* ── SCAN ── */
-#screen-scan { padding:0; }
-.scan-content { padding:20px; padding-bottom:40px; }
-.scan-zone {
-  background:rgba(255,255,255,.03);
-  border:1.5px dashed rgba(255,176,32,.25);
-  border-radius:var(--radius-lg);
-  padding:36px 24px;
-  text-align:center;
-  margin-bottom:16px;
-}
-.scan-zone-icon { font-size:52px; margin-bottom:14px; }
-.scan-zone h3 { font-size:18px; font-weight:800; margin-bottom:8px; }
-.scan-zone p { font-size:14px; color:var(--muted); line-height:1.5; }
-#qr-video-container {
-  position:relative; border-radius:24px;
-  overflow:hidden; margin-bottom:16px; display:none;
-  border:2px solid rgba(255,176,32,.3);
-}
-#qr-video { width:100%; border-radius:22px; display:block; }
-.scan-overlay { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; }
-.scan-frame {
-  width:190px; height:190px;
-  border:3px solid var(--gold);
-  border-radius:16px;
-  box-shadow:0 0 0 2000px rgba(0,0,0,.45);
-}
-.divider { display:flex; align-items:center; gap:12px; margin:20px 0; }
-.divider-line { flex:1; height:1px; background:rgba(255,255,255,.07); }
-.divider-text { font-size:12px; color:var(--muted); font-weight:600; }
+/* ══ EARNINGS TAB ══════════════════════════════════════════════ */
+.period-tabs{display:flex;gap:7px;margin-bottom:16px}
+.ptab{flex:1;padding:9px;border-radius:11px;text-align:center;font-family:'Syne',sans-serif;font-weight:700;font-size:12px;cursor:pointer;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.03);color:var(--muted);transition:all .15s}
+.ptab.on{background:rgba(255,176,32,.1);color:var(--gold);border-color:rgba(255,176,32,.22)}
+.rev-hero{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.18);border-radius:22px;padding:22px;text-align:center;margin-bottom:14px}
+.rev-hero-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;font-weight:600;margin-bottom:7px}
+.rev-hero-n{font-size:42px;font-weight:800;color:var(--green);font-family:'Syne',sans-serif;line-height:1}
+.rev-hero-sub{font-size:12px;color:var(--muted);margin-top:4px}
+.rev-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px}
+.rev-cell{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:14px;text-align:center}
+.rev-cell-n{font-size:19px;font-weight:800;font-family:'Syne',sans-serif}
+.rev-cell-l{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:4px;font-weight:600}
+.svc-breakdown{background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:14px;margin-bottom:14px}
+.svc-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.svc-row:last-child{border-bottom:none}
+.svc-row-icon{font-size:18px;width:32px;text-align:center}
+.svc-row-name{flex:1;font-size:13px;font-weight:600}
+.svc-row-cnt{font-size:11px;color:var(--muted)}
+.svc-row-rev{font-size:14px;font-weight:800;color:var(--green);font-family:'Syne',sans-serif}
+.tx-row{display:grid;grid-template-columns:1fr 72px 78px;padding:10px 12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);border-radius:11px;margin-bottom:5px;font-size:13px}
+.tx-name{font-weight:600}.tx-plan{font-size:10px;color:var(--muted)}
+.tx-time{font-size:11px;color:var(--gold);text-align:right}
+.tx-amt{font-weight:700;color:var(--green);text-align:right}
 
-/* ── RESULT CARD ── */
-.result-card {
-  background:rgba(255,176,32,.06);
-  border:1.5px solid rgba(255,176,32,.25);
-  border-radius:var(--radius-lg);
-  padding:22px;
-  margin-bottom:16px;
-  display:none;
-}
-.result-name { font-size:22px; font-weight:800; margin-bottom:6px; }
-.result-plate {
-  display:inline-block;
-  background:var(--gold); color:#07111f;
-  border-radius:8px; padding:5px 14px;
-  font-size:15px; font-weight:800; letter-spacing:2px;
-  margin-bottom:16px; font-family:'Syne',sans-serif;
-}
-.result-row {
-  display:flex; justify-content:space-between; align-items:center;
-  padding:10px 0;
-  border-bottom:1px solid rgba(255,255,255,.06);
-  font-size:14px;
-}
-.result-row:last-child { border-bottom:none; }
-.result-row span { color:var(--muted); font-size:13px; }
+/* ══ MORE TAB ══════════════════════════════════════════════════ */
+.more-section{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;padding:16px 0 8px}
+.more-item{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer;transition:opacity .15s}
+.more-item:last-child{border-bottom:none}
+.more-item:active{opacity:.6}
+.more-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+.more-icon.gold{background:rgba(255,176,32,.1);border:1px solid rgba(255,176,32,.15)}
+.more-icon.blue{background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.15)}
+.more-icon.green{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.15)}
+.more-icon.red{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.15)}
+.more-icon.purple{background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.15)}
+.more-icon.gray{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07)}
+.more-lbl{flex:1;font-size:15px;font-weight:600}
+.more-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.more-arrow{color:var(--muted);font-size:16px}
 
-/* ── PLATE LOOKUP ── */
-#screen-lookup { padding:0; }
-.lookup-content { padding:20px; padding-bottom:40px; }
-.plate-input-big {
-  width:100%; padding:20px 18px;
-  background:rgba(255,255,255,.05);
-  border:1.5px solid rgba(255,255,255,.08);
-  border-radius:18px; color:var(--text);
-  font-family:'Syne',sans-serif;
-  font-size:24px; font-weight:800;
-  letter-spacing:4px; text-transform:uppercase; text-align:center;
-  outline:none; transition:border .2s, box-shadow .2s;
-}
-.plate-input-big:focus { border-color:rgba(255,176,32,.5); box-shadow:0 0 0 4px rgba(255,176,32,.08); }
-.plate-input-big::placeholder { color:rgba(122,144,168,.4); letter-spacing:2px; font-size:18px; }
+/* ══ SERVICES SUBSCREEN ════════════════════════════════════════ */
+.svc-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:17px;padding:15px;margin-bottom:9px;display:flex;align-items:center;gap:13px}
+.svc-icon-box{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;background:rgba(255,176,32,.08);border:1px solid rgba(255,176,32,.13)}
+.svc-info{flex:1}.svc-nm{font-size:14px;font-weight:700}.svc-ds{font-size:11px;color:var(--muted);margin-top:1px}.svc-dur{font-size:10px;color:var(--muted);margin-top:3px}
+.svc-price{font-size:17px;font-weight:800;color:var(--gold);font-family:'Syne',sans-serif;white-space:nowrap}
+.icon-btn{width:30px;height:30px;border-radius:7px;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;background:rgba(255,255,255,.05);color:var(--muted);transition:background .15s}
+.icon-btn.edit{background:rgba(255,176,32,.1);color:var(--gold)}
+.icon-btn.del{background:rgba(239,68,68,.1);color:var(--red)}
 
-/* ── TOAST ── */
-#toast {
-  position:fixed; top:64px; left:50%;
-  transform:translateX(-50%) translateY(-90px);
-  background:var(--s2);
-  border:1px solid rgba(255,255,255,.08);
-  border-left:4px solid var(--gold);
-  padding:13px 22px; border-radius:14px;
-  font-size:14px; z-index:9999;
-  opacity:0; transition:all .3s;
-  white-space:nowrap; max-width:90vw;
-  overflow:hidden; text-overflow:ellipsis;
-  box-shadow:0 8px 24px rgba(0,0,0,.4);
-}
-#toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
+/* ══ WASHERS SUBSCREEN ═════════════════════════════════════════ */
+.wshr-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:19px;padding:15px;margin-bottom:11px}
+.wshr-card.on-wash{border-color:rgba(59,130,246,.28);background:rgba(59,130,246,.05)}
+.wshr-card.avail{border-color:rgba(34,197,94,.18);background:rgba(34,197,94,.04)}
+.wshr-top{display:flex;align-items:center;gap:13px;margin-bottom:11px}
+.wshr-big-ava{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:800;color:#fff;font-family:'Syne',sans-serif;flex-shrink:0}
+.wshr-nm{font-size:15px;font-weight:700}.wshr-role{font-size:11px;color:var(--muted)}
+.wshr-badge{font-size:10px;font-weight:700;padding:4px 9px;border-radius:100px}
+.wshr-free{background:rgba(34,197,94,.12);color:var(--green)}
+.wshr-busy{background:rgba(59,130,246,.14);color:#7eb4ff}
+.wshr-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:10px}
+.wshr-stat{text-align:center;background:rgba(255,255,255,.03);border-radius:9px;padding:7px}
+.wshr-stat-n{font-size:17px;font-weight:800;color:var(--gold);font-family:'Syne',sans-serif}
+.wshr-stat-l{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;font-weight:600}
+.wshr-job{padding:9px 11px;background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.13);border-radius:11px;margin-bottom:9px}
+.wshr-job-lbl{font-size:10px;color:#7eb4ff;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:3px}
+.wshr-job-car{font-size:13px;font-weight:700}.wshr-job-t{font-size:11px;color:var(--muted)}
+.add-dashed{border:1.5px dashed rgba(255,255,255,.1);border-radius:17px;padding:18px;text-align:center;cursor:pointer;transition:background .15s}
+.add-dashed:active{background:rgba(255,255,255,.03)}
+
+/* ══ MODALS ════════════════════════════════════════════════════ */
+.ov{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.72);backdrop-filter:blur(8px);display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .22s}
+.ov.open{opacity:1;pointer-events:all}
+.sheet{width:100%;max-width:620px;background:var(--s1);border-radius:26px 26px 0 0;padding:22px 20px calc(26px + env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .28s cubic-bezier(.34,1.4,.64,1);max-height:88vh;overflow-y:auto}
+.ov.open .sheet{transform:translateY(0)}
+.sheet-handle{width:38px;height:4px;background:rgba(255,255,255,.09);border-radius:2px;margin:0 auto 18px}
+.sheet-title{font-size:19px;font-weight:800;margin-bottom:18px}
+
+.washer-sel{display:flex;align-items:center;gap:11px;padding:12px 14px;border-radius:13px;cursor:pointer;margin-bottom:7px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);transition:background .15s}
+.washer-sel:active{background:rgba(59,130,246,.08)}
+.washer-sel.na{opacity:.38;cursor:not-allowed}
+.washer-sel-nm{font-size:14px;font-weight:700}.washer-sel-st{font-size:11px;color:var(--muted)}
+
+/* Profile */
+.profile-hero{background:linear-gradient(145deg,rgba(255,176,32,.1),rgba(255,176,32,.03));border:1px solid rgba(255,176,32,.18);border-radius:22px;padding:22px;text-align:center;margin-bottom:16px}
+.profile-mark{width:64px;height:64px;background:linear-gradient(135deg,var(--gold2),var(--gold));border-radius:18px;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:26px;color:#06101c;margin:0 auto 12px}
+.profile-name{font-size:20px;font-weight:800}
+.profile-loc{color:var(--gold);font-size:13px;margin-top:3px}
+
+/* Toast */
+#toast{position:fixed;top:60px;left:50%;transform:translateX(-50%) translateY(-80px);background:var(--s2);border:1px solid rgba(255,255,255,.07);border-left:4px solid var(--green);padding:11px 18px;border-radius:13px;font-size:13px;z-index:9999;opacity:0;transition:all .27s;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis;box-shadow:0 10px 28px rgba(0,0,0,.5)}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.empty{text-align:center;padding:36px 18px;color:var(--muted);font-size:13px}
+.empty-icon{font-size:38px;margin-bottom:11px}
 </style>
 </head>
 <body>
 
 <!-- SPLASH -->
-<div id="screen-splash" class="screen active">
-  <div class="splash-logo">
-    <div class="splash-icon">S</div>
-    <div class="splash-title">Splash<span>Pass</span></div>
-    <div class="splash-sub">Operator Console</div>
-    <div class="splash-spinner"></div>
-  </div>
+<div id="scr-splash" class="screen active">
+  <div class="splash-mark">S</div>
+  <div class="splash-title">Splash<span>Pass</span></div>
+  <div class="splash-sub">Operator Console</div>
+  <div class="spin"></div>
 </div>
 
 <!-- AUTH -->
-<div id="screen-auth" class="screen">
-  <div class="auth-logo">
-    <div class="auth-logo-icon">S</div>
-    <div class="auth-logo-text">SplashPass</div>
-  </div>
-  <div class="auth-tag">Operator Console</div>
-  <div class="auth-title">Operator Login</div>
-  <div class="auth-sub">Sign in to your wash point dashboard</div>
-  <div class="form-group"><label>Email</label><input type="email" id="login-email" placeholder="you@example.com"></div>
-  <div class="form-group"><label>Password</label><input type="password" id="login-pass" placeholder="Your password"></div>
-  <div id="login-error" class="form-error"></div>
-  <button class="btn btn-gold" id="login-btn" onclick="login()" style="margin-bottom:16px">Sign In</button>
-  <div style="text-align:center;font-size:13px;color:var(--muted)">Contact admin to get access</div>
+<div id="scr-auth" class="screen">
+  <div class="auth-chip"><div class="auth-chip-dot">S</div><div class="auth-chip-txt">SplashPass Ops</div></div>
+  <div class="auth-h">Operator Sign In</div>
+  <div class="auth-sub">Access your wash point dashboard</div>
+  <div class="fg"><label>Email</label><input type="email" id="a-email" placeholder="you@example.com"></div>
+  <div class="fg"><label>Password</label><input type="password" id="a-pass" placeholder="Password"></div>
+  <div id="a-err" class="ferr"></div>
+  <button class="btn btn-gold" id="a-btn" onclick="doLogin()">Sign In</button>
 </div>
 
-<!-- HOME -->
-<div id="screen-home" class="screen">
+<!-- ══════════════ BOOKINGS TAB ══════════════ -->
+<div id="scr-bookings" class="screen">
   <!-- Sticky header -->
-  <div class="home-header">
-    <div class="home-top">
+  <div class="bkgs-top">
+    <div class="bkgs-row1">
       <div>
-        <div class="home-name" id="home-name">—</div>
-        <div class="home-point" id="home-point">—</div>
-        <div class="home-date" id="home-date">—</div>
+        <div class="wp-name" id="b-name">—</div>
+        <div class="wp-loc" id="b-loc">—</div>
+        <div class="wp-date" id="b-date">—</div>
       </div>
-      <button class="logout-btn" onclick="logout()">Log Out</button>
+      <button class="logout-btn" onclick="doLogout()">Sign Out</button>
     </div>
-
-    <!-- Status toggle -->
-    <div class="status-bar">
-      <div class="status-left">
-        <div class="status-dot" id="status-dot"></div>
-        <div>
-          <div class="status-label" id="status-label">Open</div>
-          <div class="status-sub" id="status-sub">Accepting bookings</div>
-        </div>
+    <!-- BIG Free/Busy -->
+    <div class="fb-toggle" id="fb-toggle">
+      <button class="fb-btn free-on" id="fb-free" onclick="setStatus('open')">
+        <span class="fb-status-dot" style="background:var(--green)"></span>FREE — Accepting
+      </button>
+      <button class="fb-btn" id="fb-busy" onclick="setStatus('paused')">
+        <span class="fb-status-dot" style="background:var(--red)"></span>BUSY — Paused
+      </button>
+    </div>
+    <!-- Capacity bar -->
+    <div class="cap-bar-wrap">
+      <div class="cap-bar-row">
+        <span class="cap-bar-lbl">Bay Capacity</span>
+        <span class="cap-bar-val" id="cap-val">0 / 0 · 0%</span>
       </div>
-      <label class="toggle-switch">
-        <input type="checkbox" id="status-toggle" onchange="toggleStatus()">
-        <div class="toggle-track" id="toggle-track"></div>
-        <div class="toggle-thumb" id="toggle-thumb"></div>
-      </label>
+      <div class="cap-bar-track"><div class="cap-bar-fill" id="cap-fill" style="width:0%"></div></div>
     </div>
   </div>
 
   <!-- Stats -->
-  <div class="stats-row">
-    <div class="stat-card">
-      <div class="stat-num" id="stat-today">0</div>
-      <div class="stat-label">Today</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-num" id="stat-done">0</div>
-      <div class="stat-label">Done</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-num" id="stat-pending">0</div>
-      <div class="stat-label">Pending</div>
-    </div>
+  <div class="stats">
+    <div class="stat"><div class="stat-n" id="s-total">0</div><div class="stat-l">Today</div></div>
+    <div class="stat"><div class="stat-n" id="s-washing" style="color:var(--green)">0</div><div class="stat-l">Washing</div></div>
+    <div class="stat"><div class="stat-n" id="s-pending" style="color:var(--amber)">0</div><div class="stat-l">Pending</div></div>
+    <div class="stat"><div class="stat-n" id="s-done" style="color:var(--muted)">0</div><div class="stat-l">Done</div></div>
   </div>
 
-  <!-- Revenue summary -->
-  <div style="padding:0 16px 14px;">
-    <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;font-weight:600;margin-bottom:10px;">Your Earnings (after 20% commission)</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
-
-      <div style="background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.15);border-radius:18px;padding:14px 10px;text-align:center;">
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px;">Today</div>
-        <div id="rev-today" style="font-size:18px;font-weight:800;color:#22c55e;font-family:'Syne',sans-serif;line-height:1;">—</div>
-        <div style="font-size:10px;color:var(--muted);margin-top:3px;">KSh</div>
-      </div>
-
-      <div style="background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.15);border-radius:18px;padding:14px 10px;text-align:center;">
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px;">This Week</div>
-        <div id="rev-week" style="font-size:18px;font-weight:800;color:#22c55e;font-family:'Syne',sans-serif;line-height:1;">—</div>
-        <div style="font-size:10px;color:var(--muted);margin-top:3px;">KSh</div>
-      </div>
-
-      <div style="background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.15);border-radius:18px;padding:14px 10px;text-align:center;">
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px;">This Month</div>
-        <div id="rev-month" style="font-size:18px;font-weight:800;color:#22c55e;font-family:'Syne',sans-serif;line-height:1;">—</div>
-        <div style="font-size:10px;color:var(--muted);margin-top:3px;">KSh</div>
-      </div>
-
-    </div>
-
-    <!-- Commission note -->
-    <div style="margin-top:8px;background:rgba(255,176,32,.06);border:1px solid rgba(255,176,32,.12);border-radius:12px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;">
-      <div style="font-size:12px;color:var(--muted);">SplashPass commission (20%)</div>
-      <div id="rev-commission" style="font-size:13px;font-weight:700;color:var(--gold);">KSh —</div>
-    </div>
-  </div>
-
-  <!-- Quick actions -->
-  <div class="action-row">
-    <div class="action-card primary" onclick="showScreen('scan')">
-      <div class="action-icon">📷</div>
-      <div class="action-label">Scan QR</div>
-      <div class="action-sub">Verify customer pass</div>
-    </div>
-    <div class="action-card" onclick="showScreen('lookup')">
-      <div class="action-icon">🔍</div>
-      <div class="action-label">Plate Lookup</div>
-      <div class="action-sub">Search by plate no.</div>
-    </div>
-  </div>
-
-  <!-- Today's queue -->
-  <div class="queue-header">
-    <div class="queue-title">Today's Bookings</div>
-    <div class="queue-count" id="queue-count">0 bookings</div>
-  </div>
-  <div id="queue-list">
-    <div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:14px">No bookings today</div>
-  </div>
-  <div style="height:30px"></div>
+  <!-- Pipeline -->
+  <div id="pipeline"></div>
+  <div style="height:10px"></div>
 </div>
 
-<!-- SCAN -->
-<div id="screen-scan" class="screen">
-  <div class="screen-header">
-    <button class="back-btn" onclick="stopCamera();showScreen('home')">←</button>
-    <h2>Scan Customer QR</h2>
-  </div>
-  <div class="scan-content">
-    <div id="qr-video-container">
-      <video id="qr-video" playsinline autoplay muted></video>
-      <div class="scan-overlay"><div class="scan-frame"></div></div>
+<!-- ══════════════ SCAN TAB ══════════════ -->
+<div id="scr-scan" class="screen">
+  <div class="hdr"><h2>Scan QR</h2></div>
+  <div class="body">
+    <div id="qr-video-wrap">
+      <video id="qr-vid" playsinline autoplay muted></video>
+      <div class="scan-frame-ov"><div class="scan-frame"></div></div>
     </div>
     <div class="scan-zone" id="scan-prompt">
       <div class="scan-zone-icon">📷</div>
-      <h3>Ready to Scan</h3>
-      <p>Point camera at customer's QR wash pass to verify and redeem</p>
-      <button class="btn btn-gold" onclick="startCamera()" style="margin-top:20px;width:auto;padding:14px 32px">Open Camera</button>
+      <h3 style="margin-bottom:8px">Scan Customer QR</h3>
+      <p style="color:var(--muted);font-size:13px;line-height:1.5">Point camera at customer's QR pass to check them in</p>
+      <button class="btn btn-gold" onclick="startCam()" style="width:auto;padding:12px 28px;margin-top:18px">Open Camera</button>
     </div>
-    <div id="scan-result" class="result-card"></div>
-    <div id="scan-actions" class="hidden">
-      <button class="btn btn-success" id="redeem-btn" onclick="redeemBooking()" style="margin-bottom:10px">✓ Mark Done</button>
+    <div id="scan-res" class="res-card"></div>
+    <div id="scan-acts" class="hidden">
+      <button class="btn btn-gold" id="checkin-btn" onclick="doCheckIn()" style="margin-bottom:9px">✓ Check In Customer</button>
       <button class="btn btn-outline" onclick="resetScan()">Scan Another</button>
+    </div>
+    <div class="divider"><div class="div-line"></div><div class="div-txt">OR</div><div class="div-line"></div></div>
+    <div class="fg"><label>Search by Plate Number</label>
+      <input type="text" id="plate-in" placeholder="KCA 123A" oninput="this.value=this.value.toUpperCase()" onkeyup="if(event.key==='Enter')doPlate()" style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;letter-spacing:3px;text-align:center">
+    </div>
+    <button class="btn btn-outline" id="plate-btn" onclick="doPlate()">Search Plate</button>
+    <div id="plate-err" style="display:none;color:var(--red);font-size:13px;text-align:center;padding:14px;background:rgba(239,68,68,.07);border-radius:13px;margin-top:10px;border:1px solid rgba(239,68,68,.14)"></div>
+    <div id="plate-res" class="res-card" style="margin-top:10px"></div>
+    <div id="plate-acts" class="hidden" style="margin-top:-4px">
+      <button class="btn btn-gold" id="plate-checkin-btn" onclick="doPlateCheckIn()" style="margin-bottom:9px">✓ Check In Customer</button>
+      <button class="btn btn-outline" onclick="resetPlate()">Search Another</button>
     </div>
   </div>
 </div>
 
-<!-- PLATE LOOKUP -->
-<div id="screen-lookup" class="screen">
-  <div class="screen-header">
-    <button class="back-btn" onclick="showScreen('home')">←</button>
-    <h2>Plate Lookup</h2>
+<!-- ══════════════ EARNINGS TAB ══════════════ -->
+<div id="scr-earnings" class="screen">
+  <div class="hdr">
+    <h2>Earnings</h2>
+    <button class="btn btn-xs btn-outline hdr-right" onclick="loadEarnings()">↻</button>
   </div>
-  <div class="lookup-content">
-    <div class="form-group">
-      <label>Number Plate</label>
-      <input class="plate-input-big" type="text" id="plate-input" placeholder="KCA 123A" oninput="this.value=this.value.toUpperCase()">
+  <div class="body">
+    <div class="period-tabs">
+      <div class="ptab on" id="pt-today" onclick="setPeriod('today')">Today</div>
+      <div class="ptab" id="pt-week" onclick="setPeriod('week')">This Week</div>
+      <div class="ptab" id="pt-month" onclick="setPeriod('month')">This Month</div>
     </div>
-    <button class="btn btn-gold" id="lookup-btn" onclick="lookupPlate()" style="margin-bottom:20px">Search</button>
-    <div id="lookup-result" class="result-card"></div>
-    <div id="lookup-actions" class="hidden">
-      <button class="btn btn-success" id="lookup-redeem-btn" onclick="redeemFromLookup()" style="margin-bottom:10px">✓ Mark Done</button>
-      <button class="btn btn-outline" onclick="resetLookup()">Search Another</button>
+    <div class="rev-hero">
+      <div class="rev-hero-lbl" id="rev-period-lbl">Today's Earnings</div>
+      <div class="rev-hero-n" id="rev-n">—</div>
+      <div class="rev-hero-sub">KSh after 20% SplashPass commission</div>
     </div>
-    <div id="lookup-error" style="text-align:center;padding:20px;color:var(--danger);font-size:14px;display:none;background:rgba(239,68,68,.08);border-radius:16px;border:1px solid rgba(239,68,68,.15)"></div>
+    <div class="rev-grid">
+      <div class="rev-cell"><div class="rev-cell-n" id="rev-washes" style="color:var(--gold)">—</div><div class="rev-cell-l">Washes</div></div>
+      <div class="rev-cell"><div class="rev-cell-n" id="rev-gross" style="color:var(--text)">—</div><div class="rev-cell-l">Gross KSh</div></div>
+      <div class="rev-cell"><div class="rev-cell-n" id="rev-comm" style="color:var(--amber)">—</div><div class="rev-cell-l">Commission</div></div>
+      <div class="rev-cell"><div class="rev-cell-n" id="rev-avg" style="color:var(--blue)">—</div><div class="rev-cell-l">Avg/Wash</div></div>
+    </div>
+    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;font-weight:700;margin-bottom:10px">By Service Type</div>
+    <div id="svc-breakdown" class="svc-breakdown"></div>
+    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;font-weight:700;margin-bottom:10px">Transaction Log</div>
+    <div id="tx-log"></div>
   </div>
 </div>
+
+<!-- ══════════════ MORE TAB ══════════════ -->
+<div id="scr-more" class="screen">
+  <div class="hdr"><h2>More</h2></div>
+  <div class="body">
+    <div class="more-section">Business</div>
+    <div class="more-item" onclick="showSub('profile')">
+      <div class="more-icon gold">🏢</div>
+      <div><div class="more-lbl">Business Profile</div><div class="more-sub">Name, location, hours</div></div>
+      <div class="more-arrow">›</div>
+    </div>
+    <div class="more-item" onclick="showSub('services')">
+      <div class="more-icon gold">✂️</div>
+      <div><div class="more-lbl">Services & Pricing</div><div class="more-sub" id="svc-count-lbl">Loading…</div></div>
+      <div class="more-arrow">›</div>
+    </div>
+    <div class="more-section">Staff</div>
+    <div class="more-item" onclick="showSub('washers')">
+      <div class="more-icon blue">👷</div>
+      <div><div class="more-lbl">Wash Attendants</div><div class="more-sub" id="wshr-count-lbl">Loading…</div></div>
+      <div class="more-arrow">›</div>
+    </div>
+    <div class="more-section">Settings</div>
+    <div class="more-item" onclick="showSub('baysettings')">
+      <div class="more-icon green">⚙️</div>
+      <div><div class="more-lbl">Bay & Queue Settings</div><div class="more-sub">Capacity, avg duration</div></div>
+      <div class="more-arrow">›</div>
+    </div>
+    <div class="more-section">Account</div>
+    <div class="more-item" onclick="doLogout()">
+      <div class="more-icon red">🚪</div>
+      <div><div class="more-lbl">Sign Out</div><div class="more-sub">Log out of this device</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ SUB-SCREENS ══════════════ -->
+<!-- Profile -->
+<div id="scr-profile" class="screen">
+  <div class="hdr"><button class="back-btn" onclick="hideSub('profile')">‹</button><h2>Business Profile</h2></div>
+  <div class="body">
+    <div class="profile-hero">
+      <div class="profile-mark" id="prof-mark">S</div>
+      <div class="profile-name" id="prof-name">—</div>
+      <div class="profile-loc" id="prof-loc">—</div>
+    </div>
+    <div class="fg"><label>Wash Point Name</label><input type="text" id="prof-name-in" placeholder="e.g. Coastline Car Wash"></div>
+    <div class="fg"><label>Location / Address</label><input type="text" id="prof-addr-in" placeholder="e.g. Mtwapa, Kilifi"></div>
+    <div class="fg"><label>Phone Number</label><input type="tel" id="prof-phone-in" placeholder="+254 7xx xxx xxx"></div>
+    <div class="fg"><label>Opening Hours</label><input type="text" id="prof-hours-in" placeholder="e.g. 7:00 AM – 7:00 PM"></div>
+    <button class="btn btn-gold" onclick="saveProfile()">Save Profile</button>
+  </div>
+</div>
+
+<!-- Services -->
+<div id="scr-services" class="screen">
+  <div class="hdr"><button class="back-btn" onclick="hideSub('services')">‹</button><h2>Services & Pricing</h2><button class="btn btn-xs btn-gold hdr-right" onclick="openSvcModal(null)">+ Add</button></div>
+  <div class="body">
+    <div id="svc-list"></div>
+  </div>
+</div>
+
+<!-- Washers -->
+<div id="scr-washers" class="screen">
+  <div class="hdr"><button class="back-btn" onclick="hideSub('washers')">‹</button><h2>Wash Attendants</h2><button class="btn btn-xs btn-gold hdr-right" onclick="openWshrModal(null)">+ Add</button></div>
+  <div class="body">
+    <div id="wshr-list"></div>
+  </div>
+</div>
+
+<!-- Bay Settings -->
+<div id="scr-baysettings" class="screen">
+  <div class="hdr"><button class="back-btn" onclick="hideSub('baysettings')">‹</button><h2>Bay & Queue Settings</h2></div>
+  <div class="body">
+    <div class="fg"><label>Total Wash Bays</label><input type="number" id="bay-total" min="1" max="30" placeholder="e.g. 4"></div>
+    <div class="fg"><label>Avg Wash Duration (minutes)</label><input type="number" id="bay-dur" min="5" max="120" placeholder="e.g. 20"></div>
+    <div id="bay-eta" style="background:rgba(255,176,32,.06);border:1px solid rgba(255,176,32,.14);border-radius:14px;padding:14px;margin-bottom:20px;font-size:13px;color:var(--muted);line-height:1.6"></div>
+    <button class="btn btn-gold" onclick="saveBaySettings()">Save Settings</button>
+  </div>
+</div>
+
+<!-- ══════════════ MODALS ══════════════ -->
+<!-- Assign Washer -->
+<div class="ov" id="ov-assign">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Assign Washer</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:16px" id="assign-info">—</div>
+    <div id="assign-list"></div>
+    <button class="btn btn-outline" style="margin-top:8px" onclick="closeOv('ov-assign')">Cancel</button>
+  </div>
+</div>
+
+<!-- Add / Edit Service -->
+<div class="ov" id="ov-svc">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="svc-modal-title">Add Service</div>
+    <input type="hidden" id="svc-id">
+    <div class="fg"><label>Name</label><input type="text" id="svc-nm" placeholder="e.g. Full Interior & Exterior"></div>
+    <div class="fg"><label>Description</label><input type="text" id="svc-ds" placeholder="Vacuum, wipe, full wash"></div>
+    <div class="fg"><label>Price (KSh)</label><input type="number" id="svc-pr" placeholder="e.g. 800"></div>
+    <div class="fg"><label>Duration (minutes)</label><input type="number" id="svc-du" placeholder="e.g. 30"></div>
+    <div class="fg"><label>Emoji Icon</label><input type="text" id="svc-ic" placeholder="🚗" maxlength="4"></div>
+    <button class="btn btn-gold" onclick="saveSvc()" style="margin-bottom:9px">Save Service</button>
+    <button class="btn btn-outline" onclick="closeOv('ov-svc')">Cancel</button>
+  </div>
+</div>
+
+<!-- Add / Edit Washer -->
+<div class="ov" id="ov-wshr">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="wshr-modal-title">Add Attendant</div>
+    <input type="hidden" id="wshr-id">
+    <div class="fg"><label>Full Name</label><input type="text" id="wshr-nm-in" placeholder="e.g. Brian Otieno"></div>
+    <div class="fg"><label>Role / Notes</label><input type="text" id="wshr-role-in" placeholder="e.g. Senior Washer"></div>
+    <button class="btn btn-gold" onclick="saveWshr()" style="margin-bottom:9px">Save</button>
+    <button class="btn btn-outline" onclick="closeOv('ov-wshr')">Cancel</button>
+  </div>
+</div>
+
+<!-- Nav -->
+<nav class="nav" id="nav">
+  <button class="nav-btn on" id="nav-bookings" onclick="showTab('bookings')"><span class="nav-icon">📋</span><span class="nav-lbl">Bookings</span></button>
+  <button class="nav-btn" id="nav-scan"     onclick="showTab('scan')"><span class="nav-icon">📷</span><span class="nav-lbl">Scan</span></button>
+  <button class="nav-btn" id="nav-earnings" onclick="showTab('earnings')"><span class="nav-icon">💰</span><span class="nav-lbl">Earnings</span></button>
+  <button class="nav-btn" id="nav-more"     onclick="showTab('more')"><span class="nav-icon">⋯</span><span class="nav-lbl">More</span></button>
+</nav>
 
 <div id="toast"></div>
 
 <script>
-var SUPABASE_URL = 'https://msdvyiqjoogafzyaoycg.supabase.co';
-var SUPABASE_KEY = 'sb_publishable_N_g24aU7TLHLNeu72gnfeg_1d7OleFW';
+var SB_URL='https://msdvyiqjoogafzyaoycg.supabase.co';
+var SB_KEY='sb_publishable_N_g24aU7TLHLNeu72gnfeg_1d7OleFW';
+var op=null, camStream=null, camTimer=null, scanData=null, plateData=null;
+var assigningId=null, currentPeriod='today';
 
-var currentOperator = null;
-var foundBooking    = null;
-var lookupData      = null;
-var cameraStream    = null;
-var scanInterval    = null;
-var isOpen          = true; // wash point status
+/* ── LOCAL HELPERS ─────────────────────────────── */
+function lk(k){return'sp_'+(op?op.wash_point:'x')+'_'+k}
+function lg(k,d){try{var v=localStorage.getItem(lk(k));return v?JSON.parse(v):d}catch(e){return d}}
+function ls(k,v){try{localStorage.setItem(lk(k),JSON.stringify(v))}catch(e){}}
+function uid(){return Math.random().toString(36).slice(2,9)+Date.now().toString(36)}
 
-// ── SUPABASE ──────────────────────────────────────
-async function sbFetch(path, options) {
-  options = options || {};
-  var res = await fetch(SUPABASE_URL + '/rest/v1/' + path, Object.assign({}, options, {
-    headers: Object.assign({
-      'apikey': SUPABASE_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_KEY,
-      'Content-Type': 'application/json',
-      'Prefer': options.prefer || 'return=representation'
-    }, options.headers || {})
+function getWashers(){return lg('washers',[])}
+function setWashers(w){ls('washers',w)}
+function getServices(){return lg('services',defaultSvcs())}
+function setServices(s){ls('services',s)}
+function getInflow(){return lg('inflow',{bays:4,dur:20})}
+function setInflow(v){ls('inflow',v)}
+function getProfile(){return lg('profile',{})}
+function setProfile(v){ls('profile',v)}
+
+function defaultSvcs(){
+  return[
+    {id:uid(),name:'Exterior Wash',desc:'Full exterior rinse & wipe',price:350,dur:15,icon:'🚿'},
+    {id:uid(),name:'Interior & Exterior',desc:'Vacuum, wipe & exterior wash',price:650,dur:30,icon:'✨'},
+    {id:uid(),name:'Engine Wash',desc:'Degreasing + power rinse',price:500,dur:20,icon:'⚙️'},
+    {id:uid(),name:'Full Detail',desc:'Deep clean inside & out',price:1500,dur:60,icon:'🏆'},
+  ];
+}
+
+function washerColor(i){return['c0','c1','c2','c3','c4'][i%5]}
+
+/* ── SUPABASE ───────────────────────────────────── */
+async function sb(path,opts){
+  opts=opts||{};
+  var r=await fetch(SB_URL+'/rest/v1/'+path,Object.assign({},opts,{
+    headers:Object.assign({'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':opts.prefer||'return=representation'},opts.headers||{})
   }));
-  if (!res.ok) {
-    var err = await res.json().catch(function() { return {}; });
-    throw new Error(err.message || 'Request failed');
-  }
-  var text = await res.text();
-  return text ? JSON.parse(text) : null;
+  if(!r.ok){var e=await r.json().catch(function(){return{}});throw new Error(e.message||'SB error')}
+  var t=await r.text();return t?JSON.parse(t):null;
 }
 
-async function getOperatorByEmail(email) {
-  var rows = await sbFetch('operators?email=eq.' + encodeURIComponent(email) + '&select=*');
-  return rows && rows[0] ? rows[0] : null;
+async function getOpByEmail(email){
+  var rows=await sb('operators?email=eq.'+encodeURIComponent(email)+'&select=*');
+  return rows&&rows[0]?rows[0]:null;
+}
+async function getTodayBookings(wp){
+  var d=new Date().toISOString().split('T')[0];
+  return await sb('bookings?date=eq.'+d+'&location=eq.'+encodeURIComponent(wp)+'&select=*&order=time.asc');
+}
+async function getBookingsRange(wp,from,to){
+  return await sb('bookings?date=gte.'+from+'&date=lte.'+to+'&location=eq.'+encodeURIComponent(wp)+'&status=eq.completed&select=*&order=created_at.desc');
+}
+async function patchBooking(id,data){
+  return await sb('bookings?id=eq.'+id,{method:'PATCH',body:JSON.stringify(data),prefer:'return=representation'});
+}
+async function getProfile_(email){
+  var r=await sb('profiles?email=eq.'+encodeURIComponent(email)+'&select=*');
+  return r&&r[0]?r[0]:null;
+}
+async function patchProfile(email,data){
+  return await sb('profiles?email=eq.'+encodeURIComponent(email),{method:'PATCH',body:JSON.stringify(data),prefer:'return=representation'});
+}
+async function findByPlate(plate){
+  var d=new Date().toISOString().split('T')[0];
+  var users=await sb('profiles?plate=ilike.'+encodeURIComponent(plate.trim())+'&select=*');
+  if(!users||!users.length)return null;
+  var u=users[0];
+  var bks=await sb('bookings?user_email=eq.'+encodeURIComponent(u.email)+'&date=eq.'+d+'&status=in.(confirmed,arrived)&select=*');
+  return{user:u,booking:bks&&bks[0]?bks[0]:null};
 }
 
-async function getTodayBookings(washPoint) {
-  var today = new Date().toISOString().split('T')[0];
-  return await sbFetch('bookings?date=eq.' + today + '&location=eq.' + encodeURIComponent(washPoint) + '&select=*&order=time.asc');
-}
-
-async function getWeekBookings(washPoint) {
-  var today = new Date();
-  var weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate() - 6);
-  var from = weekAgo.toISOString().split('T')[0];
-  var to   = today.toISOString().split('T')[0];
-  return await sbFetch('bookings?date=gte.' + from + '&date=lte.' + to +
-    '&location=eq.' + encodeURIComponent(washPoint) + '&status=eq.completed&select=*');
-}
-
-async function getMonthBookings(washPoint) {
-  var today = new Date();
-  var from  = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
-  var to    = today.toISOString().split('T')[0];
-  return await sbFetch('bookings?date=gte.' + from + '&date=lte.' + to +
-    '&location=eq.' + encodeURIComponent(washPoint) + '&status=eq.completed&select=*');
-}
-
-function sumRevenue(bookings) {
-  return (bookings || []).reduce(function(total, b) {
-    return total + (b.operator_amount || 0);
-  }, 0);
-}
-
-async function getBookingsByPlate(plate) {
-  var today = new Date().toISOString().split('T')[0];
-  var users = await sbFetch('profiles?plate=ilike.' + encodeURIComponent(plate.trim()) + '&select=*');
-  if (!users || !users.length) return null;
-  var user = users[0];
-  var bookings = await sbFetch('bookings?user_email=eq.' + encodeURIComponent(user.email) + '&date=eq.' + today + '&status=eq.confirmed&select=*');
-  return { user: user, booking: bookings && bookings[0] ? bookings[0] : null };
-}
-
-async function redeemBookingById(bookingId, userEmail) {
-  // Mark booking done
-  await sbFetch('bookings?id=eq.' + bookingId, {
-    method: 'PATCH',
-    body: JSON.stringify({ status: 'completed' }),
-    prefer: 'return=representation'
-  });
-  // Deduct credit + add loyalty points
-  var users = await sbFetch('profiles?email=eq.' + encodeURIComponent(userEmail) + '&select=*');
-  if (users && users[0]) {
-    var u = users[0];
-    var updates = {};
-    if (u.plan !== 'Fleet' && u.credits > 0) updates.credits = u.credits - 1;
-    updates.loyalty_points = (u.loyalty_points || 0) + 10;
-    await sbFetch('profiles?email=eq.' + encodeURIComponent(userEmail), {
-      method: 'PATCH',
-      body: JSON.stringify(updates),
-      prefer: 'return=representation'
-    });
-  }
-}
-
-// ── STATUS ────────────────────────────────────────
-async function toggleStatus() {
-  isOpen = document.getElementById('status-toggle').checked;
-  updateStatusUI();
-  // Persist to operators table
-  try {
-    await sbFetch('operators?email=eq.' + encodeURIComponent(currentOperator.email), {
-      method: 'PATCH',
-      body: JSON.stringify({ status: isOpen ? 'open' : 'paused' }),
-      prefer: 'return=representation'
-    });
-    toast(isOpen ? 'Wash point is now Open' : 'Wash point Paused — no new bookings');
-  } catch(e) {
-    toast('Could not sync status: ' + e.message, true);
-  }
-}
-
-function updateStatusUI() {
-  var dot   = document.getElementById('status-dot');
-  var label = document.getElementById('status-label');
-  var sub   = document.getElementById('status-sub');
-  var track = document.getElementById('toggle-track');
-  var thumb = document.getElementById('toggle-thumb');
-  var toggle = document.getElementById('status-toggle');
-
-  if (isOpen) {
-    dot.className   = 'status-dot';
-    label.textContent = 'Open';
-    sub.textContent   = 'Accepting bookings';
-    track.className   = 'toggle-track on';
-    thumb.className   = 'toggle-thumb on';
-    toggle.checked    = true;
-  } else {
-    dot.className   = 'status-dot paused';
-    label.textContent = 'Paused';
-    sub.textContent   = 'New bookings stopped';
-    track.className   = 'toggle-track';
-    thumb.className   = 'toggle-thumb';
-    toggle.checked    = false;
-  }
-}
-
-// ── UI HELPERS ────────────────────────────────────
-function toast(msg, isError) {
-  var t = document.getElementById('toast');
-  t.textContent = msg;
-  t.style.borderLeftColor = isError ? 'var(--danger)' : 'var(--success)';
-  t.classList.add('show');
-  setTimeout(function() { t.classList.remove('show'); }, 3000);
-}
-function setBtn(id, loading, label) {
-  var b = document.getElementById(id);
-  if (!b) return;
-  b.disabled = loading;
-  b.textContent = loading ? 'Please wait...' : label;
-}
-function showScreen(name) {
-  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
-  document.getElementById('screen-' + name).classList.add('active');
-  if (name === 'home') renderHome();
-}
-
-// ── BOOT ─────────────────────────────────────────
-window.onload = function() {
-  setTimeout(function() {
-    var saved = localStorage.getItem('splashpass_operator');
-    if (saved) {
-      try {
-        currentOperator = JSON.parse(saved);
-        isOpen = currentOperator.status !== 'paused';
-        showScreen('home');
-        return;
-      } catch(e) { localStorage.removeItem('splashpass_operator'); }
-    }
-    showScreen('auth');
-  }, 1600);
+/* ── BOOT ───────────────────────────────────────── */
+window.onload=function(){
+  setTimeout(function(){
+    var saved=localStorage.getItem('sp_op');
+    if(saved){try{op=JSON.parse(saved);bootIn();return}catch(e){localStorage.removeItem('sp_op')}}
+    showOnly('auth');
+  },1500);
 };
 
-// ── AUTH ─────────────────────────────────────────
-async function login() {
-  var email = document.getElementById('login-email').value.trim().toLowerCase();
-  var pass  = document.getElementById('login-pass').value;
-  var err   = document.getElementById('login-error');
-  if (!email || !pass) { err.textContent = 'Please enter email and password.'; return; }
-  setBtn('login-btn', true, 'Sign In');
-  err.textContent = '';
-  try {
-    var op = await getOperatorByEmail(email);
-    if (!op || op.password !== pass) { err.textContent = 'Invalid credentials.'; return; }
-    currentOperator = op;
-    isOpen = op.status !== 'paused';
-    localStorage.setItem('splashpass_operator', JSON.stringify(op));
-    showScreen('home');
-  } catch(e) { err.textContent = 'Error: ' + e.message; }
-  finally { setBtn('login-btn', false, 'Sign In'); }
+function showOnly(name){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active')});
+  var el=document.getElementById('scr-'+name);
+  if(el)el.classList.add('active');
 }
 
-function logout() {
-  currentOperator = null;
-  localStorage.removeItem('splashpass_operator');
-  showScreen('auth');
+function bootIn(){
+  document.getElementById('nav').style.display='flex';
+  showTab('bookings');
+  updateMoreCounts();
 }
 
-// ── HOME RENDER ───────────────────────────────────
-async function renderHome() {
-  if (!currentOperator) return;
-
-  // Header
-  document.getElementById('home-name').textContent  = currentOperator.name || 'Operator';
-  document.getElementById('home-point').textContent = '📍 ' + (currentOperator.wash_point || 'Wash Point');
-  var now = new Date();
-  document.getElementById('home-date').textContent  =
-    now.toLocaleDateString('en-KE', { weekday:'long', day:'numeric', month:'long' });
-
-  // Status UI
-  updateStatusUI();
-
-  // Load today's bookings + revenue in parallel
-  try {
-    var [bookings, weekBookings, monthBookings] = await Promise.all([
-      getTodayBookings(currentOperator.wash_point),
-      getWeekBookings(currentOperator.wash_point),
-      getMonthBookings(currentOperator.wash_point)
-    ]);
-
-    bookings      = bookings || [];
-    weekBookings  = weekBookings || [];
-    monthBookings = monthBookings || [];
-
-    // Booking stats
-    var done    = bookings.filter(function(b) { return b.status === 'completed'; });
-    var pending = bookings.filter(function(b) { return b.status !== 'completed'; });
-
-    document.getElementById('stat-today').textContent   = bookings.length;
-    document.getElementById('stat-done').textContent    = done.length;
-    document.getElementById('stat-pending').textContent = pending.length;
-    document.getElementById('queue-count').textContent  =
-      bookings.length + ' booking' + (bookings.length !== 1 ? 's' : '');
-
-    // Revenue
-    var todayRev  = sumRevenue(done);
-    var weekRev   = sumRevenue(weekBookings);
-    var monthRev  = sumRevenue(monthBookings);
-    var todayGross = done.reduce(function(t, b) { return t + (b.amount || 0); }, 0);
-    var commission = todayGross - todayRev;
-
-    document.getElementById('rev-today').textContent      = todayRev.toLocaleString();
-    document.getElementById('rev-week').textContent       = weekRev.toLocaleString();
-    document.getElementById('rev-month').textContent      = monthRev.toLocaleString();
-    document.getElementById('rev-commission').textContent = 'KSh ' + commission.toLocaleString();
-
-    renderQueue(bookings);
-  } catch(e) { toast('Error loading dashboard: ' + e.message, true); }
+/* ── AUTH ───────────────────────────────────────── */
+async function doLogin(){
+  var email=document.getElementById('a-email').value.trim().toLowerCase();
+  var pass=document.getElementById('a-pass').value;
+  var err=document.getElementById('a-err');
+  if(!email||!pass){err.textContent='Enter email and password.';return}
+  setBtn('a-btn',true);
+  err.textContent='';
+  try{
+    var o=await getOpByEmail(email);
+    if(!o||o.password!==pass){err.textContent='Invalid credentials.';return}
+    op=o;
+    localStorage.setItem('sp_op',JSON.stringify(op));
+    bootIn();
+  }catch(e){err.textContent='Error: '+e.message}
+  finally{setBtn('a-btn',false)}
 }
 
-function renderQueue(bookings) {
-  var container = document.getElementById('queue-list');
-  if (!bookings.length) {
-    container.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:14px">No bookings today at this wash point</div>';
-    return;
+function doLogout(){
+  if(!confirm('Sign out?'))return;
+  stopCam();
+  op=null;
+  localStorage.removeItem('sp_op');
+  document.getElementById('nav').style.display='none';
+  showOnly('auth');
+}
+
+/* ── TABS ───────────────────────────────────────── */
+var SUB_STACK=[];
+function showTab(name){
+  SUB_STACK=[];
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active')});
+  document.getElementById('scr-'+name).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('on')});
+  var nb=document.getElementById('nav-'+name);
+  if(nb)nb.classList.add('on');
+  if(name==='bookings')loadBookings();
+  if(name==='earnings')loadEarnings();
+  if(name==='scan'){resetScan();resetPlate()}
+  if(name==='more')updateMoreCounts();
+}
+
+function showSub(name){
+  SUB_STACK.push(name);
+  showOnly(name);
+  if(name==='services')renderServices();
+  if(name==='washers')renderWashers();
+  if(name==='profile')loadProfileForm();
+  if(name==='baysettings')loadBayForm();
+}
+function hideSub(name){
+  showOnly('more');
+  SUB_STACK=[];
+}
+
+/* ── STATUS ─────────────────────────────────────── */
+var currentStatus='open';
+async function setStatus(val){
+  currentStatus=val;
+  var free=document.getElementById('fb-free');
+  var busy=document.getElementById('fb-busy');
+  if(val==='open'){
+    free.className='fb-btn free-on';busy.className='fb-btn';
+  } else {
+    free.className='fb-btn';busy.className='fb-btn busy-on';
   }
-  container.innerHTML = bookings.map(function(b) {
-    var isDone   = b.status === 'completed';
-    var isGuest  = b.type === 'guest';
-    var badgeCls = isDone ? 'badge-completed' : 'badge-confirmed';
-    var badgeTxt = isDone ? '✓ Done' : 'Confirmed';
-    return '<div class="booking-card ' + (isDone ? 'done' : 'pending') + '">' +
-      '<div class="booking-top">' +
-        '<div class="booking-name">' + (b.user_name || 'Guest') + '</div>' +
-        '<div class="booking-time">' + b.time + '</div>' +
-      '</div>' +
-      '<div class="booking-meta">' +
-        '<span class="booking-plate">' + (b.plate || '— —') + '</span>' +
-        '<span class="status-badge ' + badgeCls + '">' + badgeTxt + '</span>' +
-        '<span class="booking-type-badge' + (isGuest ? ' guest' : '') + '">' + (isGuest ? '⚡ Guest' : b.plan || '—') + '</span>' +
-      '</div>' +
-      (!isDone ?
-        '<button class="mark-done-btn" onclick="quickRedeem(' + b.id + ',\'' + b.user_email + '\',this)">✓ Mark Done</button>'
-      : '') +
+  try{
+    await sb('operators?email=eq.'+encodeURIComponent(op.email),{method:'PATCH',body:JSON.stringify({status:val}),prefer:'return=representation'});
+    toast(val==='open'?'🟢 Now Open — accepting bookings':'🔴 Paused — no new bookings');
+  }catch(e){toast('Sync error: '+e.message,true)}
+}
+
+/* ── BOOKINGS / PIPELINE ────────────────────────── */
+async function loadBookings(){
+  if(!op)return;
+  var now=new Date();
+  document.getElementById('b-name').textContent=op.name||'Operator';
+  document.getElementById('b-loc').textContent='📍 '+(op.wash_point||'Wash Point');
+  document.getElementById('b-date').textContent=now.toLocaleDateString('en-KE',{weekday:'long',day:'numeric',month:'long'});
+  currentStatus=op.status||'open';
+  var free=document.getElementById('fb-free');
+  var busy=document.getElementById('fb-busy');
+  if(currentStatus==='open'){free.className='fb-btn free-on';busy.className='fb-btn'}
+  else{free.className='fb-btn';busy.className='fb-btn busy-on'}
+
+  try{
+    var bks=await getTodayBookings(op.wash_point)||[];
+    renderPipeline(bks);
+    updateStats(bks);
+    updateCapacity(bks);
+  }catch(e){toast('Error loading bookings: '+e.message,true)}
+}
+
+function updateStats(bks){
+  var washing=bks.filter(function(b){return b.status==='washing'}).length;
+  var pending=bks.filter(function(b){return b.status==='confirmed'||b.status==='pending'}).length;
+  var done=bks.filter(function(b){return b.status==='completed'}).length;
+  document.getElementById('s-total').textContent=bks.length;
+  document.getElementById('s-washing').textContent=washing;
+  document.getElementById('s-pending').textContent=pending;
+  document.getElementById('s-done').textContent=done;
+}
+
+function updateCapacity(bks){
+  var inflow=getInflow();
+  var bays=inflow.bays||4;
+  var active=bks.filter(function(b){return b.status==='washing'}).length;
+  var pct=Math.round((active/bays)*100);
+  var capFill=document.getElementById('cap-fill');
+  capFill.style.width=Math.min(pct,100)+'%';
+  capFill.className='cap-bar-fill'+(pct>=100?' full':pct>=70?' warn':'');
+  document.getElementById('cap-val').textContent=active+' / '+bays+' · '+pct+'%';
+}
+
+function renderPipeline(bks){
+  var washers=getWashers();
+  // Build lanes
+  var lanes=[
+    {key:'pending',   label:'New Requests',  cls:'new',       badgeCls:'lc-new',      count:0, html:''},
+    {key:'confirmed', label:'Confirmed',      cls:'confirmed', badgeCls:'lc-confirmed',count:0, html:''},
+    {key:'arrived',   label:'Arrived',        cls:'arrived',   badgeCls:'lc-arrived',  count:0, html:''},
+    {key:'washing',   label:'Washing',        cls:'washing',   badgeCls:'lc-washing',  count:0, html:''},
+    {key:'completed', label:'Done',           cls:'done',      badgeCls:'lc-done',     count:0, html:''},
+  ];
+
+  // Queue position counter (non-done cards)
+  var qpos=0;
+  bks.forEach(function(b,idx){
+    var lane=lanes.find(function(l){return l.key===b.status});
+    if(!lane)return;
+    lane.count++;
+    var isDone=b.status==='completed';
+    if(!isDone)qpos++;
+    var posNum=isDone?'':qpos;
+
+    var washer=washers.find(function(w){return w.currentBookingId==b.id});
+    var isWashing=!!washer&&!!washer.washStartedAt;
+    var elapsed='';
+    if(isWashing&&washer.washStartedAt){elapsed=Math.floor((Date.now()-washer.washStartedAt)/60000)+' min';}
+
+    var washerHtml='';
+    if(washer&&!isDone){
+      var wi=washers.indexOf(washer);
+      washerHtml='<div class="w-row"><div class="w-ava '+washerColor(wi)+'">'+washer.name.charAt(0).toUpperCase()+'</div>'+
+        '<div class="w-info"><div class="w-nm">'+washer.name+'</div><div class="w-st">'+(isWashing?'Washing':'Assigned')+'</div></div>'+
+        (elapsed?'<div class="w-timer">⏱ '+elapsed+'</div>'):''+'</div>';
+    }
+
+    var actHtml='';
+    if(b.status==='pending'){
+      actHtml='<div class="card-actions">'+
+        '<button class="act-reject" onclick="rejectBooking('+b.id+',this)">✗ Reject</button>'+
+        '<button class="act-accept" onclick="acceptBooking('+b.id+',this)">✓ Accept</button>'+
+      '</div>';
+    } else if(b.status==='confirmed'){
+      actHtml='<div class="card-actions"><button class="act-assign" style="flex:1" onclick="showCheckinNote(\''+b.id+'\')">📷 Scan QR to Check In</button></div>';
+    } else if(b.status==='arrived'){
+      if(!washer){
+        actHtml='<div class="card-actions"><button class="act-assign" onclick="openAssign('+b.id+',\''+esc(b.user_name||'Guest')+'\')">👷 Assign Washer</button></div>';
+      } else if(!washer.washStartedAt){
+        actHtml='<div class="card-actions">'+
+          '<button class="act-start" onclick="startWash('+b.id+')">▶ Start Wash</button>'+
+          '<button class="act-done" onclick="completWash('+b.id+',\''+esc(b.user_email)+'\',this)">✓ Done</button>'+
+        '</div>';
+      } else {
+        actHtml='<div class="card-actions"><button class="act-done" style="flex:1" onclick="completWash('+b.id+',\''+esc(b.user_email)+'\',this)">✓ Complete Wash</button></div>';
+      }
+    } else if(b.status==='washing'){
+      actHtml='<div class="card-actions"><button class="act-done" style="flex:1" onclick="completWash('+b.id+',\''+esc(b.user_email)+'\',this)">✓ Complete Wash</button></div>';
+    }
+
+    var badgeTxt=b.status==='pending'?'⏳ New Request':b.status==='confirmed'?'✓ Confirmed':b.status==='arrived'?'📍 Arrived':b.status==='washing'?'🫧 Washing':'✓ Done';
+    var badgeCls='b-'+b.status;
+    if(b.status==='completed')badgeCls='b-done';
+
+    lane.html+='<div class="bcard '+lane.cls+'">'+
+      (posNum?'<div class="qnum">#'+posNum+'</div>':'')+
+      '<div class="bcard-top"><div class="bcard-name">'+(b.user_name||'Guest')+'</div><div class="bcard-time">'+b.time+'</div></div>'+
+      '<div class="bcard-meta">'+
+        '<span class="plate">'+(b.plate||'—')+'</span>'+
+        '<span class="badge '+badgeCls+'">'+badgeTxt+'</span>'+
+        '<span class="badge '+(b.type==='guest'?'b-guest':'')+'">'+( b.type==='guest'?'⚡ Guest':b.plan||'—')+'</span>'+
+      '</div>'+
+      washerHtml+actHtml+
+    '</div>';
+  });
+
+  var html='';
+  lanes.forEach(function(lane){
+    if(lane.count===0&&lane.key==='pending')return; // hide empty new requests
+    if(lane.count===0&&lane.key==='completed')return; // hide empty done
+    if(lane.count===0)return;
+    html+='<div class="lane-head"><span class="lane-title">'+lane.label+'</span><span class="lane-count '+lane.badgeCls+'">'+lane.count+'</span></div>';
+    html+=lane.html;
+  });
+  if(!html)html='<div class="empty"><div class="empty-icon">📋</div>No bookings today</div>';
+  document.getElementById('pipeline').innerHTML=html;
+}
+
+/* Booking actions */
+async function acceptBooking(id,btn){
+  btn.disabled=true;btn.textContent='Accepting…';
+  try{await patchBooking(id,{status:'confirmed'});toast('✓ Booking accepted');loadBookings()}
+  catch(e){toast('Error: '+e.message,true);btn.disabled=false;btn.textContent='✓ Accept'}
+}
+async function rejectBooking(id,btn){
+  if(!confirm('Reject this booking?'))return;
+  btn.disabled=true;btn.textContent='Rejecting…';
+  try{await patchBooking(id,{status:'rejected'});toast('Booking rejected');loadBookings()}
+  catch(e){toast('Error: '+e.message,true);btn.disabled=false;btn.textContent='✗ Reject'}
+}
+function showCheckinNote(id){
+  toast('Scan the customer QR code on the Scan tab to check them in');
+  setTimeout(function(){showTab('scan')},900);
+}
+function openAssign(bookingId,name){
+  assigningId=bookingId;
+  document.getElementById('assign-info').textContent='Car: '+name;
+  var washers=getWashers();
+  var el=document.getElementById('assign-list');
+  if(!washers.length){
+    el.innerHTML='<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">No attendants added. Go to More → Wash Attendants.</div>';
+  } else {
+    el.innerHTML=washers.map(function(w,i){
+      var busy=!!w.currentBookingId;
+      var cnt=busy?1:0;
+      return'<div class="washer-sel'+(busy?' na':'')+'" onclick="'+(busy?'':'"assignWasher(\''+w.id+'\')"')+'>'+
+        '<div class="w-ava '+washerColor(i)+'">'+w.name.charAt(0).toUpperCase()+'</div>'+
+        '<div><div class="washer-sel-nm">'+w.name+'</div><div class="washer-sel-st">'+(busy?'🔵 Busy — 1 active':'✅ Free')+'</div></div>'+
+      '</div>';
+    }).join('');
+  }
+  openOv('ov-assign');
+}
+function assignWasher(wid){
+  var washers=getWashers();
+  washers.forEach(function(w){if(w.id===wid){w.currentBookingId=assigningId;w.washStartedAt=null}});
+  setWashers(washers);
+  closeOv('ov-assign');
+  toast('✓ Washer assigned');
+  loadBookings();
+}
+function startWash(id){
+  var washers=getWashers();
+  washers.forEach(function(w){if(w.currentBookingId==id)w.washStartedAt=Date.now()});
+  setWashers(washers);
+  // also update status to washing
+  patchBooking(id,{status:'washing'}).catch(function(){});
+  toast('▶ Wash started');
+  loadBookings();
+}
+async function completWash(id,email,btn){
+  if(btn){btn.disabled=true;btn.textContent='Processing…'}
+  try{
+    await patchBooking(id,{status:'completed'});
+    var u=await getProfile_(email);
+    if(u){
+      var upd={loyalty_points:(u.loyalty_points||0)+10};
+      if(u.plan!=='Fleet'&&u.credits>0)upd.credits=u.credits-1;
+      await patchProfile(email,upd);
+    }
+    var washers=getWashers();
+    washers.forEach(function(w){
+      if(w.currentBookingId==id){
+        w.todayWashes=(w.todayWashes||0)+1;w.totalWashes=(w.totalWashes||0)+1;
+        w.currentBookingId=null;w.washStartedAt=null;
+      }
+    });
+    setWashers(washers);
+    toast('✓ Wash complete! Loyalty points added.');
+    loadBookings();
+  }catch(e){toast('Error: '+e.message,true);if(btn){btn.disabled=false;btn.textContent='✓ Complete Wash'}}
+}
+
+/* ── SCAN ────────────────────────────────────────── */
+async function startCam(){
+  try{
+    var stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+    camStream=stream;
+    var vid=document.getElementById('qr-vid');
+    vid.srcObject=stream;
+    document.getElementById('qr-video-wrap').style.display='block';
+    document.getElementById('scan-prompt').style.display='none';
+    camTimer=setInterval(function(){captureFrame(vid)},500);
+    toast('Camera active — point at QR code');
+  }catch(e){toast('Camera denied. Use plate search.',true)}
+}
+function stopCam(){
+  if(camStream){camStream.getTracks().forEach(function(t){t.stop()});camStream=null}
+  if(camTimer){clearInterval(camTimer);camTimer=null}
+}
+function captureFrame(vid){
+  if(vid.readyState!==4)return;
+  var c=document.createElement('canvas');c.width=vid.videoWidth;c.height=vid.videoHeight;
+  c.getContext('2d').drawImage(vid,0,0);
+  if(!('BarcodeDetector' in window))return;
+  new BarcodeDetector({formats:['qr_code']}).detect(c).then(function(codes){
+    if(codes.length){stopCam();processQR(codes[0].rawValue)}
+  }).catch(function(){});
+}
+async function processQR(raw){
+  try{
+    var data=JSON.parse(raw);
+    if(!data.id||!data.user){toast('Invalid QR.',true);return}
+    var bks=await sb('bookings?id=eq.'+data.id+'&select=*');
+    if(!bks||!bks.length){toast('Booking not found.',true);return}
+    var b=bks[0];
+    if(b.status==='completed'){toast('Already redeemed.',true);return}
+    var u=await getProfile_(b.user_email)||{};
+    scanData={booking:b,user:u};
+    showScanResult(b,u,'scan');
+  }catch(e){toast('Could not read QR.',true)}
+}
+function showScanResult(b,u,target){
+  var carInfo=[u.car_colour,u.car_make,u.car_model].filter(Boolean).join(' ')||'Not on file';
+  var credits=u.plan==='Fleet'?'Unlimited':(u.credits||0)+' remaining';
+  var html='<div class="res-name">'+(b.user_name||'Guest')+'</div>'+
+    '<div class="res-plate">'+(u.plate||b.plate||'NO PLATE')+'</div>'+
+    '<div class="res-row"><span>Car</span><strong>'+carInfo+'</strong></div>'+
+    '<div class="res-row"><span>Booking</span><strong>'+b.time+'</strong></div>'+
+    '<div class="res-row"><span>Plan</span><strong>'+(b.plan||(b.type==='guest'?'⚡ Guest':'—'))+'</strong></div>'+
+    '<div class="res-row"><span>Credits</span><strong style="color:var(--gold)">'+credits+'</strong></div>';
+  if(target==='scan'){
+    document.getElementById('scan-res').style.display='block';
+    document.getElementById('scan-res').innerHTML=html;
+    document.getElementById('scan-acts').classList.remove('hidden');
+    document.getElementById('scan-prompt').style.display='none';
+    document.getElementById('qr-video-wrap').style.display='none';
+  } else {
+    document.getElementById('plate-res').style.display='block';
+    document.getElementById('plate-res').innerHTML=html;
+    document.getElementById('plate-acts').classList.remove('hidden');
+  }
+}
+async function doCheckIn(){
+  if(!scanData)return;
+  setBtn('checkin-btn',true);
+  try{
+    await patchBooking(scanData.booking.id,{status:'arrived'});
+    toast('✓ Customer checked in — go to Bookings to assign a washer');
+    resetScan();
+  }catch(e){toast('Error: '+e.message,true)}
+  finally{setBtn('checkin-btn',false)}
+}
+function resetScan(){
+  scanData=null;stopCam();
+  document.getElementById('scan-res').style.display='none';
+  document.getElementById('scan-acts').classList.add('hidden');
+  document.getElementById('scan-prompt').style.display='block';
+  document.getElementById('qr-video-wrap').style.display='none';
+}
+
+/* Plate lookup */
+async function doPlate(){
+  var plate=document.getElementById('plate-in').value.trim();
+  var errEl=document.getElementById('plate-err');
+  errEl.style.display='none';
+  document.getElementById('plate-res').style.display='none';
+  document.getElementById('plate-acts').classList.add('hidden');
+  if(!plate){errEl.style.display='block';errEl.textContent='Enter a plate number.';return}
+  setBtn('plate-btn',true);
+  try{
+    var res=await findByPlate(plate);
+    if(!res||!res.user){errEl.style.display='block';errEl.textContent='No customer found with plate '+plate;return}
+    if(!res.booking){errEl.style.display='block';errEl.textContent='No active booking today for '+plate+'. Customer: '+res.user.name;return}
+    plateData=res;
+    showScanResult(res.booking,res.user,'plate');
+  }catch(e){errEl.style.display='block';errEl.textContent='Error: '+e.message}
+  finally{setBtn('plate-btn',false)}
+}
+async function doPlateCheckIn(){
+  if(!plateData)return;
+  setBtn('plate-checkin-btn',true);
+  try{
+    await patchBooking(plateData.booking.id,{status:'arrived'});
+    toast('✓ Customer checked in via plate');
+    resetPlate();
+  }catch(e){toast('Error: '+e.message,true)}
+  finally{setBtn('plate-checkin-btn',false)}
+}
+function resetPlate(){
+  plateData=null;
+  document.getElementById('plate-in').value='';
+  document.getElementById('plate-res').style.display='none';
+  document.getElementById('plate-acts').classList.add('hidden');
+  document.getElementById('plate-err').style.display='none';
+}
+
+/* ── EARNINGS ────────────────────────────────────── */
+async function loadEarnings(){
+  if(!op)return;
+  var today=new Date().toISOString().split('T')[0];
+  var from=today;
+  var lbls={today:"Today's Earnings",week:"This Week's Earnings",month:"This Month's Earnings"};
+  if(currentPeriod==='week'){var d=new Date();d.setDate(d.getDate()-6);from=d.toISOString().split('T')[0]}
+  else if(currentPeriod==='month'){var n=new Date();from=new Date(n.getFullYear(),n.getMonth(),1).toISOString().split('T')[0]}
+  document.getElementById('rev-period-lbl').textContent=lbls[currentPeriod];
+  try{
+    var bks=await getBookingsRange(op.wash_point,from,today)||[];
+    var opRev=bks.reduce(function(t,b){return t+(b.operator_amount||0)},0);
+    var gross=bks.reduce(function(t,b){return t+(b.amount||0)},0);
+    var comm=gross-opRev;
+    var avg=bks.length?Math.round(opRev/bks.length):0;
+    document.getElementById('rev-n').textContent=opRev.toLocaleString();
+    document.getElementById('rev-washes').textContent=bks.length;
+    document.getElementById('rev-gross').textContent=gross.toLocaleString();
+    document.getElementById('rev-comm').textContent=comm.toLocaleString();
+    document.getElementById('rev-avg').textContent=avg.toLocaleString();
+    renderSvcBreakdown(bks);
+    renderTxLog(bks);
+  }catch(e){toast('Earnings error: '+e.message,true)}
+}
+function setPeriod(p){
+  currentPeriod=p;
+  ['today','week','month'].forEach(function(x){document.getElementById('pt-'+x).classList.toggle('on',x===p)});
+  loadEarnings();
+}
+function renderSvcBreakdown(bks){
+  var svcs=getServices();
+  // group by service name using booking.service_name or fallback to plan
+  var map={};
+  bks.forEach(function(b){
+    var key=b.service_name||b.plan||'Other';
+    if(!map[key])map[key]={count:0,rev:0};
+    map[key].count++;map[key].rev+=(b.operator_amount||0);
+  });
+  var rows=Object.keys(map).map(function(k){return{name:k,count:map[k].count,rev:map[k].rev}});
+  rows.sort(function(a,b){return b.rev-a.rev});
+  var el=document.getElementById('svc-breakdown');
+  if(!rows.length){el.innerHTML='<div style="text-align:center;color:var(--muted);font-size:13px;padding:12px">No data</div>';return}
+  el.innerHTML=rows.map(function(r){
+    var svc=svcs.find(function(s){return s.name===r.name});
+    var icon=svc?svc.icon:'🚗';
+    return'<div class="svc-row">'+
+      '<div class="svc-row-icon">'+icon+'</div>'+
+      '<div class="svc-row-name">'+r.name+'<div class="svc-row-cnt">'+r.count+' wash'+(r.count!==1?'es':'')+'</div></div>'+
+      '<div class="svc-row-rev">'+r.rev.toLocaleString()+'</div>'+
+    '</div>';
+  }).join('');
+}
+function renderTxLog(bks){
+  var el=document.getElementById('tx-log');
+  if(!bks.length){el.innerHTML='<div class="empty"><div class="empty-icon">💰</div>No transactions yet</div>';return}
+  el.innerHTML=bks.map(function(b){
+    return'<div class="tx-row">'+
+      '<div><div class="tx-name">'+(b.user_name||'Guest')+'</div><div class="tx-plan">'+(b.plan||b.type||'—')+'</div></div>'+
+      '<div class="tx-time">'+(b.time||'—')+'</div>'+
+      '<div class="tx-amt">+'+(b.operator_amount||0).toLocaleString()+'</div>'+
     '</div>';
   }).join('');
 }
 
-async function quickRedeem(bookingId, userEmail, btn) {
-  if (btn) { btn.disabled = true; btn.textContent = 'Processing...'; }
-  try {
-    await redeemBookingById(bookingId, userEmail);
-    toast('✓ Wash marked done! Points added.');
-    renderHome();
-  } catch(e) {
-    toast('Error: ' + e.message, true);
-    if (btn) { btn.disabled = false; btn.textContent = '✓ Mark Done'; }
+/* ── MORE / SERVICES ──────────────────────────────── */
+function updateMoreCounts(){
+  var svcs=getServices();
+  var washers=getWashers();
+  document.getElementById('svc-count-lbl').textContent=svcs.length+' service'+(svcs.length!==1?'s':'');
+  document.getElementById('wshr-count-lbl').textContent=washers.length+' attendant'+(washers.length!==1?'s':'');
+}
+function renderServices(){
+  var svcs=getServices();
+  var el=document.getElementById('svc-list');
+  if(!svcs.length){
+    el.innerHTML='<div class="empty"><div class="empty-icon">🚿</div>No services yet<br><br><button class="btn btn-gold btn-sm" onclick="openSvcModal(null)">Add First Service</button></div>';
+    return;
   }
+  el.innerHTML=svcs.map(function(s){
+    return'<div class="svc-card">'+
+      '<div class="svc-icon-box">'+(s.icon||'🚗')+'</div>'+
+      '<div class="svc-info"><div class="svc-nm">'+s.name+'</div><div class="svc-ds">'+(s.desc||'')+'</div><div class="svc-dur">⏱ '+(s.dur||'—')+' min</div></div>'+
+      '<div style="text-align:right">'+
+        '<div class="svc-price">KSh '+Number(s.price).toLocaleString()+'</div>'+
+        '<div style="display:flex;gap:5px;margin-top:7px;justify-content:flex-end">'+
+          '<button class="icon-btn edit" onclick="openSvcModal(\''+s.id+'\')">✏</button>'+
+          '<button class="icon-btn del" onclick="delSvc(\''+s.id+'\')">🗑</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }).join('')+
+  '<div style="margin-top:14px"><button class="btn btn-outline" onclick="openSvcModal(null)">+ Add Another Service</button></div>';
 }
-
-// ── QR SCAN ───────────────────────────────────────
-async function startCamera() {
-  try {
-    var stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-    cameraStream = stream;
-    var video = document.getElementById('qr-video');
-    video.srcObject = stream;
-    document.getElementById('qr-video-container').style.display = 'block';
-    document.getElementById('scan-prompt').style.display = 'none';
-    toast('Camera active — point at QR code');
-    scanInterval = setInterval(function() { captureFrame(video); }, 500);
-  } catch(e) {
-    toast('Camera access denied. Use plate lookup instead.', true);
-  }
+function openSvcModal(id){
+  var svcs=getServices();var s=id?svcs.find(function(x){return x.id===id}):null;
+  document.getElementById('svc-modal-title').textContent=s?'Edit Service':'Add Service';
+  document.getElementById('svc-id').value=s?s.id:'';
+  document.getElementById('svc-nm').value=s?s.name:'';
+  document.getElementById('svc-ds').value=s?s.desc:'';
+  document.getElementById('svc-pr').value=s?s.price:'';
+  document.getElementById('svc-du').value=s?s.dur:'';
+  document.getElementById('svc-ic').value=s?s.icon:'🚗';
+  openOv('ov-svc');
 }
-
-function stopCamera() {
-  if (cameraStream) { cameraStream.getTracks().forEach(function(t) { t.stop(); }); cameraStream = null; }
-  if (scanInterval) { clearInterval(scanInterval); scanInterval = null; }
-}
-
-function captureFrame(video) {
-  if (video.readyState !== 4) return;
-  var canvas = document.createElement('canvas');
-  canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-  var ctx = canvas.getContext('2d');
-  ctx.drawImage(video, 0, 0);
-  if ('BarcodeDetector' in window) {
-    var detector = new BarcodeDetector({ formats: ['qr_code'] });
-    detector.detect(canvas).then(function(codes) {
-      if (codes.length > 0) { stopCamera(); processQRCode(codes[0].rawValue); }
-    }).catch(function(){});
-  }
-}
-
-async function processQRCode(raw) {
-  try {
-    var data = JSON.parse(raw);
-    if (!data.id || !data.user) { toast('Invalid QR code.', true); return; }
-    var bookings = await sbFetch('bookings?id=eq.' + data.id + '&select=*');
-    if (!bookings || !bookings.length) { toast('Booking not found.', true); return; }
-    var b = bookings[0];
-    if (b.status === 'completed') { toast('Already redeemed.', true); return; }
-    var users = await sbFetch('profiles?email=eq.' + encodeURIComponent(b.user_email) + '&select=*');
-    var user  = users && users[0] ? users[0] : {};
-    foundBooking = { booking: b, user: user };
-    showScanResult(b, user);
-  } catch(e) { toast('Could not read QR code.', true); }
-}
-
-function showScanResult(b, user) {
-  var carInfo = [user.car_colour, user.car_make, user.car_model].filter(Boolean).join(' ') || 'Not on file';
-  var credits = user.plan === 'Fleet' ? 'Unlimited' : (user.credits || 0) + ' remaining';
-  var el = document.getElementById('scan-result');
-  el.style.display = 'block';
-  el.innerHTML =
-    '<div class="result-name">' + (b.user_name || 'Guest') + '</div>' +
-    '<div class="result-plate">' + (user.plate || b.plate || 'NO PLATE') + '</div>' +
-    '<div class="result-row"><span>Car</span><strong>' + carInfo + '</strong></div>' +
-    '<div class="result-row"><span>Slot</span><strong>' + b.time + '</strong></div>' +
-    '<div class="result-row"><span>Plan</span><strong>' + (b.plan || (b.type === 'guest' ? '⚡ Guest Wash' : '—')) + '</strong></div>' +
-    '<div class="result-row"><span>Credits</span><strong style="color:var(--gold)">' + credits + '</strong></div>';
-  document.getElementById('scan-actions').classList.remove('hidden');
-  document.getElementById('scan-prompt').style.display = 'none';
-  document.getElementById('qr-video-container').style.display = 'none';
-}
-
-async function redeemBooking() {
-  if (!foundBooking) return;
-  setBtn('redeem-btn', true, '✓ Mark Done');
-  try {
-    await redeemBookingById(foundBooking.booking.id, foundBooking.booking.user_email);
-    toast('✓ Wash marked done! Points added.');
-    resetScan(); renderHome();
-  } catch(e) { toast('Error: ' + e.message, true); }
-  finally { setBtn('redeem-btn', false, '✓ Mark Done'); }
-}
-
-function resetScan() {
-  foundBooking = null;
-  document.getElementById('scan-result').style.display = 'none';
-  document.getElementById('scan-actions').classList.add('hidden');
-  document.getElementById('scan-prompt').style.display = 'block';
-  document.getElementById('qr-video-container').style.display = 'none';
-  stopCamera();
-}
-
-// ── PLATE LOOKUP ──────────────────────────────────
-async function lookupPlate() {
-  var plate = document.getElementById('plate-input').value.trim();
-  var errEl = document.getElementById('lookup-error');
-  if (!plate) { errEl.style.display = 'block'; errEl.textContent = 'Please enter a plate number.'; return; }
-  setBtn('lookup-btn', true, 'Search');
-  errEl.style.display = 'none';
-  document.getElementById('lookup-result').style.display = 'none';
-  document.getElementById('lookup-actions').classList.add('hidden');
-  try {
-    var result = await getBookingsByPlate(plate);
-    if (!result || !result.user) {
-      errEl.style.display = 'block'; errEl.textContent = 'No customer found with plate ' + plate; return;
-    }
-    if (!result.booking) {
-      errEl.style.display = 'block'; errEl.textContent = 'No booking today for ' + plate + '. Customer: ' + result.user.name; return;
-    }
-    lookupData = result;
-    var u = result.user, b = result.booking;
-    var carInfo = [u.car_colour, u.car_make, u.car_model].filter(Boolean).join(' ') || 'Not on file';
-    var credits = u.plan === 'Fleet' ? 'Unlimited' : (u.credits || 0) + ' remaining';
-    var el = document.getElementById('lookup-result');
-    el.style.display = 'block';
-    el.innerHTML =
-      '<div class="result-name">' + u.name + '</div>' +
-      '<div class="result-plate">' + (u.plate || plate) + '</div>' +
-      '<div class="result-row"><span>Car</span><strong>' + carInfo + '</strong></div>' +
-      '<div class="result-row"><span>Slot</span><strong>' + b.time + '</strong></div>' +
-      '<div class="result-row"><span>Plan</span><strong>' + (b.plan || '—') + '</strong></div>' +
-      '<div class="result-row"><span>Credits</span><strong style="color:var(--gold)">' + credits + '</strong></div>';
-    document.getElementById('lookup-actions').classList.remove('hidden');
-  } catch(e) {
-    errEl.style.display = 'block'; errEl.textContent = 'Error: ' + e.message;
-  } finally { setBtn('lookup-btn', false, 'Search'); }
-}
-
-async function redeemFromLookup() {
-  if (!lookupData) return;
-  setBtn('lookup-redeem-btn', true, '✓ Mark Done');
-  try {
-    await redeemBookingById(lookupData.booking.id, lookupData.booking.user_email);
-    toast('✓ Wash marked done! Points added.');
-    resetLookup(); renderHome();
-  } catch(e) { toast('Error: ' + e.message, true); }
-  finally { setBtn('lookup-redeem-btn', false, '✓ Mark Done'); }
-}
-
-function resetLookup() {
-  lookupData = null;
-  document.getElementById('plate-input').value = '';
-  document.getElementById('lookup-result').style.display = 'none';
-  document.getElementById('lookup-actions').classList.add('hidden');
-  document.getElementById('lookup-error').style.display = 'none';
-}
-</script>
-</body>
-</html>
+function saveSvc(){
+  var nm=document.getElementById('svc-nm').value.trim();
+  var pr=parseFloat(document.getElementById('svc-pr').value);
+  if(!nm){toast('Enter a service name',true);return}
+  if(isNaN(pr)||pr<0){toast('Enter a valid price',true);return}
+  var svcs=getServices();var eid=document.getElementById('svc-id').value;
+  var obj={id:eid||uid(),name:nm,desc:document.getElementById('svc-ds').value.trim(),price:pr,dur:parseInt(document.getElementById('svc-du').val
