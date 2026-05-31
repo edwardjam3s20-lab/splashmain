@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>SplashPass Ops</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <style>
 :root{
   --bg:#06101c;--s1:#0c1a2b;--s2:#112238;--s3:#172d48;--s4:#1d3458;
@@ -607,13 +607,22 @@ async function findByPlate(plate){
 }
 
 /* ── BOOT ───────────────────────────────────────── */
-window.onload=function(){
-  setTimeout(function(){
+function boot(){
+  try{
     var saved=localStorage.getItem('sp_op');
-    if(saved){try{op=JSON.parse(saved);bootIn();return}catch(e){localStorage.removeItem('sp_op')}}
-    showOnly('auth');
-  },1500);
-};
+    if(saved){
+      try{op=JSON.parse(saved);bootIn();return}
+      catch(e){localStorage.removeItem('sp_op')}
+    }
+  }catch(e){}
+  showOnly('auth');
+}
+// Fire as soon as DOM is ready, no waiting for images/fonts
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded',function(){setTimeout(boot,400)});
+}else{
+  setTimeout(boot,400);
+}
 
 function showOnly(name){
   document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active')});
