@@ -617,12 +617,11 @@ function boot(){
   }catch(e){}
   showOnly('auth');
 }
-// Fire as soon as DOM is ready, no waiting for images/fonts
-if(document.readyState==='loading'){
-  document.addEventListener('DOMContentLoaded',function(){setTimeout(boot,400)});
-}else{
-  setTimeout(boot,400);
-}
+boot();
+setTimeout(function(){
+  var s=document.getElementById('scr-splash');
+  if(s&&s.classList.contains('active')){showOnly('auth');}
+},2000);
 
 function showOnly(name){
   document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active')});
