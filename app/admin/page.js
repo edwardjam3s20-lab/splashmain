@@ -3,20 +3,15 @@ import { useState, useEffect, useRef } from 'react'
 import Intelligence from './splashpass-admin-intelligence'
 
 export default function AdminPage() {
-  const [screen, setScreen] = useState('login') // login | tfa-setup | tfa-verify | admin
-  const [adminTab, setAdminTab] = useState('overview') // overview | intelligence
+  const [screen, setScreen] = useState('login')
+  const [adminTab, setAdminTab] = useState('overview')
   const [loginData, setLoginData] = useState({ email: '', password: '' })
   const [loginError, setLoginError] = useState('')
   const [loginLoading, setLoginLoading] = useState(false)
   const [pending, setPending] = useState({ email: '', token: '' })
-  const [tfaSetup, setTfaSetup] = useState({ qrDataUrl: '', secret: '' })
-  const [setupCode, setSetupCode] = useState(['','','','','',''])
-  const [setupError, setSetupError] = useState('')
-  const [setupLoading, setSetupLoading] = useState(false)
   const [verifyCode, setVerifyCode] = useState(['','','','','',''])
   const [verifyError, setVerifyError] = useState('')
   const [verifyLoading, setVerifyLoading] = useState(false)
-  const [countdown, setCountdown] = useState(30)
   const [adminEmail, setAdminEmail] = useState('')
   const [data, setData] = useState({ operators:[], subscribers:[], bookings:[], washPoints:[] })
   const [dataLoading, setDataLoading] = useState(false)
@@ -32,12 +27,25 @@ export default function AdminPage() {
   const [addPointError, setAddPointError] = useState('')
   const [addPointLoading, setAddPointLoading] = useState(false)
   const countdownRef = useRef(null)
-  const setupRefs = useRef([])
   const verifyRefs = useRef([])
 
   function showToast(msg, isError=false) {
     setToast({ msg, show:true, error:isError })
     setTimeout(() => setToast(t => ({...t, show:false})), 3500)
+  }
+
+  function closeCreateModal() {
+    setCreateModal(false)
+    setCreateError('')
+    setNewOp({ name:'', email:'', password:'', wash_point:'' })
+  }
+
+  function closeAddPointModal() {
+    setAddPointModal(false)
+    setAddPointError('')
+    setNewPoint({ name:'', area:'', lat:'', lng:'', description:'' })
+    setPointFile(null)
+    setPointPreview('')
   }
 
   // ── LOGIN ──────────────────────────────────────────────────────────
@@ -54,38 +62,16 @@ export default function AdminPage() {
       const json = await res.json()
       if (!res.ok) { setLoginError(json.error || 'Login failed.'); return }
       setPending({ email: json.email, token: json.pendingToken })
-
       const sendRes = await fetch('/api/tfa/email-send', {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ email: json.email, pendingToken: json.pendingToken })
       })
       const sendJson = await sendRes.json()
       if (!sendRes.ok) { setLoginError(sendJson.error || 'Failed to send code.'); return }
-
       setScreen('tfa-verify')
       setTimeout(() => verifyRefs.current[0]?.focus(), 100)
     } catch(e) { setLoginError('Network error. Please try again.') }
     finally { setLoginLoading(false) }
-  }
-
-  // ── 2FA SETUP CONFIRM ──────────────────────────────────────────────
-  async function handleSetupConfirm() {
-    const code = setupCode.join('')
-    if (code.length < 6) { setSetupError('Enter the full 6-digit code.'); return }
-    setSetupLoading(true); setSetupError('')
-    try {
-      const res = await fetch('/api/tfa/setup', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ action:'confirm', email:pending.email, pendingToken:pending.token, code, secret:tfaSetup.secret })
-      })
-      const json = await res.json()
-      if (!res.ok) { setSetupError(json.error || 'Verification failed.'); return }
-      setAdminEmail(pending.email)
-      setScreen('admin')
-      loadData()
-      showToast('2FA enabled & logged in securely ✓')
-    } catch(e) { setSetupError('Network error.') }
-    finally { setSetupLoading(false) }
   }
 
   // ── 2FA VERIFY ─────────────────────────────────────────────────────
@@ -114,20 +100,14 @@ export default function AdminPage() {
     finally { setVerifyLoading(false) }
   }
 
-  function startCountdown() {
-    clearInterval(countdownRef.current)
-    const tick = () => setCountdown(30 - (Math.floor(Date.now()/1000) % 30))
-    tick()
-    countdownRef.current = setInterval(tick, 1000)
-  }
-
   function cancelTfa() {
     clearInterval(countdownRef.current)
     setPending({ email:'', token:'' })
+    setVerifyCode(['','','','','',''])
+    setVerifyError('')
     setScreen('login')
   }
 
-  // ── OTP INPUT HELPERS ──────────────────────────────────────────────
   function handleOtpInput(index, value, codeArr, setCode, refs, onComplete) {
     const digit = value.replace(/\D/g,'').slice(-1)
     const newCode = [...codeArr]
@@ -138,9 +118,7 @@ export default function AdminPage() {
   }
 
   function handleOtpKeyDown(e, index, refs, codeArr, setCode) {
-    if (e.key === 'Backspace' && !codeArr[index] && index > 0) {
-      refs.current[index-1]?.focus()
-    }
+    if (e.key === 'Backspace' && !codeArr[index] && index > 0) refs.current[index-1]?.focus()
   }
 
   function handleOtpPaste(e, setCode, refs, onComplete) {
@@ -162,6 +140,8 @@ export default function AdminPage() {
     setLoginData({ email:'', password:'' })
     setAdminEmail('')
     setData({ operators:[], subscribers:[], bookings:[], washPoints:[] })
+    setCreateModal(false)
+    setAddPointModal(false)
   }
 
   // ── DATA ──────────────────────────────────────────────────────────
@@ -191,8 +171,7 @@ export default function AdminPage() {
       const json = await res.json()
       if (!res.ok) { setCreateError(json.error || 'Failed to create operator.'); return }
       showToast('Operator created successfully!')
-      setCreateModal(false)
-      setNewOp({ name:'', email:'', password:'', wash_point:'' })
+      closeCreateModal()
       loadData()
     } catch(e) { setCreateError('Network error.') }
     finally { setCreateLoading(false) }
@@ -248,9 +227,7 @@ export default function AdminPage() {
       const json = await res.json()
       if (!res.ok) { setAddPointError(json.error || 'Failed to add wash point.'); return }
       showToast('Wash point added!')
-      setAddPointModal(false)
-      setNewPoint({ name:'', area:'', lat:'', lng:'', description:'' })
-      setPointFile(null); setPointPreview('')
+      closeAddPointModal()
       loadData()
     } catch(e) { setAddPointError('Network error.') }
     finally { setAddPointLoading(false) }
@@ -272,10 +249,37 @@ export default function AdminPage() {
 
   const rev = data.subscribers.reduce((s,u) => s + (u.plan_price ? parseInt(u.plan_price)*4 : 0), 0)
 
+  // ── MODAL OVERLAY COMPONENT ───────────────────────────────────────
+  function Modal({ onClose, children }) {
+    useEffect(() => {
+      function onKey(e) { if (e.key === 'Escape') onClose() }
+      document.addEventListener('keydown', onKey)
+      return () => document.removeEventListener('keydown', onKey)
+    }, [onClose])
+    return (
+      <div
+        style={{
+          position:'fixed', inset:0, zIndex:1000,
+          background:'rgba(0,0,0,0.7)',
+          display:'flex', alignItems:'center', justifyContent:'center',
+          backdropFilter:'blur(4px)'
+        }}
+        onClick={e => { if (e.target === e.currentTarget) onClose() }}
+      >
+        <div style={{
+          background:'var(--navy2,#0d1117)', border:'1px solid rgba(255,255,255,.1)',
+          borderRadius:16, padding:28, width:420, maxWidth:'95vw',
+          maxHeight:'90vh', overflowY:'auto'
+        }}>
+          {children}
+        </div>
+      </div>
+    )
+  }
+
   // ── RENDER ────────────────────────────────────────────────────────
   return (
     <>
-
       {/* LOGIN */}
       {screen === 'login' && (
         <div className="center-screen">
@@ -336,7 +340,7 @@ export default function AdminPage() {
       {/* ADMIN DASHBOARD */}
       {screen === 'admin' && (
         <div>
-          {/* ── TOP NAV ── */}
+          {/* TOP NAV */}
           <div className="admin-nav">
             <div style={{display:'flex',alignItems:'center',gap:10}}>
               <div className="admin-nav-icon">S</div>
@@ -351,14 +355,15 @@ export default function AdminPage() {
             </div>
           </div>
 
-          {/* ── TAB BAR ── */}
+          {/* TAB BAR */}
           <div style={{
             display:'flex', gap:4, padding:'0 24px',
-            background:'var(--navy2,#0d1117)', borderBottom:'1px solid rgba(255,255,255,.07)'
+            background:'var(--navy2,#0d1117)',
+            borderBottom:'1px solid rgba(255,255,255,.07)'
           }}>
             {[
-              { id:'overview', label:'⚙️ Overview' },
-              { id:'intelligence', label:'📊 Intelligence' },
+              { id:'overview', label:'⚙️  Overview' },
+              { id:'intelligence', label:'📊  Intelligence' },
             ].map(t => (
               <button
                 key={t.id}
@@ -368,7 +373,8 @@ export default function AdminPage() {
                   background:'none', border:'none', cursor:'pointer',
                   borderBottom: adminTab === t.id ? '2px solid var(--gold,#f5c518)' : '2px solid transparent',
                   color: adminTab === t.id ? 'var(--gold,#f5c518)' : 'var(--grey,#888)',
-                  transition:'all .15s', fontFamily:'inherit'
+                  transition:'all .15s', fontFamily:'inherit',
+                  pointerEvents:'all', position:'relative', zIndex:1
                 }}
               >
                 {t.label}
@@ -376,7 +382,7 @@ export default function AdminPage() {
             ))}
           </div>
 
-          {/* ── OVERVIEW TAB ── */}
+          {/* OVERVIEW TAB */}
           {adminTab === 'overview' && (
             <div className="admin-body">
               {/* STATS */}
@@ -391,23 +397,23 @@ export default function AdminPage() {
               <div className="section">
                 <div className="section-header">
                   <div className="section-title">Wash Points</div>
-                  <button className="btn btn-gold" onClick={()=>setAddPointModal(true)}>+ Add Wash Point</button>
+                  <button className="btn btn-gold" onClick={() => setAddPointModal(true)}>+ Add Wash Point</button>
                 </div>
                 <div className="op-grid">
-                  {dataLoading ? <div style={{color:'var(--grey)',fontSize:14}}>Loading...</div> :
-                    !data.washPoints.length ? <div style={{color:'var(--grey)',fontSize:14}}>No wash points yet.</div> :
-                    data.washPoints.map(p => (
-                      <div key={p.id} className="op-card">
-                        {p.image_url && <img src={p.image_url} style={{width:'100%',height:110,objectFit:'cover',borderRadius:8,marginBottom:10,border:'1px solid rgba(255,255,255,.06)'}} alt="" />}
-                        <div className="op-card-name">💧 {p.name}</div>
-                        <div className="op-card-email">{p.area}</div>
-                        <div className="op-card-point" style={{color:'var(--grey)'}}>📌 {parseFloat(p.lat).toFixed(4)}, {parseFloat(p.lng).toFixed(4)}</div>
-                        {p.description && <div style={{fontSize:12,color:'var(--grey)',marginBottom:10,lineHeight:1.4}}>{p.description}</div>}
-                        <div style={{display:'flex',gap:8,marginTop:4}}>
-                          <button className="btn btn-danger" style={{padding:'6px 14px',fontSize:12,flex:1}} onClick={()=>handleDeleteWashPoint(p.id)}>Remove</button>
+                  {dataLoading
+                    ? <div style={{color:'var(--grey)',fontSize:14}}>Loading...</div>
+                    : !data.washPoints.length
+                      ? <div style={{color:'var(--grey)',fontSize:14}}>No wash points yet.</div>
+                      : data.washPoints.map(p => (
+                        <div key={p.id} className="op-card">
+                          {p.image_url && <img src={p.image_url} style={{width:'100%',height:110,objectFit:'cover',borderRadius:8,marginBottom:10,border:'1px solid rgba(255,255,255,.06)'}} alt="" />}
+                          <div className="op-card-name">💧 {p.name}</div>
+                          <div className="op-card-email">{p.area}</div>
+                          <div className="op-card-point" style={{color:'var(--grey)'}}>📌 {parseFloat(p.lat).toFixed(4)}, {parseFloat(p.lng).toFixed(4)}</div>
+                          {p.description && <div style={{fontSize:12,color:'var(--grey)',marginBottom:10,lineHeight:1.4}}>{p.description}</div>}
+                          <button className="btn btn-danger" style={{padding:'6px 14px',fontSize:12,width:'100%'}} onClick={() => handleDeleteWashPoint(p.id)}>Remove</button>
                         </div>
-                      </div>
-                    ))
+                      ))
                   }
                 </div>
               </div>
@@ -416,21 +422,21 @@ export default function AdminPage() {
               <div className="section">
                 <div className="section-header">
                   <div className="section-title">Wash Point Operators</div>
-                  <button className="btn btn-gold" onClick={()=>setCreateModal(true)}>+ Add Operator</button>
+                  <button className="btn btn-gold" onClick={() => setCreateModal(true)}>+ Add Operator</button>
                 </div>
                 <div className="op-grid">
-                  {dataLoading ? <div style={{color:'var(--grey)',fontSize:14}}>Loading...</div> :
-                    !data.operators.length ? <div style={{color:'var(--grey)',fontSize:14}}>No operators yet.</div> :
-                    data.operators.map(op => (
-                      <div key={op.id} className="op-card">
-                        <div className="op-card-name">{op.full_name || op.name || '—'}</div>
-                        <div className="op-card-email">{op.email}</div>
-                        <div className="op-card-point">📍 {op.wash_point}</div>
-                        <div style={{display:'flex',gap:8}}>
-                          <button className="btn btn-danger" style={{padding:'6px 14px',fontSize:12,flex:1}} onClick={()=>handleDeleteOperator(op.id)}>Remove</button>
+                  {dataLoading
+                    ? <div style={{color:'var(--grey)',fontSize:14}}>Loading...</div>
+                    : !data.operators.length
+                      ? <div style={{color:'var(--grey)',fontSize:14}}>No operators yet.</div>
+                      : data.operators.map(op => (
+                        <div key={op.id} className="op-card">
+                          <div className="op-card-name">{op.full_name || op.name || '—'}</div>
+                          <div className="op-card-email">{op.email}</div>
+                          <div className="op-card-point">📍 {op.wash_point}</div>
+                          <button className="btn btn-danger" style={{padding:'6px 14px',fontSize:12,width:'100%',marginTop:8}} onClick={() => handleDeleteOperator(op.id)}>Remove</button>
                         </div>
-                      </div>
-                    ))
+                      ))
                   }
                 </div>
               </div>
@@ -443,7 +449,9 @@ export default function AdminPage() {
                 </div>
                 <div style={{overflowX:'auto'}}>
                   <table className="sub-table">
-                    <thead><tr><th>Name</th><th>Phone</th><th>Plan</th><th>Credits</th><th>Status</th><th>Plate</th></tr></thead>
+                    <thead>
+                      <tr><th>Name</th><th>Phone</th><th>Plan</th><th>Credits</th><th>Status</th><th>Plate</th></tr>
+                    </thead>
                     <tbody>
                       {dataLoading ? (
                         <tr><td colSpan={6} style={{color:'var(--grey)',textAlign:'center',padding:20}}>Loading...</td></tr>
@@ -466,20 +474,27 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* ── INTELLIGENCE TAB ── */}
-          {adminTab === 'intelligence' && (
-            <Intelligence />
-          )}
+          {/* INTELLIGENCE TAB */}
+          {adminTab === 'intelligence' && <Intelligence />}
         </div>
       )}
 
       {/* CREATE OPERATOR MODAL */}
-      <div className={`modal-overlay ${createModal?'show':''}`}>
-        <div className="modal">
-          <h3>Add New Operator</h3>
-          <div className="form-group"><label>Full Name</label><input type="text" placeholder="John Kamau" value={newOp.name} onChange={e=>setNewOp({...newOp,name:e.target.value})} /></div>
-          <div className="form-group"><label>Email</label><input type="email" placeholder="john@splashpass.co.ke" value={newOp.email} onChange={e=>setNewOp({...newOp,email:e.target.value})} /></div>
-          <div className="form-group"><label>Password</label><input type="password" placeholder="Temporary password" value={newOp.password} onChange={e=>setNewOp({...newOp,password:e.target.value})} /></div>
+      {createModal && (
+        <Modal onClose={closeCreateModal}>
+          <h3 style={{marginBottom:20}}>Add New Operator</h3>
+          <div className="form-group">
+            <label>Full Name</label>
+            <input type="text" placeholder="John Kamau" value={newOp.name} onChange={e=>setNewOp({...newOp,name:e.target.value})} />
+          </div>
+          <div className="form-group">
+            <label>Email</label>
+            <input type="email" placeholder="john@splashpass.co.ke" value={newOp.email} onChange={e=>setNewOp({...newOp,email:e.target.value})} />
+          </div>
+          <div className="form-group">
+            <label>Password</label>
+            <input type="password" placeholder="Temporary password" value={newOp.password} onChange={e=>setNewOp({...newOp,password:e.target.value})} />
+          </div>
           <div className="form-group">
             <label>Assign Wash Point</label>
             <select value={newOp.wash_point} onChange={e=>setNewOp({...newOp,wash_point:e.target.value})}>
@@ -488,22 +503,39 @@ export default function AdminPage() {
             </select>
           </div>
           {createError && <div className="form-error">{createError}</div>}
-          <div style={{display:'flex',gap:10,marginTop:8}}>
-            <button className="btn btn-gold" disabled={createLoading} onClick={handleCreateOperator} style={{flex:1}}>{createLoading?'Please wait...':'Create Operator'}</button>
-            <button className="btn btn-outline" onClick={()=>{setCreateModal(false);setCreateError('');setNewOp({name:'',email:'',password:'',wash_point:''})}} style={{flex:1}}>Cancel</button>
+          <div style={{display:'flex',gap:10,marginTop:16}}>
+            <button className="btn btn-gold" disabled={createLoading} onClick={handleCreateOperator} style={{flex:1}}>
+              {createLoading ? 'Please wait...' : 'Create Operator'}
+            </button>
+            <button className="btn btn-outline" onClick={closeCreateModal} style={{flex:1}}>Cancel</button>
           </div>
-        </div>
-      </div>
+        </Modal>
+      )}
 
       {/* ADD WASH POINT MODAL */}
-      <div className={`modal-overlay ${addPointModal?'show':''}`}>
-        <div className="modal" style={{maxHeight:'90vh',overflowY:'auto'}}>
-          <h3>Add Wash Point</h3>
-          <div className="form-group"><label>Name</label><input type="text" placeholder="SplashPass Nyali" value={newPoint.name} onChange={e=>setNewPoint({...newPoint,name:e.target.value})} /></div>
-          <div className="form-group"><label>Area / Suburb</label><input type="text" placeholder="Nyali, Mombasa" value={newPoint.area} onChange={e=>setNewPoint({...newPoint,area:e.target.value})} /></div>
-          <div className="form-group"><label>Latitude</label><input type="number" step="any" placeholder="-4.0435" value={newPoint.lat} onChange={e=>setNewPoint({...newPoint,lat:e.target.value})} /></div>
-          <div className="form-group"><label>Longitude</label><input type="number" step="any" placeholder="39.7173" value={newPoint.lng} onChange={e=>setNewPoint({...newPoint,lng:e.target.value})} /></div>
-          <div className="form-group"><label>Description</label><textarea placeholder="e.g. Located at the Nyali Centre parking lot." style={{resize:'vertical',minHeight:80}} value={newPoint.description} onChange={e=>setNewPoint({...newPoint,description:e.target.value})} /></div>
+      {addPointModal && (
+        <Modal onClose={closeAddPointModal}>
+          <h3 style={{marginBottom:20}}>Add Wash Point</h3>
+          <div className="form-group">
+            <label>Name</label>
+            <input type="text" placeholder="SplashPass Nyali" value={newPoint.name} onChange={e=>setNewPoint({...newPoint,name:e.target.value})} />
+          </div>
+          <div className="form-group">
+            <label>Area / Suburb</label>
+            <input type="text" placeholder="Nyali, Mombasa" value={newPoint.area} onChange={e=>setNewPoint({...newPoint,area:e.target.value})} />
+          </div>
+          <div className="form-group">
+            <label>Latitude</label>
+            <input type="number" step="any" placeholder="-4.0435" value={newPoint.lat} onChange={e=>setNewPoint({...newPoint,lat:e.target.value})} />
+          </div>
+          <div className="form-group">
+            <label>Longitude</label>
+            <input type="number" step="any" placeholder="39.7173" value={newPoint.lng} onChange={e=>setNewPoint({...newPoint,lng:e.target.value})} />
+          </div>
+          <div className="form-group">
+            <label>Description</label>
+            <textarea placeholder="e.g. Located at the Nyali Centre parking lot." style={{resize:'vertical',minHeight:80,width:'100%',background:'var(--navy3,#1a2233)',border:'1px solid rgba(255,255,255,.1)',borderRadius:8,padding:'10px 12px',color:'inherit',fontFamily:'inherit',fontSize:14}} value={newPoint.description} onChange={e=>setNewPoint({...newPoint,description:e.target.value})} />
+          </div>
           <div className="form-group">
             <label>Photo</label>
             <input type="file" accept="image/*" style={{padding:'10px 12px',cursor:'pointer'}} onChange={e=>{
@@ -513,15 +545,17 @@ export default function AdminPage() {
               reader.onload=ev=>setPointPreview(ev.target.result)
               reader.readAsDataURL(f)
             }} />
-            {pointPreview && <img src={pointPreview} style={{width:'100%',height:160,objectFit:'cover',borderRadius:10,border:'1px solid var(--navy3)',marginTop:10}} alt="" />}
+            {pointPreview && <img src={pointPreview} style={{width:'100%',height:160,objectFit:'cover',borderRadius:10,border:'1px solid rgba(255,255,255,.1)',marginTop:10}} alt="" />}
           </div>
           {addPointError && <div className="form-error">{addPointError}</div>}
-          <div style={{display:'flex',gap:10,marginTop:8}}>
-            <button className="btn btn-gold" disabled={addPointLoading} onClick={handleCreateWashPoint} style={{flex:1}}>{addPointLoading?'Please wait...':'Add Wash Point'}</button>
-            <button className="btn btn-outline" onClick={()=>{setAddPointModal(false);setAddPointError('');setNewPoint({name:'',area:'',lat:'',lng:'',description:''});setPointFile(null);setPointPreview('')}} style={{flex:1}}>Cancel</button>
+          <div style={{display:'flex',gap:10,marginTop:16}}>
+            <button className="btn btn-gold" disabled={addPointLoading} onClick={handleCreateWashPoint} style={{flex:1}}>
+              {addPointLoading ? 'Please wait...' : 'Add Wash Point'}
+            </button>
+            <button className="btn btn-outline" onClick={closeAddPointModal} style={{flex:1}}>Cancel</button>
           </div>
-        </div>
-      </div>
+        </Modal>
+      )}
 
       {/* TOAST */}
       <div id="toast" className={toast.show?'show':''} style={{borderLeftColor:toast.error?'var(--danger)':'var(--gold)'}}>{toast.msg}</div>
