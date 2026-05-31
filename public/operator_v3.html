@@ -1228,6 +1228,11 @@ function closeModal(id) {
 }
 
 // ── BOOT ─────────────────────────────────────────
+function showRaw(name) {
+  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+  document.getElementById('screen-' + name).classList.add('active');
+}
+
 // Boot immediately - no delay
 (function(){
   try{
@@ -1243,11 +1248,6 @@ function closeModal(id) {
   }catch(e){}
   showRaw('auth');
 })();
-
-function showRaw(name) {
-  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
-  document.getElementById('screen-' + name).classList.add('active');
-}
 
 function bootLoggedIn() {
   document.getElementById('bottom-nav').style.display = 'flex';
