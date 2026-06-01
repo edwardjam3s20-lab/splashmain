@@ -3,6 +3,7 @@ const CACHE = 'splashpass-ops-v2';
 const PRECACHE = [
   '/operator_v4.html',
   '/operator.html',
+  '/operator-ui.css',
   '/operator-manifest.json',
   '/icon.svg'
 ];

@@ -4,15 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <link rel="manifest" href="/operator-manifest.json">
-<meta name="theme-color" content="#07111f">
+<meta name="theme-color" content="#2563EB">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="SplashPass Ops">
 <meta name="description" content="SplashPass Operator Console">
 <title>SplashPass Ops</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/operator-ui.css">
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 <style>
+/* legacy hooks — minimal */
 :root {
   --bg:      #07111f;
   --s1:      #0f1d30;
@@ -670,7 +671,10 @@ textarea { resize:vertical; min-height:80px; }
 </style>
 </head>
 <body>
-
+<div class="phone-shell">
+<div class="phone-frame">
+<div class="status-bar-mock"><span>9:41</span><span class="icons">▮▮▮ WiFi 🔋</span></div>
+<div class="app-body">
 <div id="offline-banner" class="hidden">You're offline — showing last data when available</div>
 
 <!-- SPLASH -->
@@ -695,27 +699,27 @@ textarea { resize:vertical; min-height:80px; }
   <div class="form-group"><label>Email</label><input type="email" id="login-email" placeholder="you@example.com"></div>
   <div class="form-group"><label>Password</label><input type="password" id="login-pass" placeholder="Your password"></div>
   <div id="login-error" class="form-error"></div>
-  <button class="btn btn-gold" id="login-btn" onclick="login()" style="margin-bottom:16px">Sign In</button>
+  <button class="btn btn-primary" id="login-btn" onclick="login()" style="margin-bottom:16px">Sign In</button>
   <div style="text-align:center;font-size:13px;color:var(--muted)">Contact admin to get access</div>
 </div>
 
-<!-- HOME TAB -->
+<!-- HOME -->
 <div id="screen-home" class="screen">
-  <div class="home-header">
-    <div class="home-top">
+  <div class="home-hero">
+    <div class="home-hero-top">
       <div>
-        <div class="home-name" id="home-name">—</div>
-        <div class="home-point" id="home-point">—</div>
-        <div class="home-date" id="home-date">—</div>
+        <h1 id="home-name">Coastline Car Wash</h1>
+        <p class="sub" id="home-point">Mombasa, Kenya</p>
+        <p class="sub" id="home-date" style="opacity:0.75;font-size:0.75rem;margin-top:2px">—</p>
       </div>
-      <button class="logout-btn" onclick="logout()">Log Out</button>
+      <button class="logout-btn" type="button" onclick="logout()">Log Out</button>
     </div>
-    <div class="status-bar">
+    <div class="status-row">
       <div class="status-left">
         <div class="status-dot" id="status-dot"></div>
         <div>
-          <div class="status-label" id="status-label">Open</div>
-          <div class="status-sub" id="status-sub">Accepting bookings</div>
+          <div id="status-label" style="font-weight:600">OPEN</div>
+          <div id="status-sub" style="font-size:0.75rem;opacity:0.9">Accepting bookings</div>
         </div>
       </div>
       <label class="toggle-switch">
@@ -724,167 +728,92 @@ textarea { resize:vertical; min-height:80px; }
         <div class="toggle-thumb" id="toggle-thumb"></div>
       </label>
     </div>
-  </div>
-
-  <!-- Inflow Widget -->
-  <div class="inflow-section">
-    <div class="inflow-header">
-      <div class="section-label">Live Inflow</div>
-      <button class="btn btn-xs btn-outline" onclick="showInflowModal()">⚙ Manage</button>
+    <div class="stats-frost">
+      <div class="stat-frost"><div class="num" id="stat-today">0</div><div class="lbl">Cars Today</div></div>
+      <div class="stat-frost"><div class="num" id="stat-done">0</div><div class="lbl">Revenue</div></div>
+      <div class="stat-frost"><div class="num" id="stat-pending">0</div><div class="lbl">Avg Min</div></div>
     </div>
-    <div class="inflow-grid">
-      <div class="inflow-card free">
-        <div class="inflow-num" id="inflow-free">0</div>
-        <div class="inflow-lbl">Bays Free</div>
-        <div class="inflow-sub" id="inflow-free-sub">All clear</div>
+  </div>
+  <div class="inflow-mini">
+    <div class="mini"><div class="n" id="inflow-free">0</div><div class="l">Bays free</div></div>
+    <div class="mini"><div class="n" id="inflow-busy">0</div><div class="l">In progress</div></div>
+    <div class="mini"><div class="n" id="inflow-queue">0</div><div class="l">Queued</div></div>
+    <div class="mini"><div class="n" id="inflow-washers">0</div><div class="l">Washers on</div></div>
+  </div>
+  <div class="section-title">Up Next</div>
+  <div class="card up-next-card" id="up-next-card">
+    <div class="row-top">
+      <div class="avatar" id="up-next-avatar">—</div>
+      <div style="flex:1">
+        <div class="name" id="up-next-name">—</div>
+        <div class="meta"><span id="up-next-plate">—</span> · <span id="up-next-time">—</span></div>
       </div>
-      <div class="inflow-card busy">
-        <div class="inflow-num" id="inflow-busy">0</div>
-        <div class="inflow-lbl">In Progress</div>
-        <div class="inflow-sub" id="inflow-busy-sub">Active washes</div>
-      </div>
-      <div class="inflow-card queued">
-        <div class="inflow-num" id="inflow-queue">0</div>
-        <div class="inflow-lbl">Queued</div>
-        <div class="inflow-sub" id="inflow-queue-sub">Waiting</div>
-      </div>
-      <div class="inflow-card washers">
-        <div class="inflow-num" id="inflow-washers">0</div>
-        <div class="inflow-lbl">Washers On</div>
-        <div class="inflow-sub" id="inflow-washers-sub">Active staff</div>
-      </div>
+      <span class="badge-kes" id="up-next-amount">KES —</span>
     </div>
+    <button type="button" class="btn btn-primary" id="up-next-checkin" onclick="checkInUpNext()">Check In</button>
   </div>
-
-  <!-- Stats -->
-  <div class="stats-row">
-    <div class="stat-card">
-      <div class="stat-num" id="stat-today">0</div>
-      <div class="stat-label">Today</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-num" id="stat-done">0</div>
-      <div class="stat-label">Done</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-num" id="stat-pending">0</div>
-      <div class="stat-label">Pending</div>
-    </div>
+  <div class="section-title" style="display:flex;justify-content:space-between;align-items:center">
+    <span>Today's Queue</span>
+    <span id="queue-count" style="font-weight:600;color:var(--blue-600)">0</span>
   </div>
-
-  <!-- Revenue -->
-  <div style="padding:0 16px 6px;">
-    <div class="section-label" style="margin-bottom:8px;">Your Earnings (after 20% commission)</div>
-  </div>
-  <div class="rev-strip">
-    <div class="rev-card">
-      <div class="rev-num" id="rev-today">—</div>
-      <div class="rev-lbl">Today</div>
-      <div style="font-size:9px;color:var(--muted);margin-top:1px;">KSh</div>
-    </div>
-    <div class="rev-card">
-      <div class="rev-num" id="rev-week">—</div>
-      <div class="rev-lbl">Week</div>
-      <div style="font-size:9px;color:var(--muted);margin-top:1px;">KSh</div>
-    </div>
-    <div class="rev-card">
-      <div class="rev-num" id="rev-month">—</div>
-      <div class="rev-lbl">Month</div>
-      <div style="font-size:9px;color:var(--muted);margin-top:1px;">KSh</div>
-    </div>
-  </div>
-  <div class="commission-bar">
-    <div style="font-size:11px;color:var(--muted);">SplashPass commission (20%)</div>
-    <div id="rev-commission" style="font-size:12px;font-weight:700;color:var(--gold);">KSh —</div>
-  </div>
-
-  <!-- Quick Actions -->
-  <div class="action-row">
-    <div class="action-card primary" onclick="showTab('scan')">
-      <div class="action-icon">📷</div>
-      <div class="action-label">Scan QR</div>
-      <div class="action-sub">Verify customer pass</div>
-    </div>
-    <div class="action-card" onclick="showTab('lookup')">
-      <div class="action-icon">🔍</div>
-      <div class="action-label">Plate Lookup</div>
-      <div class="action-sub">Search by plate no.</div>
-    </div>
-  </div>
-
-  <!-- Today Queue -->
-  <div class="queue-header">
-    <div class="queue-title">Today's Queue</div>
-    <div class="queue-count" id="queue-count">0 bookings</div>
-  </div>
-  <div id="queue-list">
-    <div class="empty-state"><div class="empty-icon">📋</div>No bookings today</div>
-  </div>
-  <div style="height:20px"></div>
+  <div id="queue-list" class="queue-list"></div>
+  <span id="rev-today" class="hidden"></span><span id="rev-week" class="hidden"></span><span id="rev-month" class="hidden"></span><span id="rev-commission" class="hidden"></span>
+  <span id="inflow-free-sub" class="hidden"></span><span id="inflow-busy-sub" class="hidden"></span><span id="inflow-queue-sub" class="hidden"></span><span id="inflow-washers-sub" class="hidden"></span>
 </div>
 
-<!-- SCAN TAB -->
+<!-- SCAN -->
 <div id="screen-scan" class="screen">
-  <div class="screen-header">
-    <h2>Scan QR Code</h2>
-  </div>
-  <div class="scan-content">
-    <div id="qr-video-container">
+  <div class="page-header"><h2>Scan Customer QR</h2></div>
+  <div class="scan-scroll">
+    <div class="scan-frame-wrap" id="qr-video-container" style="display:none">
       <video id="qr-video" playsinline autoplay muted></video>
-      <div class="scan-overlay"><div class="scan-frame"></div></div>
+      <div class="scan-corners"><span></span></div>
+      <div class="scan-line"></div>
     </div>
-    <div class="scan-zone" id="scan-prompt">
-      <div class="scan-zone-icon">📷</div>
-      <h3>Ready to Scan</h3>
-      <p>Point camera at customer's QR wash pass to verify and redeem</p>
-      <button class="btn btn-gold" onclick="startCamera()" style="margin-top:18px;width:auto;padding:13px 30px">Open Camera</button>
+    <div id="scan-prompt" class="scan-frame-wrap" style="display:flex;align-items:center;justify-content:center;flex-direction:column;color:#fff;padding:24px;text-align:center">
+      <p style="margin-bottom:16px;opacity:0.9">Point camera at customer wash pass</p>
+      <button type="button" class="btn btn-primary" onclick="startCamera()" style="width:auto;padding:12px 24px">Open Camera</button>
     </div>
-    <div id="scan-result" class="result-card"></div>
-    <div id="scan-actions" class="hidden">
-      <button class="btn btn-success" id="redeem-btn" onclick="redeemBooking()" style="margin-bottom:10px">✓ Mark Done</button>
-      <button class="btn btn-outline" onclick="resetScan()">Scan Another</button>
+    <div class="divider-or">or search by plate</div>
+    <div class="search-plate-wrap">
+      <div class="search-plate">
+        <span>🔍</span>
+        <input type="text" id="plate-input" placeholder="KCA 123A" oninput="this.value=this.value.toUpperCase()" onkeyup="if(event.key==='Enter') lookupPlate()">
+      </div>
+      <button type="button" class="btn btn-primary" id="lookup-btn" style="margin-top:12px" onclick="lookupPlate()">Search Plate</button>
     </div>
+    <div id="lookup-error" class="hidden" style="margin:12px 16px;padding:12px;background:var(--red-100);color:var(--red-500);border-radius:12px;font-size:0.875rem"></div>
+    <div id="scan-result" class="hidden"></div>
+    <div id="scan-actions" class="hidden" style="padding:0 16px 16px"></div>
+    <div id="lookup-result" class="hidden"></div>
+    <div id="lookup-actions" class="hidden"></div>
   </div>
 </div>
 
-<!-- PLATE LOOKUP TAB -->
-<div id="screen-lookup" class="screen">
-  <div class="screen-header">
-    <h2>Plate Lookup</h2>
-  </div>
-  <div class="lookup-content">
-    <div class="form-group">
-      <label>Number Plate</label>
-      <input class="plate-input-big" type="text" id="plate-input" placeholder="KCA 123A"
-        oninput="this.value=this.value.toUpperCase()"
-        onkeyup="if(event.key==='Enter') lookupPlate()">
-    </div>
-    <button class="btn btn-gold" id="lookup-btn" onclick="lookupPlate()" style="margin-bottom:18px">Search</button>
-    <div id="lookup-result" class="result-card"></div>
-    <div id="lookup-actions" class="hidden">
-      <button class="btn btn-success" id="lookup-redeem-btn" onclick="redeemFromLookup()" style="margin-bottom:10px">✓ Mark Done</button>
-      <button class="btn btn-outline" onclick="resetLookup()">Search Another</button>
-    </div>
-    <div id="lookup-error" style="text-align:center;padding:18px;color:var(--danger);font-size:13px;display:none;background:rgba(239,68,68,.08);border-radius:14px;border:1px solid rgba(239,68,68,.15)"></div>
-  </div>
-</div>
+<div id="screen-lookup" class="screen hidden"></div>
 
-<!-- REVENUE TAB -->
+<!-- EARNINGS -->
 <div id="screen-revenue" class="screen">
-  <div class="screen-header">
-    <h2>Revenue</h2>
-    <button class="btn btn-xs btn-outline header-action" onclick="renderRevenue()">↻ Refresh</button>
-  </div>
-  <div class="revenue-content">
-    <div class="rev-period-tabs">
-      <div class="period-tab active" id="ptab-today" onclick="selectPeriod('today')">Today</div>
-      <div class="period-tab" id="ptab-week" onclick="selectPeriod('week')">This Week</div>
-      <div class="period-tab" id="ptab-month" onclick="selectPeriod('month')">This Month</div>
+  <div class="page-header"><h2>Earnings</h2></div>
+  <div class="earnings-scroll">
+    <div class="chart-card">
+      <div class="period-pills">
+        <button type="button" class="period-pill" id="ptab-today" onclick="selectPeriod('today')">Today</button>
+        <button type="button" class="period-pill active" id="ptab-week" onclick="selectPeriod('week')">Week</button>
+        <button type="button" class="period-pill" id="ptab-month" onclick="selectPeriod('month')">Month</button>
+      </div>
+      <p style="font-size:0.75rem;color:var(--slate-500);margin-bottom:4px" id="rev-period-label">This Week</p>
+      <p style="font-size:1.75rem;font-weight:700;margin-bottom:12px">KES <span id="rev-hero-num">—</span></p>
+      <div class="bar-chart" id="earnings-chart"></div>
     </div>
-    <div class="rev-hero">
-      <div class="rev-hero-label" id="rev-period-label">Today's Earnings</div>
-      <div class="rev-hero-num" id="rev-hero-num">—</div>
-      <div class="rev-hero-ksh">KSh after 20% commission</div>
+    <div class="summary-grid">
+      <div class="summary-card"><div style="font-size:0.625rem;color:var(--slate-500)">Today</div><div class="amt" id="sum-today">—</div><div class="chg up" id="chg-today">—</div></div>
+      <div class="summary-card"><div style="font-size:0.625rem;color:var(--slate-500)">Week</div><div class="amt" id="sum-week">—</div><div class="chg up" id="chg-week">—</div></div>
+      <div class="summary-card"><div style="font-size:0.625rem;color:var(--slate-500)">Month</div><div class="amt" id="sum-month">—</div><div class="chg up" id="chg-month">—</div></div>
+    </div>
+    <div class="section-title">Recent Transactions</div>
+    <div class="rev-hero hidden">
+      <div class="rev-hero-ksh"></div>
     </div>
     <div class="rev-breakdown">
       <div class="rev-item">
@@ -916,13 +845,32 @@ textarea { resize:vertical; min-height:80px; }
   </div>
 </div>
 
-<!-- WASHERS TAB -->
+<!-- WASH -->
 <div id="screen-washers" class="screen">
-  <div class="screen-header">
-    <h2>Washers</h2>
-    <button class="btn btn-xs btn-gold header-action" onclick="showAddWasherModal()">+ Add</button>
+  <div class="page-header">
+    <h2>Wash</h2>
+    <button type="button" class="btn btn-sm btn-primary" onclick="showAddWasherModal()">+ Staff</button>
   </div>
-  <div class="washers-content">
+  <div id="wash-progress-panel" class="hidden">
+    <div class="wash-ring-wrap">
+      <svg width="160" height="160" viewBox="0 0 160 160">
+        <circle cx="80" cy="80" r="70" fill="none" stroke="#E2E8F0" stroke-width="10"/>
+        <circle id="wash-ring-progress" cx="80" cy="80" r="70" fill="none" stroke="#2563EB" stroke-width="10" stroke-linecap="round" stroke-dasharray="439.8" stroke-dashoffset="110" transform="rotate(-90 80 80)"/>
+      </svg>
+      <div class="wash-timer-center" id="wash-timer-display" style="position:absolute;margin-top:-100px;margin-left:48px">00:00</div>
+    </div>
+    <div class="card" id="wash-active-card" style="margin-top:-20px"></div>
+    <div class="checklist" id="wash-checklist">
+      <div class="checklist-item"><span class="check-dot on">✓</span> Check in customer</div>
+      <div class="checklist-item" id="step-assign"><span class="check-dot"></span> Assign washer</div>
+      <div class="checklist-item" id="step-wash"><span class="check-dot"></span> Wash in progress</div>
+      <div class="checklist-item" id="step-done"><span class="check-dot"></span> Complete &amp; payment</div>
+    </div>
+    <div style="padding:0 16px 16px">
+      <button type="button" class="btn btn-primary" id="wash-complete-btn" onclick="completeActiveWash()">Complete Wash</button>
+    </div>
+  </div>
+  <div class="washers-content" id="wash-staff-panel">
     <div id="washers-list">
       <div class="empty-state"><div class="empty-icon">👷</div>No washers added yet<br><br>
         <button class="btn btn-gold btn-sm" onclick="showAddWasherModal()">Add First Washer</button>
@@ -931,50 +879,86 @@ textarea { resize:vertical; min-height:80px; }
   </div>
 </div>
 
-<!-- SERVICES TAB -->
+<!-- SERVICES (sub-screen from More) -->
 <div id="screen-services" class="screen">
-  <div class="screen-header">
-    <h2>Services & Pricing</h2>
-    <button class="btn btn-xs btn-gold header-action" onclick="showServiceModal(null)">+ Add</button>
+  <div class="page-header">
+    <button type="button" class="back-btn" onclick="showTab('more')">←</button>
+    <h2>Services &amp; Pricing</h2>
+    <button type="button" class="btn btn-sm btn-primary" onclick="showServiceModal(null)">+ Add</button>
   </div>
   <div class="services-content">
     <div id="services-list">
-      <div class="empty-state"><div class="empty-icon">🚿</div>No services configured yet<br><br>
-        <button class="btn btn-gold btn-sm" onclick="showServiceModal(null)">Add First Service</button>
-      </div>
+      <div class="empty-state">No services yet</div>
     </div>
   </div>
 </div>
 
-<!-- BOTTOM NAV -->
+<!-- MORE -->
+<div id="screen-more" class="screen">
+  <div class="page-header"><h2>More</h2></div>
+  <div class="more-scroll">
+    <div class="more-banner">
+      <div class="avatar" id="more-avatar" style="width:52px;height:52px">SP</div>
+      <div>
+        <strong id="more-name">—</strong>
+        <p style="font-size:0.8125rem;opacity:0.9" id="more-point">—</p>
+        <span style="font-size:0.6875rem;background:rgba(255,255,255,0.2);padding:4px 8px;border-radius:100px;margin-top:6px;display:inline-block" id="more-status">OPEN</span>
+      </div>
+    </div>
+    <div class="menu-group">
+      <div class="menu-group-title">Business</div>
+      <button type="button" class="menu-row" onclick="showTab('services')"><span class="icon">💧</span><span class="text"><strong>Services &amp; Pricing</strong><small>Manage wash menu</small></span><span class="chev">›</span></button>
+      <button type="button" class="menu-row" onclick="showTab('washers'); renderWashers()"><span class="icon">👷</span><span class="text"><strong>Washers</strong><small>Staff roster</small></span><span class="chev">›</span></button>
+      <button type="button" class="menu-row" onclick="showInflowModal()"><span class="icon">🅿️</span><span class="text"><strong>Bay settings</strong><small>Inflow &amp; capacity</small></span><span class="chev">›</span></button>
+    </div>
+    <div class="menu-group">
+      <div class="menu-group-title">Account</div>
+      <button type="button" class="menu-row logout" onclick="logout()">Log Out</button>
+    </div>
+  </div>
+</div>
+
 <nav class="bottom-nav" id="bottom-nav" style="display:none">
-  <button class="nav-item active" id="nav-home" onclick="showTab('home')">
-    <span class="nav-icon">🏠</span>
+  <button type="button" class="nav-item active" id="nav-home" onclick="showTab('home')">
+    <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1h-5v-7H9v7H4a1 1 0 01-1-1V9.5z"/></svg></span>
     <span class="nav-label">Home</span>
   </button>
-  <button class="nav-item" id="nav-scan" onclick="showTab('scan')">
-    <span class="nav-icon">📷</span>
+  <button type="button" class="nav-item" id="nav-scan" onclick="showTab('scan')">
+    <span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM18 14h3v3h-3zM14 18h3v3h-3zM18 18h3v3h-3z"/></svg></span>
     <span class="nav-label">Scan</span>
   </button>
-  <button class="nav-item" id="nav-lookup" onclick="showTab('lookup')">
-    <span class="nav-icon">🔍</span>
-    <span class="nav-label">Lookup</span>
+  <button type="button" class="nav-item" id="nav-washers" onclick="showTab('washers')">
+    <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 2a4 4 0 014 4v2h2a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V10a2 2 0 012-2h2V6a4 4 0 014-4z"/></svg></span>
+    <span class="nav-label">Wash</span>
   </button>
-  <button class="nav-item" id="nav-revenue" onclick="showTab('revenue')">
-    <span class="nav-icon">💰</span>
-    <span class="nav-label">Revenue</span>
+  <button type="button" class="nav-item" id="nav-revenue" onclick="showTab('earnings')">
+    <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></span>
+    <span class="nav-label">Earnings</span>
   </button>
-  <button class="nav-item" id="nav-washers" onclick="showTab('washers')">
-    <span class="nav-icon">👷</span>
-    <span class="nav-label">Washers</span>
-  </button>
-  <button class="nav-item" id="nav-services" onclick="showTab('services')">
-    <span class="nav-icon">✂️</span>
-    <span class="nav-label">Services</span>
+  <button type="button" class="nav-item" id="nav-more" onclick="showTab('more')">
+    <span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></span>
+    <span class="nav-label">More</span>
   </button>
 </nav>
 
+</div><!-- app-body -->
+<div id="toast"></div>
+</div><!-- phone-frame -->
+</div><!-- phone-shell -->
+
 <!-- MODALS -->
+<div class="modal-overlay" id="modal-verified">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="verified-icon">✓</div>
+    <div class="verified-title">VERIFIED</div>
+    <p style="text-align:center;color:var(--slate-500);font-size:0.8125rem;margin-bottom:16px">Booking confirmed</p>
+    <div class="card" style="margin:0 0 16px" id="verified-customer-card"></div>
+    <div class="detail-rows" id="verified-details"></div>
+    <button type="button" class="btn btn-primary" style="margin-top:16px" id="verified-checkin-btn" onclick="verifiedCheckIn()">Check In (Arrival)</button>
+    <button type="button" class="btn btn-outline" style="margin-top:10px" onclick="closeModal('modal-verified')">Cancel</button>
+  </div>
+</div>
 
 <!-- Inflow / Bay Management Modal -->
 <div class="modal-overlay" id="modal-inflow">
@@ -1062,8 +1046,6 @@ textarea { resize:vertical; min-height:80px; }
   </div>
 </div>
 
-<div id="toast"></div>
-
 <script>
 var currentOperator = null;
 var foundBooking    = null;
@@ -1077,6 +1059,10 @@ var homePollTimer   = null;
 var washTimerTick   = null;
 var washersUseLocal = true;
 var serverWashers   = [];
+var upNextBooking   = null;
+var verifiedContext = null;
+var activeWashBookingId = null;
+var washTimerInterval = null;
 
 // ── LOCAL STATE (persisted per wash point) ─────────
 function getLocalKey(k) { return 'splashpass_' + (currentOperator ? currentOperator.wash_point : 'op') + '_' + k; }
@@ -1253,12 +1239,14 @@ function updateStatusUI() {
   var thumb = document.getElementById('toggle-thumb');
   var toggle = document.getElementById('status-toggle');
   if (isOpen) {
-    dot.className = 'status-dot'; label.textContent = 'Open'; sub.textContent = 'Accepting bookings';
+    dot.className = 'status-dot'; label.textContent = 'OPEN'; sub.textContent = 'Accepting bookings';
     track.className = 'toggle-track on'; thumb.className = 'toggle-thumb on'; toggle.checked = true;
   } else {
-    dot.className = 'status-dot paused'; label.textContent = 'Paused'; sub.textContent = 'New bookings stopped';
+    dot.className = 'status-dot paused'; label.textContent = 'CLOSED'; sub.textContent = 'New bookings stopped';
     track.className = 'toggle-track'; thumb.className = 'toggle-thumb'; toggle.checked = false;
   }
+  var ms = document.getElementById('more-status');
+  if (ms) ms.textContent = isOpen ? 'OPEN' : 'CLOSED';
 }
 
 // ── UI HELPERS ────────────────────────────────────
@@ -1277,18 +1265,33 @@ function setBtn(id, loading, label) {
 }
 
 function showTab(name) {
+  if (name === 'earnings') name = 'revenue';
   document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
   var el = document.getElementById('screen-' + name);
   if (el) el.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
-  var navEl = document.getElementById('nav-' + name);
+  var navMap = { revenue: 'revenue', washers: 'washers', more: 'more' };
+  var navEl = document.getElementById('nav-' + (navMap[name] || name));
   if (navEl) navEl.classList.add('active');
   if (name === 'home') renderHome();
   if (name === 'revenue') renderRevenue();
-  if (name === 'washers') renderWashers();
+  if (name === 'washers') { updateWashPanel(); renderWashers(); }
   if (name === 'services') renderServices();
-  if (name === 'scan') { resetScan(); }
-  if (name === 'lookup') { resetLookup(); }
+  if (name === 'more') syncMoreScreen();
+  if (name === 'scan') resetScan();
+}
+
+function initials(name) {
+  if (!name) return '?';
+  return name.split(' ').map(function(w) { return w[0]; }).join('').slice(0, 2).toUpperCase();
+}
+
+function syncMoreScreen() {
+  if (!currentOperator) return;
+  document.getElementById('more-name').textContent = currentOperator.wash_point || currentOperator.name;
+  document.getElementById('more-point').textContent = currentOperator.name || '';
+  document.getElementById('more-avatar').textContent = initials(currentOperator.wash_point || currentOperator.name);
+  document.getElementById('more-status').textContent = isOpen ? 'OPEN' : 'CLOSED';
 }
 
 function openModal(id) {
@@ -1339,6 +1342,7 @@ function bootLoggedIn() {
   document.getElementById('bottom-nav').style.display = 'flex';
   setOfflineBanner(false);
   startHomePolling();
+  syncMoreScreen();
   showTab('home');
 }
 
@@ -1381,8 +1385,8 @@ async function logout() {
 // ── HOME RENDER ───────────────────────────────────
 async function renderHome() {
   if (!currentOperator) return;
-  document.getElementById('home-name').textContent  = currentOperator.name || 'Operator';
-  document.getElementById('home-point').textContent = '📍 ' + (currentOperator.wash_point || 'Wash Point');
+  document.getElementById('home-name').textContent  = currentOperator.wash_point || 'SplashPass';
+  document.getElementById('home-point').textContent = (currentOperator.name || 'Operator') + ' · Mombasa, Kenya';
   var now = new Date();
   document.getElementById('home-date').textContent  =
     now.toLocaleDateString('en-KE', { weekday:'long', day:'numeric', month:'long' });
@@ -1403,15 +1407,17 @@ async function renderHome() {
 
     var done    = bookings.filter(function(b) { return b.status === 'completed'; });
     var pending = bookings.filter(function(b) { return b.status !== 'completed'; });
-
-    document.getElementById('stat-today').textContent   = bookings.length;
-    document.getElementById('stat-done').textContent    = done.length;
-    document.getElementById('stat-pending').textContent = pending.length;
-    document.getElementById('queue-count').textContent  = bookings.length + ' booking' + (bookings.length !== 1 ? 's' : '');
-
     var todayRev  = sumRevenue(done);
     var weekRev   = sumRevenue(weekB);
     var monthRev  = sumRevenue(monthB);
+    window._earningsCache = { todayRev: todayRev, weekRev: weekRev, monthRev: monthRev, weekB: weekB };
+
+    var settings = getInflowSettings();
+    document.getElementById('stat-today').textContent   = bookings.length;
+    document.getElementById('stat-done').textContent    = todayRev.toLocaleString();
+    document.getElementById('stat-pending').textContent = settings.avgDuration || '—';
+    document.getElementById('queue-count').textContent  = String(pending.length);
+    renderUpNext(pending);
     var gross     = done.reduce(function(t,b) { return t+(b.amount||0); }, 0);
     var commission = gross - todayRev;
 
@@ -1472,6 +1478,101 @@ function updateInflowETA() {
 
 document.getElementById('inflow-total-bays').addEventListener('input', updateInflowETA);
 document.getElementById('inflow-avg-duration').addEventListener('input', updateInflowETA);
+
+function renderUpNext(pending) {
+  var card = document.getElementById('up-next-card');
+  if (!pending.length) { card.classList.remove('visible'); upNextBooking = null; return; }
+  var b = pending[0];
+  upNextBooking = b;
+  card.classList.add('visible');
+  document.getElementById('up-next-avatar').textContent = initials(b.user_name || 'G');
+  document.getElementById('up-next-name').textContent = b.user_name || 'Guest';
+  document.getElementById('up-next-plate').textContent = b.car_plate || b.plate || '—';
+  document.getElementById('up-next-time').textContent = b.time || '—';
+  var amt = b.operator_amount || b.total_amount || b.amount || 0;
+  document.getElementById('up-next-amount').textContent = 'KES ' + Number(amt).toLocaleString();
+}
+
+function checkInUpNext() {
+  if (!upNextBooking) return;
+  openAssignModal(upNextBooking.id, upNextBooking.user_name || 'Guest');
+}
+
+function showVerifiedModal(b, user) {
+  verifiedContext = { booking: b, user: user || {} };
+  foundBooking = verifiedContext;
+  var plate = user.plate || b.car_plate || '—';
+  document.getElementById('verified-customer-card').innerHTML =
+    '<div class="row-top" style="display:flex;gap:12px;align-items:center">' +
+    '<div class="avatar">' + initials(b.user_name || user.name) + '</div>' +
+    '<div><div class="name">' + (b.user_name || user.name || 'Guest') + '</div>' +
+    '<div class="meta">' + plate + '</div></div></div>';
+  var pay = (b.operator_amount || b.total_amount) ? 'KES ' + Number(b.operator_amount || b.total_amount).toLocaleString() : 'Paid';
+  document.getElementById('verified-details').innerHTML =
+    '<div class="row"><span>Wash Type</span><strong>' + (b.service_name || b.plan || '—') + '</strong></div>' +
+    '<div class="row"><span>Booking Time</span><strong>' + (b.time || '—') + '</strong></div>' +
+    '<div class="row"><span>Total</span><strong>' + pay + '</strong></div>' +
+    '<div class="row"><span>Status</span><strong style="color:var(--emerald-500)">' + (b.status || 'confirmed') + '</strong></div>';
+  openModal('modal-verified');
+}
+
+function verifiedCheckIn() {
+  closeModal('modal-verified');
+  if (!verifiedContext) return;
+  openAssignModal(verifiedContext.booking.id, verifiedContext.booking.user_name || 'Guest');
+}
+
+function updateWashPanel() {
+  var washers = getWashers();
+  var active = washers.find(function(w) { return w.currentBookingId && w.washStartedAt; });
+  var panel = document.getElementById('wash-progress-panel');
+  var staff = document.getElementById('wash-staff-panel');
+  if (active) {
+    panel.classList.remove('hidden');
+    staff.classList.add('hidden');
+    activeWashBookingId = active.currentBookingId;
+    document.getElementById('wash-active-card').innerHTML =
+      '<strong>' + active.name + '</strong><p style="color:var(--slate-500);font-size:0.875rem;margin-top:4px">Booking #' + active.currentBookingId + '</p>';
+    startWashTimerDisplay(active.washStartedAt);
+  } else {
+    panel.classList.add('hidden');
+    staff.classList.remove('hidden');
+    stopWashTimerDisplay();
+  }
+}
+
+function startWashTimerDisplay(startedAt) {
+  stopWashTimerDisplay();
+  function tick() {
+    var sec = Math.floor((Date.now() - startedAt) / 1000);
+    var m = String(Math.floor(sec / 60)).padStart(2, '0');
+    var s = String(sec % 60).padStart(2, '0');
+    var el = document.getElementById('wash-timer-display');
+    if (el) el.textContent = m + ':' + s;
+    var ring = document.getElementById('wash-ring-progress');
+    if (ring) {
+      var pct = Math.min(1, sec / (20 * 60));
+      ring.setAttribute('stroke-dashoffset', String(439.8 * (1 - pct)));
+    }
+  }
+  tick();
+  washTimerInterval = setInterval(tick, 1000);
+}
+
+function stopWashTimerDisplay() {
+  if (washTimerInterval) { clearInterval(washTimerInterval); washTimerInterval = null; }
+}
+
+function completeActiveWash() {
+  if (!activeWashBookingId) return;
+  var btn = document.getElementById('wash-complete-btn');
+  quickRedeem(activeWashBookingId, null, btn);
+  btn.classList.remove('btn-primary');
+  btn.classList.add('btn-success');
+  btn.textContent = 'Completed ✓';
+  activeWashBookingId = null;
+  setTimeout(function() { updateWashPanel(); renderHome(); }, 800);
+}
 
 function saveInflowSettings() {
   var bays = parseInt(document.getElementById('inflow-total-bays').value);
@@ -1616,8 +1717,9 @@ function startWash(bookingId) {
     }
   });
   saveWashers(washers);
-  toast('▶ Wash started — timer running');
+  toast('Wash started');
   renderHome();
+  showTab('washers');
 }
 
 // ── QR SCAN ───────────────────────────────────────
@@ -1628,7 +1730,8 @@ async function startCamera() {
     var video = document.getElementById('qr-video');
     video.srcObject = stream;
     document.getElementById('qr-video-container').style.display = 'block';
-    document.getElementById('scan-prompt').style.display = 'none';
+    var sp = document.getElementById('scan-prompt');
+    if (sp) sp.style.display = 'none';
     toast('Camera active — point at QR code');
     scanInterval = setInterval(function() { captureFrame(video); }, 500);
   } catch(e) {
@@ -1675,19 +1778,9 @@ async function processQRCode(raw) {
 }
 
 function showScanResult(b, user) {
-  var carInfo = [user.car_colour, user.car_make, user.car_model].filter(Boolean).join(' ') || 'Not on file';
-  var credits = user.plan === 'Fleet' ? 'Unlimited' : (user.credits || 0) + ' remaining';
-  var el = document.getElementById('scan-result');
-  el.style.display = 'block';
-  el.innerHTML =
-    '<div class="result-name">' + (b.user_name || 'Guest') + '</div>' +
-    '<div class="result-plate">' + (user.plate || b.plate || 'NO PLATE') + '</div>' +
-    '<div class="result-row"><span>Car</span><strong>' + carInfo + '</strong></div>' +
-    '<div class="result-row"><span>Slot</span><strong>' + b.time + '</strong></div>' +
-    '<div class="result-row"><span>Plan</span><strong>' + (b.plan || (b.type === 'guest' ? '⚡ Guest Wash' : '—')) + '</strong></div>' +
-    '<div class="result-row"><span>Credits</span><strong style="color:var(--gold)">' + credits + '</strong></div>';
-  document.getElementById('scan-actions').classList.remove('hidden');
-  document.getElementById('scan-prompt').style.display = 'none';
+  showVerifiedModal(b, user);
+  var sp = document.getElementById('scan-prompt');
+  if (sp) sp.style.display = 'none';
   document.getElementById('qr-video-container').style.display = 'none';
 }
 
@@ -1715,35 +1808,23 @@ function resetScan() {
 async function lookupPlate() {
   var plate = document.getElementById('plate-input').value.trim();
   var errEl = document.getElementById('lookup-error');
-  if (!plate) { errEl.style.display = 'block'; errEl.textContent = 'Please enter a plate number.'; return; }
+  if (!plate) { errEl.classList.remove('hidden'); errEl.textContent = 'Please enter a plate number.'; return; }
   setBtn('lookup-btn', true, 'Search');
-  errEl.style.display = 'none';
+  errEl.classList.add('hidden');
   document.getElementById('lookup-result').style.display = 'none';
   document.getElementById('lookup-actions').classList.add('hidden');
   try {
     var result = await getBookingsByPlate(plate);
     if (!result || !result.user) {
-      errEl.style.display = 'block'; errEl.textContent = 'No customer found with plate ' + plate; return;
+      errEl.classList.remove('hidden'); errEl.textContent = 'No customer found with plate ' + plate; return;
     }
     if (!result.booking) {
-      errEl.style.display = 'block'; errEl.textContent = 'No booking today for ' + plate + '. Customer: ' + result.user.name; return;
+      errEl.classList.remove('hidden'); errEl.textContent = 'No booking today for ' + plate + '. Customer: ' + result.user.name; return;
     }
     lookupData = result;
-    var u = result.user, b = result.booking;
-    var carInfo = [u.car_colour, u.car_make, u.car_model].filter(Boolean).join(' ') || 'Not on file';
-    var credits = u.plan === 'Fleet' ? 'Unlimited' : (u.credits || 0) + ' remaining';
-    var el = document.getElementById('lookup-result');
-    el.style.display = 'block';
-    el.innerHTML =
-      '<div class="result-name">' + u.name + '</div>' +
-      '<div class="result-plate">' + (u.plate || plate) + '</div>' +
-      '<div class="result-row"><span>Car</span><strong>' + carInfo + '</strong></div>' +
-      '<div class="result-row"><span>Slot</span><strong>' + b.time + '</strong></div>' +
-      '<div class="result-row"><span>Plan</span><strong>' + (b.plan || '—') + '</strong></div>' +
-      '<div class="result-row"><span>Credits</span><strong style="color:var(--gold)">' + credits + '</strong></div>';
-    document.getElementById('lookup-actions').classList.remove('hidden');
+    showVerifiedModal(result.booking, result.user);
   } catch(e) {
-    errEl.style.display = 'block'; errEl.textContent = 'Error: ' + e.message;
+    errEl.classList.remove('hidden'); errEl.textContent = 'Error: ' + e.message;
   } finally { setBtn('lookup-btn', false, 'Search'); }
 }
 
@@ -1751,7 +1832,7 @@ async function redeemFromLookup() {
   if (!lookupData) return;
   setBtn('lookup-redeem-btn', true, '✓ Mark Done');
   try {
-    await redeemBookingById(lookupData.booking.id, lookupData.booking.user_email);
+    await redeemBookingById(lookupData.booking.id);
     toast('✓ Wash marked done! Points added.');
     resetLookup();
   } catch(e) { toast('Error: ' + e.message, true); }
@@ -1770,9 +1851,27 @@ function resetLookup() {
 function selectPeriod(p) {
   currentPeriod = p;
   ['today','week','month'].forEach(function(x) {
-    document.getElementById('ptab-'+x).classList.toggle('active', x===p);
+    var el = document.getElementById('ptab-'+x);
+    if (el) el.classList.toggle('active', x===p);
   });
   renderRevenue();
+}
+
+function renderEarningsChart(bookings) {
+  var el = document.getElementById('earnings-chart');
+  if (!el) return;
+  var days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  var totals = [0,0,0,0,0,0,0];
+  (bookings || []).forEach(function(b) {
+    var d = new Date(b.date || Date.now());
+    var idx = (d.getDay() + 6) % 7;
+    totals[idx] += b.operator_amount || 0;
+  });
+  var max = Math.max.apply(null, totals.concat([1]));
+  el.innerHTML = totals.map(function(v, i) {
+    var h = Math.max(4, Math.round((v / max) * 100));
+    return '<div class="bar-col"><div class="bar" style="height:' + h + 'px"></div><span class="lbl">' + days[i] + '</span></div>';
+  }).join('');
 }
 
 async function renderRevenue() {
@@ -1797,6 +1896,11 @@ async function renderRevenue() {
     var avg    = bookings.length ? Math.round(opRev / bookings.length) : 0;
 
     document.getElementById('rev-hero-num').textContent     = opRev.toLocaleString();
+    renderEarningsChart(bookings);
+    var cache = window._earningsCache || {};
+    if (document.getElementById('sum-today')) document.getElementById('sum-today').textContent = (cache.todayRev || 0).toLocaleString();
+    if (document.getElementById('sum-week')) document.getElementById('sum-week').textContent = (cache.weekRev || opRev).toLocaleString();
+    if (document.getElementById('sum-month')) document.getElementById('sum-month').textContent = (cache.monthRev || 0).toLocaleString();
     document.getElementById('rev-washes').textContent       = bookings.length;
     document.getElementById('rev-gross').textContent        = gross.toLocaleString();
     document.getElementById('rev-commission-amt').textContent = comm.toLocaleString();
