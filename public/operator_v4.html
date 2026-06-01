@@ -98,16 +98,16 @@ h1,h2,h3,h4 { font-family:'Syne', sans-serif; }
 label { display:block; font-size:11px; color:var(--muted); margin-bottom:8px; font-weight:600; text-transform:uppercase; letter-spacing:.7px; }
 input, select, textarea {
   width:100%; padding:14px 16px;
-  background:rgba(255,255,255,.05);
-  border:1px solid rgba(255,255,255,.07);
+  background:#FFFFFF;
+  border:1px solid #E2E8F0;
   border-radius:14px;
-  color:var(--text);
-  font-family:'DM Sans',sans-serif; font-size:15px;
+  color:#1E293B;
+  font-family:system-ui,-apple-system,sans-serif;
+  font-size:15px;
   outline:none;
-  transition:border .2s, box-shadow .2s;
 }
-input:focus, select:focus, textarea:focus { border-color:rgba(255,176,32,.5); box-shadow:0 0 0 4px rgba(255,176,32,.08); }
-input::placeholder, textarea::placeholder { color:var(--muted); }
+input:focus, select:focus, textarea:focus { border-color:#2563EB; box-shadow:0 0 0 3px rgba(37,99,235,.15); }
+input::placeholder, textarea::placeholder { color:#94A3B8; }
 select option { background:var(--s1); }
 textarea { resize:vertical; min-height:80px; }
 .form-error { color:var(--danger); font-size:13px; margin-bottom:10px; }
@@ -689,18 +689,20 @@ textarea { resize:vertical; min-height:80px; }
 
 <!-- AUTH -->
 <div id="screen-auth" class="screen">
-  <div class="auth-logo">
-    <div class="auth-logo-icon"><img src="icon.svg" style="width:28px"></div>
-    <div class="auth-logo-text">SplashPass</div>
+  <div style="padding:32px 24px;max-width:360px;margin:0 auto;width:100%">
+    <div class="auth-brand" style="margin-bottom:28px">
+      <img src="icon.svg" alt="" width="48" height="48" style="margin-bottom:12px">
+      <h1 style="color:#2563EB;font-size:1.5rem">SplashPass</h1>
+      <p style="color:#64748B;font-size:0.875rem;margin-top:4px">Operator console</p>
+    </div>
+    <h2 style="font-size:1.25rem;margin-bottom:6px;color:#1E293B">Sign in</h2>
+    <p style="color:#64748B;font-size:0.875rem;margin-bottom:24px">Your wash point dashboard</p>
+    <div class="form-group"><label>Email</label><input type="email" id="login-email" placeholder="you@example.com" autocomplete="username"></div>
+    <div class="form-group"><label>Password</label><input type="password" id="login-pass" placeholder="Your password" autocomplete="current-password"></div>
+    <div id="login-error" class="form-error"></div>
+    <button type="button" class="btn btn-primary" id="login-btn" onclick="login()" style="margin-bottom:16px">Sign In</button>
+    <p style="text-align:center;font-size:0.8125rem;color:#94A3B8">Need access? Contact your SplashPass admin.</p>
   </div>
-  <div class="auth-tag">Operator Console</div>
-  <div class="auth-title">Operator Login</div>
-  <div class="auth-sub">Sign in to your wash point dashboard</div>
-  <div class="form-group"><label>Email</label><input type="email" id="login-email" placeholder="you@example.com"></div>
-  <div class="form-group"><label>Password</label><input type="password" id="login-pass" placeholder="Your password"></div>
-  <div id="login-error" class="form-error"></div>
-  <button class="btn btn-primary" id="login-btn" onclick="login()" style="margin-bottom:16px">Sign In</button>
-  <div style="text-align:center;font-size:13px;color:var(--muted)">Contact admin to get access</div>
 </div>
 
 <!-- HOME -->

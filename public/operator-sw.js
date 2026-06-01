@@ -1,5 +1,5 @@
 // SplashPass Ops — Service Worker
-const CACHE = 'splashpass-ops-v2';
+const CACHE = 'splashpass-ops-v3';
 const PRECACHE = [
   '/operator_v4.html',
   '/operator.html',
