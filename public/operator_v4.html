@@ -3,9 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<link rel="manifest" href="/operator-manifest.json"><link rel="manifest" href="/operator-manifest.json"><meta name="theme-color" content="#07111f">
-<meta name="mobile-web-app-capable" content="yes">
 <link rel="manifest" href="/operator-manifest.json">
+<meta name="theme-color" content="#07111f">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="SplashPass Ops">
@@ -1028,7 +1027,7 @@ textarea { resize:vertical; min-height:80px; }
       <label>Emoji Icon</label>
       <input type="text" id="svc-icon" placeholder="🚗" maxlength="4">
     </div>
-    <button class="btn btn-gold" onclick="saveService()" style="margin-bottom:10px">Save Service</button>
+    <button class="btn btn-gold" id="save-service-btn" onclick="saveService()" style="margin-bottom:10px">Save Service</button>
     <button class="btn btn-outline" onclick="closeModal('modal-service')">Cancel</button>
   </div>
 </div>
@@ -1139,21 +1138,18 @@ async function getBookingsByPlate(plate) {
 }
 
 async function redeemBookingById(bookingId, userEmail) {
+  // Get booking to determine points_earned from service
+  var bookings = await sbFetch('bookings?id=eq.' + bookingId + '&select=*');
+  var booking  = bookings && bookings[0];
+  var pointsEarned = (booking && booking.points_earned) || 10;
+
+  // Mark complete — this fires the award_loyalty_points trigger automatically
   await sbFetch('bookings?id=eq.' + bookingId, {
     method: 'PATCH',
-    body: JSON.stringify({ status: 'completed' }),
+    body: JSON.stringify({ status: 'completed', points_earned: pointsEarned }),
     prefer: 'return=representation'
   });
-  var users = await sbFetch('profiles?email=eq.' + encodeURIComponent(userEmail) + '&select=*');
-  if (users && users[0]) {
-    var u = users[0];
-    var updates = {};
-    if (u.plan !== 'Fleet' && u.credits > 0) updates.credits = u.credits - 1;
-    updates.loyalty_points = (u.loyalty_points || 0) + 10;
-    await sbFetch('profiles?email=eq.' + encodeURIComponent(userEmail), {
-      method: 'PATCH', body: JSON.stringify(updates), prefer: 'return=representation'
-    });
-  }
+  // No manual loyalty_points update needed — Supabase trigger handles it
 }
 
 function sumRevenue(bookings) {
@@ -1233,6 +1229,13 @@ function showRaw(name) {
   document.getElementById('screen-' + name).classList.add('active');
 }
 
+// Register service worker for PWA install
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/operator-sw.js').catch(function(e) {
+    console.warn('SW registration failed:', e);
+  });
+}
+
 // Boot immediately - no delay
 (function(){
   try{
@@ -1267,6 +1270,10 @@ async function login() {
     if (!op || op.password !== pass) { err.textContent = 'Invalid credentials.'; return; }
     currentOperator = op;
     isOpen = op.status !== 'paused';
+    // Warn if wash_point_id not set — services tab won't work without it
+    if (!op.wash_point_id) {
+      console.warn('SplashPass: operator has no wash_point_id — contact admin to link your account to a wash point.');
+    }
     localStorage.setItem('splashpass_operator', JSON.stringify(op));
     bootLoggedIn();
   } catch(e) { err.textContent = 'Error: ' + e.message; }
@@ -1440,9 +1447,9 @@ function renderQueue(bookings) {
         '<div class="booking-time">' + b.time + '</div>' +
       '</div>' +
       '<div class="booking-meta">' +
-        '<span class="booking-plate">' + (b.plate || '— —') + '</span>' +
+        '<span class="booking-plate">' + (b.car_plate || b.plate || '— —') + '</span>' +
         '<span class="status-badge ' + badgeCls + '">' + badgeTxt + '</span>' +
-        '<span class="booking-type-badge' + (isGuest ? ' guest' : '') + '">' + (isGuest ? '⚡ Guest' : (b.plan||'—')) + '</span>' +
+        '<span class="booking-type-badge' + (isGuest ? ' guest' : '') + '">' + (isGuest ? '⚡ Guest' : (b.booking_type||b.plan||'—')) + '</span>' +
       '</div>' +
       washerInfo + actions +
     '</div>';
@@ -1818,78 +1825,106 @@ function freeWasher(id) {
 }
 
 // ── SERVICES TAB ──────────────────────────────────
-function renderServices() {
-  var services = getServices();
+async function renderServices() {
   var el = document.getElementById('services-list');
-  if (!services.length) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🚿</div>No services yet<br><br>' +
-      '<button class="btn btn-gold btn-sm" onclick="showServiceModal(null)">Add First Service</button></div>';
-    return;
-  }
-  el.innerHTML = services.map(function(s) {
-    return '<div class="service-card">' +
-      '<div class="service-icon-box">' + (s.icon||'🚗') + '</div>' +
-      '<div class="service-info">' +
-        '<div class="service-name">' + s.name + '</div>' +
-        '<div class="service-desc">' + (s.desc||'') + '</div>' +
-        '<div class="service-duration">⏱ ' + (s.duration||'—') + ' min</div>' +
-      '</div>' +
-      '<div style="text-align:right">' +
-        '<div class="service-price">KSh ' + Number(s.price).toLocaleString() + '</div>' +
-        '<div style="display:flex;gap:6px;margin-top:8px;justify-content:flex-end">' +
-          '<button class="icon-btn edit" onclick="showServiceModal(\'' + s.id + '\')">✏</button>' +
-          '<button class="icon-btn del" onclick="deleteService(\'' + s.id + '\')">🗑</button>' +
+  el.innerHTML = '<div class="empty-state"><div class="splash-spinner" style="margin:0 auto"></div></div>';
+  try {
+    var wpId = currentOperator.wash_point_id;
+    if (!wpId) { el.innerHTML = '<div class="empty-state">No wash point linked to your account. Contact admin.</div>'; return; }
+    var services = await sbFetch('wash_point_extras?wash_point_id=eq.' + wpId + '&order=price.asc') || [];
+    if (!services.length) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon">🚿</div>No services yet<br><br>' +
+        '<button class="btn btn-gold btn-sm" onclick="showServiceModal(null)">Add First Service</button></div>';
+      return;
+    }
+    el.innerHTML = services.map(function(s) {
+      return '<div class="service-card">' +
+        '<div class="service-icon-box">' + (s.icon||'🚿') + '</div>' +
+        '<div class="service-info">' +
+          '<div class="service-name">' + s.name + '</div>' +
+          '<div class="service-desc">' + (s.description||'') + '</div>' +
+          '<div class="service-duration">⭐ ' + (s.points_value||10) + ' pts · ⏱ ' + (s.duration||'—') + ' min</div>' +
         '</div>' +
-      '</div>' +
-    '</div>';
-  }).join('') +
-  '<div style="margin-top:16px">' +
-    '<button class="btn btn-outline" onclick="showServiceModal(null)">+ Add Another Service</button>' +
-  '</div>';
+        '<div style="text-align:right">' +
+          '<div class="service-price">KSh ' + Number(s.price).toLocaleString() + '</div>' +
+          '<div style="display:flex;gap:6px;margin-top:8px;justify-content:flex-end">' +
+            '<button class="icon-btn edit" onclick="showServiceModal(\'' + s.id + '\')">✏</button>' +
+            '<button class="icon-btn del" onclick="deleteService(\'' + s.id + '\')">🗑</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('') +
+    '<div style="margin-top:16px"><button class="btn btn-outline" onclick="showServiceModal(null)">+ Add Another Service</button></div>';
+  } catch(e) { el.innerHTML = '<div class="empty-state">Error loading services: ' + e.message + '</div>'; }
 }
 
-function showServiceModal(id) {
-  var services = getServices();
-  var s = id ? services.find(function(x){ return x.id === id; }) : null;
-  document.getElementById('service-modal-title').textContent = s ? 'Edit Service' : 'Add Service';
-  document.getElementById('service-edit-id').value   = s ? s.id : '';
-  document.getElementById('svc-name').value     = s ? s.name : '';
-  document.getElementById('svc-desc').value     = s ? s.desc : '';
-  document.getElementById('svc-price').value    = s ? s.price : '';
-  document.getElementById('svc-duration').value = s ? s.duration : '';
-  document.getElementById('svc-icon').value     = s ? s.icon : '🚗';
+async function showServiceModal(id) {
+  document.getElementById('service-modal-title').textContent = id ? 'Edit Service' : 'Add Service';
+  document.getElementById('service-edit-id').value = id || '';
+  if (id) {
+    try {
+      var rows = await sbFetch('wash_point_extras?id=eq.' + id + '&select=*');
+      var s = rows && rows[0];
+      if (s) {
+        document.getElementById('svc-name').value     = s.name || '';
+        document.getElementById('svc-desc').value     = s.description || '';
+        document.getElementById('svc-price').value    = s.price || '';
+        document.getElementById('svc-duration').value = s.duration || '';
+        document.getElementById('svc-icon').value     = s.icon || '🚿';
+      }
+    } catch(e) {}
+  } else {
+    document.getElementById('svc-name').value     = '';
+    document.getElementById('svc-desc').value     = '';
+    document.getElementById('svc-price').value    = '';
+    document.getElementById('svc-duration').value = '';
+    document.getElementById('svc-icon').value     = '🚿';
+  }
   openModal('modal-service');
 }
 
-function saveService() {
+async function saveService() {
   var name     = document.getElementById('svc-name').value.trim();
   var desc     = document.getElementById('svc-desc').value.trim();
   var price    = parseFloat(document.getElementById('svc-price').value);
-  var duration = parseInt(document.getElementById('svc-duration').value);
-  var icon     = document.getElementById('svc-icon').value.trim() || '🚗';
-  if (!name) { toast('Please enter a service name', true); return; }
-  if (isNaN(price) || price < 0) { toast('Please enter a valid price', true); return; }
-  var services = getServices();
+  var duration = parseInt(document.getElementById('svc-duration').value) || null;
+  var icon     = document.getElementById('svc-icon').value.trim() || '🚿';
   var editId   = document.getElementById('service-edit-id').value;
-  if (editId) {
-    services = services.map(function(s) {
-      return s.id === editId ? { id: s.id, name: name, desc: desc, price: price, duration: duration, icon: icon } : s;
-    });
-  } else {
-    services.push({ id: uuid(), name: name, desc: desc, price: price, duration: duration, icon: icon });
-  }
-  saveServices(services);
-  closeModal('modal-service');
-  toast('✓ Service saved');
-  renderServices();
+  var wpId     = currentOperator.wash_point_id;
+
+  if (!name)                       { toast('Please enter a service name', true); return; }
+  if (isNaN(price) || price < 0)   { toast('Please enter a valid price', true); return; }
+  if (!wpId)                       { toast('No wash point linked to account', true); return; }
+
+  setBtn('save-service-btn', true, 'Saving...');
+  try {
+    if (editId) {
+      await sbFetch('wash_point_extras?id=eq.' + editId, {
+        method: 'PATCH',
+        body: JSON.stringify({ name: name, description: desc, price: price, duration: duration, icon: icon }),
+        prefer: 'return=representation'
+      });
+    } else {
+      await sbFetch('wash_point_extras', {
+        method: 'POST',
+        body: JSON.stringify({ wash_point_id: wpId, name: name, description: desc, price: price, duration: duration, icon: icon }),
+        prefer: 'return=representation'
+      });
+    }
+    closeModal('modal-service');
+    toast('✓ Service saved');
+    renderServices();
+  } catch(e) { toast('Error saving service: ' + e.message, true); }
+  finally { setBtn('save-service-btn', false, 'Save Service'); }
 }
 
-function deleteService(id) {
-  if (!confirm('Delete this service?')) return;
-  var services = getServices().filter(function(s){ return s.id !== id; });
-  saveServices(services);
-  toast('Service deleted');
-  renderServices();
+async function deleteService(id) {
+  if (!confirm('Delete this service? Customers will no longer see it.')) return;
+  try {
+    await sbFetch('wash_point_extras?id=eq.' + id, { method: 'DELETE' });
+    toast('Service deleted');
+    renderServices();
+  } catch(e) { toast('Error: ' + e.message, true); }
 }
 </script>
 </body>
