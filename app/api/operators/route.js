@@ -1,18 +1,24 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
-import { hash } from 'crypto'
+import { hashOperatorPassword } from '@/lib/operatorPassword'
 
 export async function POST(request) {
   const session = await getSession()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { name, email, password, wash_point } = await request.json()
+  const { name, email, password, wash_point, wash_point_id } = await request.json()
   if (!name || !email || !password || !wash_point) {
     return NextResponse.json({ error: 'All fields required.' }, { status: 400 })
   }
 
   const supabase = getSupabaseAdmin()
+
+  let resolvedWashPointId = wash_point_id || null
+  if (!resolvedWashPointId && wash_point) {
+    const { data: wp } = await supabase.from('wash_points').select('id').eq('name', wash_point).single()
+    if (wp) resolvedWashPointId = wp.id
+  }
 
   // Check for duplicate email in profiles and operators
   const { data: existing } = await supabase
@@ -26,11 +32,17 @@ export async function POST(request) {
   }
 
   // Hash the password server-side before storing
-  const hashedPassword = hash('sha256', password + process.env.SESSION_SECRET)
+  const hashedPassword = hashOperatorPassword(password)
 
   const { data, error } = await supabase
     .from('operators')
-    .insert({ name, email: email.toLowerCase(), password: hashedPassword, wash_point })
+    .insert({
+      name,
+      email: email.toLowerCase(),
+      password: hashedPassword,
+      wash_point,
+      wash_point_id: resolvedWashPointId,
+    })
     .select()
     .single()
 

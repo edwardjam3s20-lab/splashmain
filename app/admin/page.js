@@ -18,7 +18,7 @@ export default function AdminPage() {
   const [toast, setToast] = useState({ msg:'', show:false, error:false })
   const [createModal, setCreateModal] = useState(false)
   const [addPointModal, setAddPointModal] = useState(false)
-  const [newOp, setNewOp] = useState({ name:'', email:'', password:'', wash_point:'' })
+  const [newOp, setNewOp] = useState({ name:'', email:'', password:'', wash_point:'', wash_point_id:'' })
   const [createError, setCreateError] = useState('')
   const [createLoading, setCreateLoading] = useState(false)
   const [newPoint, setNewPoint] = useState({ name:'', area:'', lat:'', lng:'', description:'' })
@@ -37,7 +37,7 @@ export default function AdminPage() {
   function closeCreateModal() {
     setCreateModal(false)
     setCreateError('')
-    setNewOp({ name:'', email:'', password:'', wash_point:'' })
+    setNewOp({ name:'', email:'', password:'', wash_point:'', wash_point_id:'' })
   }
 
   function closeAddPointModal() {
@@ -497,7 +497,10 @@ export default function AdminPage() {
           </div>
           <div className="form-group">
             <label>Assign Wash Point</label>
-            <select value={newOp.wash_point} onChange={e=>setNewOp({...newOp,wash_point:e.target.value})}>
+            <select value={newOp.wash_point} onChange={e=>{
+              const p = data.washPoints.find(wp => wp.name === e.target.value)
+              setNewOp({...newOp, wash_point: e.target.value, wash_point_id: p ? p.id : ''})
+            }}>
               <option value="">Select wash point</option>
               {data.washPoints.map(p=><option key={p.id} value={p.name}>{p.name}</option>)}
             </select>

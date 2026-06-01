@@ -11,6 +11,7 @@
 <meta name="description" content="SplashPass Operator Console">
 <title>SplashPass Ops</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 <style>
 :root {
   --bg:      #07111f;
@@ -652,6 +653,14 @@ textarea { resize:vertical; min-height:80px; }
 }
 #toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
 
+#offline-banner {
+  position:fixed; top:0; left:0; right:0; z-index:200;
+  background:rgba(239,68,68,.92); color:#fff;
+  text-align:center; font-size:12px; font-weight:700;
+  padding:10px 14px; padding-top:calc(10px + env(safe-area-inset-top));
+}
+#offline-banner.hidden { display:none; }
+
 /* ── SCROLLABLE AREA ── */
 .tab-body { padding-bottom:calc(80px + env(safe-area-inset-bottom)); }
 
@@ -661,6 +670,8 @@ textarea { resize:vertical; min-height:80px; }
 </style>
 </head>
 <body>
+
+<div id="offline-banner" class="hidden">You're offline — showing last data when available</div>
 
 <!-- SPLASH -->
 <div id="screen-splash" class="screen active">
@@ -1054,9 +1065,6 @@ textarea { resize:vertical; min-height:80px; }
 <div id="toast"></div>
 
 <script>
-var SUPABASE_URL = 'https://msdvyiqjoogafzyaoycg.supabase.co';
-var SUPABASE_KEY = 'sb_publishable_N_g24aU7TLHLNeu72gnfeg_1d7OleFW';
-
 var currentOperator = null;
 var foundBooking    = null;
 var lookupData      = null;
@@ -1065,6 +1073,10 @@ var scanInterval    = null;
 var isOpen          = true;
 var currentPeriod   = 'today';
 var assigningBooking = null;
+var homePollTimer   = null;
+var washTimerTick   = null;
+var washersUseLocal = true;
+var serverWashers   = [];
 
 // ── LOCAL STATE (persisted per wash point) ─────────
 function getLocalKey(k) { return 'splashpass_' + (currentOperator ? currentOperator.wash_point : 'op') + '_' + k; }
@@ -1072,8 +1084,32 @@ function localGet(k, def) { try { var v = localStorage.getItem(getLocalKey(k)); 
 function localSet(k, v) { try { localStorage.setItem(getLocalKey(k), JSON.stringify(v)); } catch(e) {} }
 
 // Washers: [{id, name, role, currentBookingId, washStartedAt, todayWashes, totalWashes}]
-function getWashers() { return localGet('washers', []); }
-function saveWashers(w) { localSet('washers', w); }
+function getWashers() {
+  if (!washersUseLocal && serverWashers.length) {
+    var state = localGet('washer_state', {});
+    return serverWashers.map(function(w) {
+      var s = state[w.id] || {};
+      return Object.assign({}, w, s);
+    });
+  }
+  return localGet('washers', []);
+}
+function saveWashers(w) {
+  if (!washersUseLocal && serverWashers.length) {
+    var state = {};
+    w.forEach(function(x) {
+      state[x.id] = {
+        currentBookingId: x.currentBookingId,
+        washStartedAt: x.washStartedAt,
+        todayWashes: x.todayWashes || 0,
+        totalWashes: x.totalWashes || 0
+      };
+    });
+    localSet('washer_state', state);
+    return;
+  }
+  localSet('washers', w);
+}
 
 // Services: [{id, name, desc, price, duration, icon}]
 function getServices() { return localGet('services', getDefaultServices()); }
@@ -1094,62 +1130,68 @@ function getDefaultServices() {
 
 function uuid() { return Math.random().toString(36).slice(2,10) + Date.now().toString(36); }
 
-// ── SUPABASE ──────────────────────────────────────
-async function sbFetch(path, options) {
+// ── API (server-side, session cookie) ─────────────
+async function apiFetch(path, options) {
   options = options || {};
-  var res = await fetch(SUPABASE_URL + '/rest/v1/' + path, Object.assign({}, options, {
-    headers: Object.assign({
-      'apikey': SUPABASE_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_KEY,
-      'Content-Type': 'application/json',
-      'Prefer': options.prefer || 'return=representation'
-    }, options.headers || {})
-  }));
-  if (!res.ok) {
-    var err = await res.json().catch(function() { return {}; });
-    throw new Error(err.message || 'Request failed');
-  }
-  var text = await res.text();
-  return text ? JSON.parse(text) : null;
+  var res = await fetch(path, Object.assign({
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' }
+  }, options));
+  var json = await res.json().catch(function() { return {}; });
+  if (!res.ok) throw new Error(json.error || 'Request failed');
+  return json;
 }
 
-async function getOperatorByEmail(email) {
-  var rows = await sbFetch('operators?email=eq.' + encodeURIComponent(email) + '&select=*');
-  return rows && rows[0] ? rows[0] : null;
+function setOfflineBanner(offline) {
+  var el = document.getElementById('offline-banner');
+  if (!el) return;
+  el.classList.toggle('hidden', !offline);
 }
 
-async function getTodayBookings(washPoint) {
+async function getTodayBookings() {
   var today = new Date().toISOString().split('T')[0];
-  return await sbFetch('bookings?date=eq.' + today + '&location=eq.' + encodeURIComponent(washPoint) + '&select=*&order=time.asc');
+  var data = await apiFetch('/api/operator/bookings?date=' + today);
+  return data.bookings || [];
 }
 
-async function getBookingsByDateRange(washPoint, from, to) {
-  return await sbFetch('bookings?date=gte.' + from + '&date=lte.' + to +
-    '&location=eq.' + encodeURIComponent(washPoint) + '&status=eq.completed&select=*&order=created_at.desc');
+async function getBookingsByDateRange(from, to) {
+  var data = await apiFetch('/api/operator/bookings?from=' + from + '&to=' + to + '&status=completed');
+  return data.bookings || [];
 }
 
 async function getBookingsByPlate(plate) {
-  var today = new Date().toISOString().split('T')[0];
-  var users = await sbFetch('profiles?plate=ilike.' + encodeURIComponent(plate.trim()) + '&select=*');
-  if (!users || !users.length) return null;
-  var user = users[0];
-  var bookings = await sbFetch('bookings?user_email=eq.' + encodeURIComponent(user.email) + '&date=eq.' + today + '&status=eq.confirmed&select=*');
-  return { user: user, booking: bookings && bookings[0] ? bookings[0] : null };
+  var data = await apiFetch('/api/operator/lookup?plate=' + encodeURIComponent(plate.trim()));
+  if (!data.user) return null;
+  return { user: data.user, booking: data.booking };
 }
 
-async function redeemBookingById(bookingId, userEmail) {
-  // Get booking to determine points_earned from service
-  var bookings = await sbFetch('bookings?id=eq.' + bookingId + '&select=*');
-  var booking  = bookings && bookings[0];
-  var pointsEarned = (booking && booking.points_earned) || 10;
-
-  // Mark complete — this fires the award_loyalty_points trigger automatically
-  await sbFetch('bookings?id=eq.' + bookingId, {
+async function redeemBookingById(bookingId) {
+  await apiFetch('/api/operator/bookings/' + bookingId, {
     method: 'PATCH',
-    body: JSON.stringify({ status: 'completed', points_earned: pointsEarned }),
-    prefer: 'return=representation'
+    body: JSON.stringify({ action: 'complete' })
   });
-  // No manual loyalty_points update needed — Supabase trigger handles it
+}
+
+async function loadWashersFromServer() {
+  try {
+    var data = await apiFetch('/api/operator/washers');
+    washersUseLocal = !!data.useLocal;
+    if (!data.useLocal && data.washers) {
+      serverWashers = data.washers.map(function(w) {
+        return {
+          id: String(w.id),
+          name: w.name,
+          role: w.role || 'Washer',
+          currentBookingId: null,
+          washStartedAt: null,
+          todayWashes: 0,
+          totalWashes: 0
+        };
+      });
+    }
+  } catch (e) {
+    washersUseLocal = true;
+  }
 }
 
 function sumRevenue(bookings) {
@@ -1161,13 +1203,46 @@ async function toggleStatus() {
   isOpen = document.getElementById('status-toggle').checked;
   updateStatusUI();
   try {
-    await sbFetch('operators?email=eq.' + encodeURIComponent(currentOperator.email), {
+    var data = await apiFetch('/api/operator/status', {
       method: 'PATCH',
-      body: JSON.stringify({ status: isOpen ? 'open' : 'paused' }),
-      prefer: 'return=representation'
+      body: JSON.stringify({ status: isOpen ? 'open' : 'paused' })
     });
+    if (data.operator) {
+      currentOperator.status = data.operator.status;
+      localStorage.setItem('splashpass_operator_profile', JSON.stringify(sanitizeOperator(currentOperator)));
+    }
     toast(isOpen ? '🟢 Wash point is now Open' : '🔴 Wash point Paused — no new bookings');
   } catch(e) { toast('Could not sync status: ' + e.message, true); }
+}
+
+function sanitizeOperator(op) {
+  return {
+    id: op.id,
+    name: op.name,
+    email: op.email,
+    wash_point: op.wash_point,
+    wash_point_id: op.wash_point_id || null,
+    status: op.status || 'open'
+  };
+}
+
+function startHomePolling() {
+  stopHomePolling();
+  homePollTimer = setInterval(function() {
+    if (document.getElementById('screen-home') && document.getElementById('screen-home').classList.contains('active')) {
+      renderHome();
+    }
+  }, 30000);
+  washTimerTick = setInterval(function() {
+    if (document.getElementById('screen-home') && document.getElementById('screen-home').classList.contains('active')) {
+      var q = document.getElementById('queue-list');
+      if (q && q.querySelector('.badge-washing')) renderHome();
+    }
+  }, 60000);
+}
+
+function stopHomePolling() {
+  if (homePollTimer) { clearInterval(homePollTimer); homePollTimer = null; }
 }
 
 function updateStatusUI() {
@@ -1225,6 +1300,7 @@ function closeModal(id) {
 
 // ── BOOT ─────────────────────────────────────────
 function showRaw(name) {
+  document.getElementById('screen-splash').classList.remove('active');
   document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
   document.getElementById('screen-' + name).classList.add('active');
 }
@@ -1236,24 +1312,33 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// Boot immediately - no delay
+// Boot: restore profile hint, validate session with server
 (function(){
-  try{
-    var saved=localStorage.getItem('splashpass_operator');
-    if(saved){
-      try{
-        currentOperator=JSON.parse(saved);
-        isOpen=currentOperator.status!=='paused';
-        bootLoggedIn();
-        return;
-      }catch(e){localStorage.removeItem('splashpass_operator')}
-    }
-  }catch(e){}
-  showRaw('auth');
+  try {
+    var saved = localStorage.getItem('splashpass_operator_profile');
+    if (saved) currentOperator = JSON.parse(saved);
+  } catch (e) {
+    localStorage.removeItem('splashpass_operator_profile');
+  }
+  apiFetch('/api/operator/auth/me')
+    .then(function(data) {
+      currentOperator = data.operator;
+      isOpen = currentOperator.status !== 'paused';
+      localStorage.setItem('splashpass_operator_profile', JSON.stringify(sanitizeOperator(currentOperator)));
+      return loadWashersFromServer();
+    })
+    .then(function() { bootLoggedIn(); })
+    .catch(function() {
+      currentOperator = null;
+      localStorage.removeItem('splashpass_operator_profile');
+      showRaw('auth');
+    });
 })();
 
 function bootLoggedIn() {
   document.getElementById('bottom-nav').style.display = 'flex';
+  setOfflineBanner(false);
+  startHomePolling();
   showTab('home');
 }
 
@@ -1266,23 +1351,28 @@ async function login() {
   setBtn('login-btn', true, 'Sign In');
   err.textContent = '';
   try {
-    var op = await getOperatorByEmail(email);
-    if (!op || op.password !== pass) { err.textContent = 'Invalid credentials.'; return; }
-    currentOperator = op;
-    isOpen = op.status !== 'paused';
-    // Warn if wash_point_id not set — services tab won't work without it
-    if (!op.wash_point_id) {
-      console.warn('SplashPass: operator has no wash_point_id — contact admin to link your account to a wash point.');
+    var data = await apiFetch('/api/operator/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email: email, password: pass })
+    });
+    currentOperator = data.operator;
+    isOpen = currentOperator.status !== 'paused';
+    if (!currentOperator.wash_point_id) {
+      console.warn('SplashPass: no wash_point_id — set in admin for Services tab.');
     }
-    localStorage.setItem('splashpass_operator', JSON.stringify(op));
+    localStorage.setItem('splashpass_operator_profile', JSON.stringify(sanitizeOperator(currentOperator)));
+    await loadWashersFromServer();
     bootLoggedIn();
-  } catch(e) { err.textContent = 'Error: ' + e.message; }
+  } catch(e) { err.textContent = e.message || 'Sign in failed.'; }
   finally { setBtn('login-btn', false, 'Sign In'); }
 }
 
-function logout() {
+async function logout() {
   if (!confirm('Log out?')) return;
+  stopHomePolling();
+  try { await apiFetch('/api/operator/auth/logout', { method: 'POST' }); } catch (e) {}
   currentOperator = null;
+  localStorage.removeItem('splashpass_operator_profile');
   localStorage.removeItem('splashpass_operator');
   document.getElementById('bottom-nav').style.display = 'none';
   showRaw('auth');
@@ -1304,10 +1394,11 @@ async function renderHome() {
     var monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
     var [bookings, weekB, monthB] = await Promise.all([
-      getTodayBookings(currentOperator.wash_point),
-      getBookingsByDateRange(currentOperator.wash_point, weekAgo.toISOString().split('T')[0], today),
-      getBookingsByDateRange(currentOperator.wash_point, monthStart.toISOString().split('T')[0], today),
+      getTodayBookings(),
+      getBookingsByDateRange(weekAgo.toISOString().split('T')[0], today),
+      getBookingsByDateRange(monthStart.toISOString().split('T')[0], today),
     ]);
+    setOfflineBanner(false);
     bookings = bookings || []; weekB = weekB || []; monthB = monthB || [];
 
     var done    = bookings.filter(function(b) { return b.status === 'completed'; });
@@ -1331,7 +1422,10 @@ async function renderHome() {
 
     updateInflowWidget(bookings);
     renderQueue(bookings);
-  } catch(e) { toast('Error loading dashboard: ' + e.message, true); }
+  } catch(e) {
+    setOfflineBanner(true);
+    toast('Error loading dashboard: ' + e.message, true);
+  }
 }
 
 // ── INFLOW WIDGET ─────────────────────────────────
@@ -1456,10 +1550,10 @@ function renderQueue(bookings) {
   }).join('');
 }
 
-async function quickRedeem(bookingId, userEmail, btn) {
+async function quickRedeem(bookingId, _userEmail, btn) {
   if (btn) { btn.disabled = true; btn.textContent = 'Processing...'; }
   try {
-    await redeemBookingById(bookingId, userEmail);
+    await redeemBookingById(bookingId);
     // Free up washer
     var washers = getWashers();
     washers.forEach(function(w) {
@@ -1558,22 +1652,26 @@ function captureFrame(video) {
     detector.detect(canvas).then(function(codes) {
       if (codes.length > 0) { stopCamera(); processQRCode(codes[0].rawValue); }
     }).catch(function(){});
+    return;
+  }
+  if (typeof jsQR === 'function') {
+    var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    var code = jsQR(imageData.data, imageData.width, imageData.height);
+    if (code && code.data) { stopCamera(); processQRCode(code.data); }
   }
 }
 
 async function processQRCode(raw) {
   try {
     var data = JSON.parse(raw);
-    if (!data.id || !data.user) { toast('Invalid QR code.', true); return; }
-    var bookings = await sbFetch('bookings?id=eq.' + data.id + '&select=*');
-    if (!bookings || !bookings.length) { toast('Booking not found.', true); return; }
-    var b = bookings[0];
+    if (!data.id) { toast('Invalid QR code.', true); return; }
+    var res = await apiFetch('/api/operator/bookings/' + data.id);
+    var b = res.booking;
     if (b.status === 'completed') { toast('Already redeemed.', true); return; }
-    var users = await sbFetch('profiles?email=eq.' + encodeURIComponent(b.user_email) + '&select=*');
-    var user  = users && users[0] ? users[0] : {};
+    var user = { plate: b.car_plate, car_make: b.car_make, car_model: b.car_model, car_colour: b.car_colour, plan: b.plan, credits: null };
     foundBooking = { booking: b, user: user };
     showScanResult(b, user);
-  } catch(e) { toast('Could not read QR code.', true); }
+  } catch(e) { toast('Could not read QR code: ' + (e.message || ''), true); }
 }
 
 function showScanResult(b, user) {
@@ -1597,7 +1695,7 @@ async function redeemBooking() {
   if (!foundBooking) return;
   setBtn('redeem-btn', true, '✓ Mark Done');
   try {
-    await redeemBookingById(foundBooking.booking.id, foundBooking.booking.user_email);
+    await redeemBookingById(foundBooking.booking.id);
     toast('✓ Wash marked done! Points added.');
     resetScan();
   } catch(e) { toast('Error: ' + e.message, true); }
@@ -1691,7 +1789,7 @@ async function renderRevenue() {
       from = new Date(n.getFullYear(), n.getMonth(), 1).toISOString().split('T')[0];
     }
     document.getElementById('rev-period-label').textContent = labels[currentPeriod];
-    var bookings = await getBookingsByDateRange(currentOperator.wash_point, from, today);
+    var bookings = await getBookingsByDateRange(from, today);
     bookings = bookings || [];
     var opRev  = sumRevenue(bookings);
     var gross  = bookings.reduce(function(t,b){return t+(b.amount||0);},0);
@@ -1829,9 +1927,9 @@ async function renderServices() {
   var el = document.getElementById('services-list');
   el.innerHTML = '<div class="empty-state"><div class="splash-spinner" style="margin:0 auto"></div></div>';
   try {
-    var wpId = currentOperator.wash_point_id;
-    if (!wpId) { el.innerHTML = '<div class="empty-state">No wash point linked to your account. Contact admin.</div>'; return; }
-    var services = await sbFetch('wash_point_extras?wash_point_id=eq.' + wpId + '&order=price.asc') || [];
+    if (!currentOperator.wash_point_id) { el.innerHTML = '<div class="empty-state">No wash point linked to your account. Contact admin.</div>'; return; }
+    var res = await apiFetch('/api/operator/services');
+    var services = res.services || [];
     if (!services.length) {
       el.innerHTML = '<div class="empty-state"><div class="empty-icon">🚿</div>No services yet<br><br>' +
         '<button class="btn btn-gold btn-sm" onclick="showServiceModal(null)">Add First Service</button></div>';
@@ -1863,8 +1961,8 @@ async function showServiceModal(id) {
   document.getElementById('service-edit-id').value = id || '';
   if (id) {
     try {
-      var rows = await sbFetch('wash_point_extras?id=eq.' + id + '&select=*');
-      var s = rows && rows[0];
+      var res = await apiFetch('/api/operator/services');
+      var s = (res.services || []).find(function(x) { return String(x.id) === String(id); });
       if (s) {
         document.getElementById('svc-name').value     = s.name || '';
         document.getElementById('svc-desc').value     = s.description || '';
@@ -1890,25 +1988,22 @@ async function saveService() {
   var duration = parseInt(document.getElementById('svc-duration').value) || null;
   var icon     = document.getElementById('svc-icon').value.trim() || '🚿';
   var editId   = document.getElementById('service-edit-id').value;
-  var wpId     = currentOperator.wash_point_id;
 
   if (!name)                       { toast('Please enter a service name', true); return; }
   if (isNaN(price) || price < 0)   { toast('Please enter a valid price', true); return; }
-  if (!wpId)                       { toast('No wash point linked to account', true); return; }
+  if (!currentOperator.wash_point_id) { toast('No wash point linked to account', true); return; }
 
   setBtn('save-service-btn', true, 'Saving...');
   try {
     if (editId) {
-      await sbFetch('wash_point_extras?id=eq.' + editId, {
+      await apiFetch('/api/operator/services/' + editId, {
         method: 'PATCH',
-        body: JSON.stringify({ name: name, description: desc, price: price, duration: duration, icon: icon }),
-        prefer: 'return=representation'
+        body: JSON.stringify({ name: name, description: desc, price: price, duration: duration, icon: icon })
       });
     } else {
-      await sbFetch('wash_point_extras', {
+      await apiFetch('/api/operator/services', {
         method: 'POST',
-        body: JSON.stringify({ wash_point_id: wpId, name: name, description: desc, price: price, duration: duration, icon: icon }),
-        prefer: 'return=representation'
+        body: JSON.stringify({ name: name, description: desc, price: price, duration: duration, icon: icon })
       });
     }
     closeModal('modal-service');
@@ -1921,7 +2016,7 @@ async function saveService() {
 async function deleteService(id) {
   if (!confirm('Delete this service? Customers will no longer see it.')) return;
   try {
-    await sbFetch('wash_point_extras?id=eq.' + id, { method: 'DELETE' });
+    await apiFetch('/api/operator/services/' + id, { method: 'DELETE' });
     toast('Service deleted');
     renderServices();
   } catch(e) { toast('Error: ' + e.message, true); }
