@@ -1,1 +1,1896 @@
-TEST
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#07111f">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="/operator-manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SplashPass Ops">
+<meta name="description" content="SplashPass Operator Console">
+<title>SplashPass Ops</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:      #07111f;
+  --s1:      #0f1d30;
+  --s2:      #162338;
+  --s3:      #1d2d45;
+  --s4:      #243350;
+  --gold:    #ffb020;
+  --gold2:   #ffd166;
+  --text:    #f0f4f8;
+  --muted:   #7a90a8;
+  --success: #22c55e;
+  --danger:  #ef4444;
+  --warn:    #f59e0b;
+  --info:    #3b82f6;
+  --radius:  20px;
+  --radius-lg: 28px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+html, body {
+  height:100%; overflow:hidden;
+  background: radial-gradient(ellipse at 80% 0%, rgba(255,176,32,.12) 0%, transparent 50%),
+              radial-gradient(ellipse at 10% 90%, rgba(255,176,32,.05) 0%, transparent 40%),
+              var(--bg);
+  color:var(--text);
+  font-family:'DM Sans', sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+
+h1,h2,h3,h4 { font-family:'Syne', sans-serif; }
+.hidden { display:none !important; }
+
+.screen { position:fixed; inset:0; overflow-y:auto; display:none; flex-direction:column; }
+.screen.active { display:flex; }
+
+/* ── SPLASH ── */
+#screen-splash {
+  align-items:center; justify-content:center;
+  background: radial-gradient(ellipse at 60% 30%, rgba(255,176,32,.16) 0%, transparent 55%), var(--bg);
+}
+.splash-logo { text-align:center; }
+.splash-icon {
+  width:88px; height:88px;
+  background:linear-gradient(145deg, var(--gold2), var(--gold));
+  border-radius:26px;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Syne',sans-serif; font-weight:800; font-size:40px; color:#07111f;
+  margin:0 auto 20px;
+  box-shadow:0 20px 50px rgba(255,176,32,.35);
+}
+.splash-title { font-size:30px; font-weight:800; }
+.splash-title span { color:var(--gold); }
+.splash-sub { color:var(--muted); font-size:13px; margin-top:6px; text-transform:uppercase; letter-spacing:1.5px; font-weight:600; }
+.splash-spinner {
+  width:36px; height:36px;
+  border:3px solid rgba(255,176,32,.15);
+  border-top-color:var(--gold);
+  border-radius:50%;
+  animation:spin .75s linear infinite;
+  margin:36px auto 0;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* ── AUTH ── */
+#screen-auth { padding:0 28px; justify-content:center; }
+.auth-logo { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
+.auth-logo-icon {
+  width:44px; height:44px;
+  background:linear-gradient(145deg, var(--gold2), var(--gold));
+  border-radius:14px;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Syne',sans-serif; font-weight:800; font-size:20px; color:#07111f;
+}
+.auth-logo-text { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; }
+.auth-tag { color:var(--gold); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:32px; }
+.auth-title { font-size:26px; font-weight:800; margin-bottom:6px; }
+.auth-sub { color:var(--muted); font-size:14px; margin-bottom:28px; }
+
+/* ── FORMS ── */
+.form-group { margin-bottom:16px; }
+label { display:block; font-size:11px; color:var(--muted); margin-bottom:8px; font-weight:600; text-transform:uppercase; letter-spacing:.7px; }
+input, select, textarea {
+  width:100%; padding:14px 16px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:14px;
+  color:var(--text);
+  font-family:'DM Sans',sans-serif; font-size:15px;
+  outline:none;
+  transition:border .2s, box-shadow .2s;
+}
+input:focus, select:focus, textarea:focus { border-color:rgba(255,176,32,.5); box-shadow:0 0 0 4px rgba(255,176,32,.08); }
+input::placeholder, textarea::placeholder { color:var(--muted); }
+select option { background:var(--s1); }
+textarea { resize:vertical; min-height:80px; }
+.form-error { color:var(--danger); font-size:13px; margin-bottom:10px; }
+
+/* ── BUTTONS ── */
+.btn {
+  display:block; width:100%; padding:16px;
+  border-radius:16px;
+  font-family:'Syne',sans-serif; font-weight:700; font-size:14px;
+  cursor:pointer; border:none;
+  transition:transform .15s, box-shadow .15s, opacity .15s;
+  text-align:center;
+}
+.btn:disabled { opacity:.45; cursor:not-allowed; }
+.btn-gold {
+  background:linear-gradient(180deg, var(--gold2) 0%, var(--gold) 100%);
+  color:#07111f;
+  box-shadow:0 10px 24px rgba(255,176,32,.28);
+}
+.btn-gold:active:not(:disabled) { transform:scale(.97); }
+.btn-success {
+  background:linear-gradient(180deg, #4ade80, var(--success));
+  color:#07111f;
+  box-shadow:0 8px 20px rgba(34,197,94,.25);
+}
+.btn-success:active:not(:disabled) { transform:scale(.97); }
+.btn-outline {
+  background:rgba(255,255,255,.05);
+  color:var(--text);
+  border:1px solid rgba(255,255,255,.1);
+}
+.btn-outline:active:not(:disabled) { transform:scale(.97); }
+.btn-danger { background:rgba(239,68,68,.15); color:var(--danger); border:1px solid rgba(239,68,68,.2); }
+.btn-danger:active:not(:disabled) { transform:scale(.97); }
+.btn-info { background:rgba(59,130,246,.15); color:#60a5fa; border:1px solid rgba(59,130,246,.2); }
+.btn-sm { width:auto; display:inline-block; padding:9px 18px; font-size:12px; border-radius:10px; }
+.btn-xs { width:auto; display:inline-flex; align-items:center; gap:5px; padding:7px 13px; font-size:11px; border-radius:8px; }
+
+/* ── NAV TABS ── */
+.bottom-nav {
+  position:fixed; bottom:0; left:0; right:0; z-index:100;
+  background:rgba(9,18,31,.95);
+  border-top:1px solid rgba(255,255,255,.07);
+  backdrop-filter:blur(16px);
+  display:flex; align-items:center;
+  padding:8px 0 calc(8px + env(safe-area-inset-bottom));
+}
+.nav-item {
+  flex:1; display:flex; flex-direction:column; align-items:center;
+  gap:4px; padding:6px 4px;
+  cursor:pointer; transition:opacity .15s;
+  border:none; background:none;
+}
+.nav-icon { font-size:20px; line-height:1; }
+.nav-label { font-size:10px; font-weight:600; color:var(--muted); font-family:'Syne',sans-serif; text-transform:uppercase; letter-spacing:.5px; transition:color .15s; }
+.nav-item.active .nav-label { color:var(--gold); }
+.nav-item.active .nav-icon { filter:drop-shadow(0 0 6px rgba(255,176,32,.6)); }
+
+/* ── SCREEN HEADER ── */
+.screen-header {
+  display:flex; align-items:center; gap:12px;
+  padding:52px 18px 16px;
+  background:rgba(7,17,31,.92);
+  position:sticky; top:0; z-index:50;
+  border-bottom:1px solid rgba(255,255,255,.05);
+  backdrop-filter:blur(12px);
+}
+.back-btn {
+  width:36px; height:36px;
+  background:rgba(255,255,255,.07);
+  border-radius:10px;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; font-size:18px; flex-shrink:0;
+  border:none; color:var(--text);
+  transition:background .15s;
+}
+.back-btn:active { background:rgba(255,255,255,.12); }
+.screen-header h2 { font-size:19px; font-weight:800; flex:1; }
+.header-action { margin-left:auto; }
+
+/* ── HOME HEADER ── */
+.home-header {
+  padding:52px 18px 14px;
+  background:rgba(7,17,31,.9);
+  border-bottom:1px solid rgba(255,255,255,.05);
+  backdrop-filter:blur(12px);
+  position:sticky; top:0; z-index:50;
+}
+.home-top { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:14px; }
+.home-name { font-size:21px; font-weight:800; }
+.home-point { font-size:13px; color:var(--gold); font-weight:600; margin-top:2px; }
+.home-date { font-size:11px; color:var(--muted); margin-top:2px; }
+.logout-btn {
+  background:rgba(239,68,68,.1);
+  border:1px solid rgba(239,68,68,.2);
+  color:var(--danger);
+  font-size:11px; font-weight:700;
+  padding:7px 12px; border-radius:10px;
+  cursor:pointer; font-family:'Syne',sans-serif;
+}
+
+/* ── STATUS TOGGLE ── */
+.status-bar {
+  display:flex; align-items:center; justify-content:space-between;
+  background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:16px;
+  padding:12px 14px;
+}
+.status-left { display:flex; align-items:center; gap:10px; }
+.status-dot {
+  width:9px; height:9px; border-radius:50%;
+  background:var(--success);
+  box-shadow:0 0 0 3px rgba(34,197,94,.2);
+  flex-shrink:0;
+  transition:background .3s, box-shadow .3s;
+}
+.status-dot.paused { background:var(--danger); box-shadow:0 0 0 3px rgba(239,68,68,.2); }
+.status-label { font-size:13px; font-weight:700; font-family:'Syne',sans-serif; }
+.status-sub { font-size:10px; color:var(--muted); margin-top:1px; }
+.toggle-switch { position:relative; width:50px; height:26px; cursor:pointer; flex-shrink:0; }
+.toggle-switch input { opacity:0; width:0; height:0; position:absolute; }
+.toggle-track {
+  position:absolute; inset:0;
+  background:rgba(239,68,68,.3); border-radius:13px;
+  border:1px solid rgba(239,68,68,.3);
+  transition:background .3s, border-color .3s;
+}
+.toggle-track.on { background:rgba(34,197,94,.25); border-color:rgba(34,197,94,.35); }
+.toggle-thumb {
+  position:absolute; top:3px; left:3px;
+  width:18px; height:18px;
+  background:var(--danger); border-radius:50%;
+  transition:transform .3s, background .3s;
+  box-shadow:0 2px 6px rgba(0,0,0,.3);
+}
+.toggle-thumb.on { transform:translateX(24px); background:var(--success); }
+
+/* ── INFLOW WIDGET ── */
+.inflow-section { padding:12px 16px 0; }
+.inflow-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.section-label { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.7px; font-weight:700; }
+.inflow-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.inflow-card {
+  border-radius:18px; padding:14px;
+  display:flex; flex-direction:column; gap:4px;
+  position:relative; overflow:hidden;
+}
+.inflow-card.free { background:rgba(34,197,94,.08); border:1px solid rgba(34,197,94,.2); }
+.inflow-card.busy { background:rgba(239,68,68,.08); border:1px solid rgba(239,68,68,.2); }
+.inflow-card.queued { background:rgba(255,176,32,.08); border:1px solid rgba(255,176,32,.2); }
+.inflow-card.washers { background:rgba(59,130,246,.08); border:1px solid rgba(59,130,246,.2); }
+.inflow-num { font-size:32px; font-weight:800; font-family:'Syne',sans-serif; line-height:1; }
+.inflow-card.free .inflow-num { color:var(--success); }
+.inflow-card.busy .inflow-num { color:var(--danger); }
+.inflow-card.queued .inflow-num { color:var(--gold); }
+.inflow-card.washers .inflow-num { color:#60a5fa; }
+.inflow-lbl { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; }
+.inflow-card.free .inflow-lbl { color:var(--success); }
+.inflow-card.busy .inflow-lbl { color:var(--danger); }
+.inflow-card.queued .inflow-lbl { color:var(--gold); }
+.inflow-card.washers .inflow-lbl { color:#60a5fa; }
+.inflow-sub { font-size:11px; color:var(--muted); }
+
+/* ── STATS ── */
+.stats-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; padding:12px 16px; }
+.stat-card {
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:18px;
+  padding:14px 10px;
+  text-align:center;
+}
+.stat-num { font-size:28px; font-weight:800; color:var(--gold); font-family:'Syne',sans-serif; line-height:1; }
+.stat-label { font-size:9px; color:var(--muted); margin-top:5px; text-transform:uppercase; letter-spacing:.6px; font-weight:600; }
+
+/* ── REVENUE STRIP ── */
+.rev-strip { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; padding:0 16px 8px; }
+.rev-card {
+  background:rgba(34,197,94,.07);
+  border:1px solid rgba(34,197,94,.15);
+  border-radius:16px; padding:12px 8px; text-align:center;
+}
+.rev-num { font-size:16px; font-weight:800; color:var(--success); font-family:'Syne',sans-serif; }
+.rev-lbl { font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-top:3px; font-weight:600; }
+.commission-bar {
+  margin:0 16px 10px;
+  background:rgba(255,176,32,.06);
+  border:1px solid rgba(255,176,32,.12);
+  border-radius:12px; padding:9px 14px;
+  display:flex; justify-content:space-between; align-items:center;
+}
+
+/* ── ACTIONS ── */
+.action-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:0 16px 12px; }
+.action-card {
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:20px; padding:18px 14px;
+  text-align:center; cursor:pointer;
+  transition:transform .15s, background .15s;
+}
+.action-card:active { transform:scale(.97); background:rgba(255,255,255,.07); }
+.action-card.primary { border-color:rgba(255,176,32,.25); background:rgba(255,176,32,.06); }
+.action-icon { font-size:28px; margin-bottom:8px; }
+.action-label { font-size:13px; font-weight:700; font-family:'Syne',sans-serif; }
+.action-sub { font-size:10px; color:var(--muted); margin-top:3px; }
+
+/* ── QUEUE ── */
+.queue-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:4px 16px 8px;
+}
+.queue-title { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.7px; font-weight:700; }
+.queue-count { font-size:11px; color:var(--gold); font-weight:700; }
+
+/* ── BOOKING CARDS ── */
+.booking-card {
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:18px; padding:16px;
+  margin:0 16px 10px;
+}
+.booking-card.pending { border-color:rgba(255,176,32,.2); background:rgba(255,176,32,.04); }
+.booking-card.washing { border-color:rgba(59,130,246,.25); background:rgba(59,130,246,.05); }
+.booking-card.done { opacity:.5; }
+.booking-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:7px; }
+.booking-name { font-size:15px; font-weight:700; }
+.booking-time { font-size:13px; color:var(--gold); font-weight:800; font-family:'Syne',sans-serif; }
+.booking-meta { display:flex; align-items:center; gap:7px; margin-bottom:10px; flex-wrap:wrap; }
+.booking-plate {
+  background:rgba(255,176,32,.12); border:1px solid rgba(255,176,32,.25);
+  border-radius:7px; padding:3px 10px;
+  font-size:12px; font-weight:800; color:var(--gold);
+  letter-spacing:1.5px; font-family:'Syne',sans-serif;
+}
+.status-badge { font-size:10px; font-weight:700; padding:3px 9px; border-radius:100px; }
+.badge-confirmed { background:rgba(255,176,32,.12); color:var(--gold); }
+.badge-completed { background:rgba(34,197,94,.12); color:var(--success); }
+.badge-washing { background:rgba(59,130,246,.15); color:#60a5fa; }
+.booking-type-badge {
+  font-size:9px; font-weight:700; padding:3px 8px; border-radius:100px;
+  background:rgba(255,255,255,.06); color:var(--muted);
+}
+.booking-type-badge.guest { background:rgba(255,176,32,.12); color:var(--gold); }
+
+/* ── WASHER ASSIGNMENT ── */
+.washer-row {
+  display:flex; align-items:center; gap:8px;
+  background:rgba(59,130,246,.07);
+  border:1px solid rgba(59,130,246,.15);
+  border-radius:12px; padding:10px 12px;
+  margin-bottom:8px;
+}
+.washer-avatar {
+  width:32px; height:32px; border-radius:50%;
+  background:linear-gradient(135deg, #3b82f6, #1d4ed8);
+  display:flex; align-items:center; justify-content:center;
+  font-size:14px; font-weight:800; color:white;
+  font-family:'Syne',sans-serif; flex-shrink:0;
+}
+.washer-info { flex:1; }
+.washer-name { font-size:13px; font-weight:700; }
+.washer-status { font-size:10px; color:var(--muted); }
+.wash-timer { font-size:12px; font-weight:700; color:#60a5fa; font-family:'Syne',sans-serif; }
+
+.booking-actions { display:flex; gap:8px; flex-wrap:wrap; }
+
+.mark-done-btn {
+  flex:1;
+  background:linear-gradient(180deg,#4ade80,var(--success));
+  color:#07111f; border:none; border-radius:12px;
+  padding:11px; font-family:'Syne',sans-serif;
+  font-weight:700; font-size:13px;
+  cursor:pointer; box-shadow:0 4px 14px rgba(34,197,94,.25);
+  transition:transform .15s;
+}
+.mark-done-btn:active { transform:scale(.97); }
+.assign-btn {
+  flex:1;
+  background:rgba(59,130,246,.12); color:#60a5fa;
+  border:1px solid rgba(59,130,246,.2); border-radius:12px;
+  padding:11px; font-family:'Syne',sans-serif;
+  font-weight:700; font-size:13px; cursor:pointer;
+  transition:transform .15s;
+}
+.assign-btn:active { transform:scale(.97); }
+.start-btn {
+  flex:1;
+  background:rgba(245,158,11,.12); color:var(--warn);
+  border:1px solid rgba(245,158,11,.2); border-radius:12px;
+  padding:11px; font-family:'Syne',sans-serif;
+  font-weight:700; font-size:13px; cursor:pointer;
+  transition:transform .15s;
+}
+.start-btn:active { transform:scale(.97); }
+
+/* ── SCAN ── */
+#screen-scan { padding:0; }
+.scan-content { padding:18px; padding-bottom:calc(80px + env(safe-area-inset-bottom)); }
+.scan-zone {
+  background:rgba(255,255,255,.03);
+  border:1.5px dashed rgba(255,176,32,.25);
+  border-radius:var(--radius-lg);
+  padding:32px 22px;
+  text-align:center; margin-bottom:14px;
+}
+.scan-zone-icon { font-size:48px; margin-bottom:12px; }
+.scan-zone h3 { font-size:17px; font-weight:800; margin-bottom:8px; }
+.scan-zone p { font-size:13px; color:var(--muted); line-height:1.5; }
+#qr-video-container {
+  position:relative; border-radius:22px;
+  overflow:hidden; margin-bottom:14px; display:none;
+  border:2px solid rgba(255,176,32,.3);
+}
+#qr-video { width:100%; border-radius:20px; display:block; }
+.scan-overlay { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; }
+.scan-frame {
+  width:180px; height:180px;
+  border:3px solid var(--gold); border-radius:16px;
+  box-shadow:0 0 0 2000px rgba(0,0,0,.45);
+}
+.divider { display:flex; align-items:center; gap:12px; margin:18px 0; }
+.divider-line { flex:1; height:1px; background:rgba(255,255,255,.07); }
+.divider-text { font-size:11px; color:var(--muted); font-weight:600; }
+
+/* ── RESULT CARD ── */
+.result-card {
+  background:rgba(255,176,32,.06);
+  border:1.5px solid rgba(255,176,32,.25);
+  border-radius:var(--radius-lg);
+  padding:20px; margin-bottom:14px; display:none;
+}
+.result-name { font-size:20px; font-weight:800; margin-bottom:6px; }
+.result-plate {
+  display:inline-block;
+  background:var(--gold); color:#07111f;
+  border-radius:7px; padding:4px 12px;
+  font-size:14px; font-weight:800; letter-spacing:2px;
+  margin-bottom:14px; font-family:'Syne',sans-serif;
+}
+.result-row {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:9px 0;
+  border-bottom:1px solid rgba(255,255,255,.06);
+  font-size:13px;
+}
+.result-row:last-child { border-bottom:none; }
+.result-row span { color:var(--muted); font-size:12px; }
+
+/* ── PLATE LOOKUP ── */
+#screen-lookup { padding:0; }
+.lookup-content { padding:18px; padding-bottom:calc(80px + env(safe-area-inset-bottom)); }
+.plate-input-big {
+  width:100%; padding:18px 16px;
+  background:rgba(255,255,255,.05);
+  border:1.5px solid rgba(255,255,255,.08);
+  border-radius:16px; color:var(--text);
+  font-family:'Syne',sans-serif;
+  font-size:22px; font-weight:800;
+  letter-spacing:4px; text-transform:uppercase; text-align:center;
+  outline:none; transition:border .2s, box-shadow .2s;
+}
+.plate-input-big:focus { border-color:rgba(255,176,32,.5); box-shadow:0 0 0 4px rgba(255,176,32,.08); }
+.plate-input-big::placeholder { color:rgba(122,144,168,.4); letter-spacing:2px; font-size:16px; }
+
+/* ── REVENUE TAB ── */
+#screen-revenue { padding:0; }
+.revenue-content { padding:18px; padding-bottom:calc(80px + env(safe-area-inset-bottom)); }
+.rev-period-tabs { display:flex; gap:8px; margin-bottom:18px; }
+.period-tab {
+  flex:1; padding:9px; border-radius:12px; text-align:center;
+  font-family:'Syne',sans-serif; font-weight:700; font-size:12px;
+  cursor:pointer; border:1px solid rgba(255,255,255,.08);
+  background:rgba(255,255,255,.04); color:var(--muted);
+  transition:all .15s;
+}
+.period-tab.active {
+  background:rgba(255,176,32,.12); color:var(--gold);
+  border-color:rgba(255,176,32,.25);
+}
+.rev-hero {
+  background:linear-gradient(145deg, rgba(34,197,94,.12), rgba(34,197,94,.04));
+  border:1px solid rgba(34,197,94,.2);
+  border-radius:24px; padding:24px;
+  text-align:center; margin-bottom:16px;
+}
+.rev-hero-label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.8px; font-weight:600; margin-bottom:8px; }
+.rev-hero-num { font-size:44px; font-weight:800; color:var(--success); font-family:'Syne',sans-serif; line-height:1; }
+.rev-hero-ksh { font-size:14px; color:var(--success); opacity:.7; margin-top:4px; }
+.rev-breakdown { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+.rev-item {
+  background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.07);
+  border-radius:18px; padding:16px; text-align:center;
+}
+.rev-item-num { font-size:20px; font-weight:800; font-family:'Syne',sans-serif; }
+.rev-item-lbl { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-top:4px; font-weight:600; }
+.rev-table-header {
+  display:grid; grid-template-columns:1fr 80px 80px;
+  padding:8px 14px; font-size:10px; color:var(--muted);
+  text-transform:uppercase; letter-spacing:.5px; font-weight:700;
+}
+.rev-table-row {
+  display:grid; grid-template-columns:1fr 80px 80px;
+  padding:12px 14px;
+  background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.05);
+  border-radius:12px; margin-bottom:6px;
+  font-size:13px;
+}
+.rev-table-row.completed { opacity:1; }
+.rev-row-name { font-weight:600; }
+.rev-row-plan { font-size:11px; color:var(--muted); }
+.rev-row-amount { font-weight:700; color:var(--success); text-align:right; }
+.rev-row-time { font-size:11px; color:var(--gold); text-align:right; }
+
+/* ── WASHERS TAB ── */
+#screen-washers { padding:0; }
+.washers-content { padding:18px; padding-bottom:calc(80px + env(safe-area-inset-bottom)); }
+.washer-card {
+  background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.07);
+  border-radius:20px; padding:16px; margin-bottom:12px;
+}
+.washer-card.active-wash { border-color:rgba(59,130,246,.3); background:rgba(59,130,246,.06); }
+.washer-card.available { border-color:rgba(34,197,94,.2); background:rgba(34,197,94,.04); }
+.washer-card-top { display:flex; align-items:center; gap:14px; margin-bottom:12px; }
+.washer-big-avatar {
+  width:48px; height:48px; border-radius:14px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:20px; font-weight:800; color:white;
+  font-family:'Syne',sans-serif; flex-shrink:0;
+}
+.washer-big-avatar.av0 { background:linear-gradient(135deg,#3b82f6,#1d4ed8); }
+.washer-big-avatar.av1 { background:linear-gradient(135deg,#8b5cf6,#6d28d9); }
+.washer-big-avatar.av2 { background:linear-gradient(135deg,#ec4899,#be185d); }
+.washer-big-avatar.av3 { background:linear-gradient(135deg,#f59e0b,#d97706); }
+.washer-big-avatar.av4 { background:linear-gradient(135deg,#10b981,#047857); }
+.washer-main { flex:1; }
+.washer-card-name { font-size:16px; font-weight:700; }
+.washer-card-role { font-size:11px; color:var(--muted); }
+.washer-badge {
+  font-size:10px; font-weight:700; padding:4px 10px; border-radius:100px;
+}
+.washer-badge.free { background:rgba(34,197,94,.12); color:var(--success); }
+.washer-badge.washing { background:rgba(59,130,246,.15); color:#60a5fa; }
+.washer-stats { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+.washer-stat { text-align:center; background:rgba(255,255,255,.03); border-radius:10px; padding:8px; }
+.washer-stat-num { font-size:18px; font-weight:800; color:var(--gold); font-family:'Syne',sans-serif; }
+.washer-stat-lbl { font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; font-weight:600; }
+.current-job {
+  margin-top:10px; padding:10px 12px;
+  background:rgba(59,130,246,.08); border:1px solid rgba(59,130,246,.15);
+  border-radius:12px;
+}
+.current-job-label { font-size:10px; color:#60a5fa; text-transform:uppercase; letter-spacing:.5px; font-weight:700; margin-bottom:4px; }
+.current-job-car { font-size:14px; font-weight:700; }
+.current-job-time { font-size:11px; color:var(--muted); }
+.add-washer-area {
+  border:1.5px dashed rgba(255,255,255,.1);
+  border-radius:18px; padding:20px;
+  text-align:center; cursor:pointer;
+  transition:border-color .15s, background .15s;
+}
+.add-washer-area:active { background:rgba(255,255,255,.03); }
+
+/* ── SERVICES TAB ── */
+#screen-services { padding:0; }
+.services-content { padding:18px; padding-bottom:calc(80px + env(safe-area-inset-bottom)); }
+.service-card {
+  background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.07);
+  border-radius:18px; padding:16px; margin-bottom:10px;
+  display:flex; align-items:center; gap:14px;
+}
+.service-icon-box {
+  width:44px; height:44px; border-radius:12px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:20px; flex-shrink:0;
+  background:rgba(255,176,32,.1); border:1px solid rgba(255,176,32,.15);
+}
+.service-info { flex:1; }
+.service-name { font-size:14px; font-weight:700; }
+.service-desc { font-size:11px; color:var(--muted); margin-top:2px; }
+.service-duration { font-size:10px; color:var(--muted); margin-top:3px; }
+.service-price { font-size:18px; font-weight:800; color:var(--gold); font-family:'Syne',sans-serif; white-space:nowrap; }
+.service-actions { display:flex; gap:8px; align-items:center; flex-direction:column; }
+.icon-btn {
+  width:32px; height:32px; border-radius:8px; border:none;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; font-size:14px;
+  background:rgba(255,255,255,.05); color:var(--muted);
+  transition:background .15s, color .15s;
+}
+.icon-btn:hover { background:rgba(255,255,255,.1); color:var(--text); }
+.icon-btn.edit { background:rgba(255,176,32,.1); color:var(--gold); }
+.icon-btn.del { background:rgba(239,68,68,.1); color:var(--danger); }
+
+/* ── MODAL ── */
+.modal-overlay {
+  position:fixed; inset:0; z-index:200;
+  background:rgba(0,0,0,.7); backdrop-filter:blur(8px);
+  display:flex; align-items:flex-end; justify-content:center;
+  opacity:0; pointer-events:none;
+  transition:opacity .25s;
+}
+.modal-overlay.open { opacity:1; pointer-events:all; }
+.modal-sheet {
+  width:100%; max-width:600px;
+  background:var(--s1);
+  border-radius:28px 28px 0 0;
+  padding:24px 22px calc(28px + env(safe-area-inset-bottom));
+  transform:translateY(100%);
+  transition:transform .3s cubic-bezier(.34,1.56,.64,1);
+  max-height:90vh; overflow-y:auto;
+}
+.modal-overlay.open .modal-sheet { transform:translateY(0); }
+.modal-handle { width:40px; height:4px; background:rgba(255,255,255,.1); border-radius:2px; margin:0 auto 20px; }
+.modal-title { font-size:20px; font-weight:800; margin-bottom:20px; }
+
+/* ── ASSIGN MODAL ── */
+.washer-select-item {
+  display:flex; align-items:center; gap:12px;
+  padding:14px 16px; border-radius:14px;
+  cursor:pointer; margin-bottom:8px;
+  background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.06);
+  transition:background .15s, border-color .15s;
+}
+.washer-select-item:active { background:rgba(59,130,246,.08); border-color:rgba(59,130,246,.2); }
+.washer-select-item.unavailable { opacity:.4; cursor:not-allowed; }
+.washer-select-name { font-size:14px; font-weight:700; }
+.washer-select-status { font-size:11px; color:var(--muted); }
+
+/* ── TOAST ── */
+#toast {
+  position:fixed; top:64px; left:50%;
+  transform:translateX(-50%) translateY(-90px);
+  background:var(--s2);
+  border:1px solid rgba(255,255,255,.08);
+  border-left:4px solid var(--gold);
+  padding:12px 20px; border-radius:14px;
+  font-size:13px; z-index:9999;
+  opacity:0; transition:all .3s;
+  white-space:nowrap; max-width:90vw;
+  overflow:hidden; text-overflow:ellipsis;
+  box-shadow:0 8px 24px rgba(0,0,0,.4);
+}
+#toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
+
+/* ── SCROLLABLE AREA ── */
+.tab-body { padding-bottom:calc(80px + env(safe-area-inset-bottom)); }
+
+/* ── EMPTY STATE ── */
+.empty-state { text-align:center; padding:40px 20px; color:var(--muted); font-size:13px; }
+.empty-icon { font-size:40px; margin-bottom:12px; }
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="screen-splash" class="screen active">
+  <div class="splash-logo">
+    <div class="splash-icon">S</div>
+    <div class="splash-title">Splash<span>Pass</span></div>
+    <div class="splash-sub">Operator Console</div>
+    <div class="splash-spinner"></div>
+  </div>
+</div>
+
+<!-- AUTH -->
+<div id="screen-auth" class="screen">
+  <div class="auth-logo">
+    <div class="auth-logo-icon">S</div>
+    <div class="auth-logo-text">SplashPass</div>
+  </div>
+  <div class="auth-tag">Operator Console</div>
+  <div class="auth-title">Operator Login</div>
+  <div class="auth-sub">Sign in to your wash point dashboard</div>
+  <div class="form-group"><label>Email</label><input type="email" id="login-email" placeholder="you@example.com"></div>
+  <div class="form-group"><label>Password</label><input type="password" id="login-pass" placeholder="Your password"></div>
+  <div id="login-error" class="form-error"></div>
+  <button class="btn btn-gold" id="login-btn" onclick="login()" style="margin-bottom:16px">Sign In</button>
+  <div style="text-align:center;font-size:13px;color:var(--muted)">Contact admin to get access</div>
+</div>
+
+<!-- HOME TAB -->
+<div id="screen-home" class="screen">
+  <div class="home-header">
+    <div class="home-top">
+      <div>
+        <div class="home-name" id="home-name">—</div>
+        <div class="home-point" id="home-point">—</div>
+        <div class="home-date" id="home-date">—</div>
+      </div>
+      <button class="logout-btn" onclick="logout()">Log Out</button>
+    </div>
+    <div class="status-bar">
+      <div class="status-left">
+        <div class="status-dot" id="status-dot"></div>
+        <div>
+          <div class="status-label" id="status-label">Open</div>
+          <div class="status-sub" id="status-sub">Accepting bookings</div>
+        </div>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="status-toggle" onchange="toggleStatus()">
+        <div class="toggle-track" id="toggle-track"></div>
+        <div class="toggle-thumb" id="toggle-thumb"></div>
+      </label>
+    </div>
+  </div>
+
+  <!-- Inflow Widget -->
+  <div class="inflow-section">
+    <div class="inflow-header">
+      <div class="section-label">Live Inflow</div>
+      <button class="btn btn-xs btn-outline" onclick="showInflowModal()">⚙ Manage</button>
+    </div>
+    <div class="inflow-grid">
+      <div class="inflow-card free">
+        <div class="inflow-num" id="inflow-free">0</div>
+        <div class="inflow-lbl">Bays Free</div>
+        <div class="inflow-sub" id="inflow-free-sub">All clear</div>
+      </div>
+      <div class="inflow-card busy">
+        <div class="inflow-num" id="inflow-busy">0</div>
+        <div class="inflow-lbl">In Progress</div>
+        <div class="inflow-sub" id="inflow-busy-sub">Active washes</div>
+      </div>
+      <div class="inflow-card queued">
+        <div class="inflow-num" id="inflow-queue">0</div>
+        <div class="inflow-lbl">Queued</div>
+        <div class="inflow-sub" id="inflow-queue-sub">Waiting</div>
+      </div>
+      <div class="inflow-card washers">
+        <div class="inflow-num" id="inflow-washers">0</div>
+        <div class="inflow-lbl">Washers On</div>
+        <div class="inflow-sub" id="inflow-washers-sub">Active staff</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-num" id="stat-today">0</div>
+      <div class="stat-label">Today</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="stat-done">0</div>
+      <div class="stat-label">Done</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="stat-pending">0</div>
+      <div class="stat-label">Pending</div>
+    </div>
+  </div>
+
+  <!-- Revenue -->
+  <div style="padding:0 16px 6px;">
+    <div class="section-label" style="margin-bottom:8px;">Your Earnings (after 20% commission)</div>
+  </div>
+  <div class="rev-strip">
+    <div class="rev-card">
+      <div class="rev-num" id="rev-today">—</div>
+      <div class="rev-lbl">Today</div>
+      <div style="font-size:9px;color:var(--muted);margin-top:1px;">KSh</div>
+    </div>
+    <div class="rev-card">
+      <div class="rev-num" id="rev-week">—</div>
+      <div class="rev-lbl">Week</div>
+      <div style="font-size:9px;color:var(--muted);margin-top:1px;">KSh</div>
+    </div>
+    <div class="rev-card">
+      <div class="rev-num" id="rev-month">—</div>
+      <div class="rev-lbl">Month</div>
+      <div style="font-size:9px;color:var(--muted);margin-top:1px;">KSh</div>
+    </div>
+  </div>
+  <div class="commission-bar">
+    <div style="font-size:11px;color:var(--muted);">SplashPass commission (20%)</div>
+    <div id="rev-commission" style="font-size:12px;font-weight:700;color:var(--gold);">KSh —</div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="action-row">
+    <div class="action-card primary" onclick="showTab('scan')">
+      <div class="action-icon">📷</div>
+      <div class="action-label">Scan QR</div>
+      <div class="action-sub">Verify customer pass</div>
+    </div>
+    <div class="action-card" onclick="showTab('lookup')">
+      <div class="action-icon">🔍</div>
+      <div class="action-label">Plate Lookup</div>
+      <div class="action-sub">Search by plate no.</div>
+    </div>
+  </div>
+
+  <!-- Today Queue -->
+  <div class="queue-header">
+    <div class="queue-title">Today's Queue</div>
+    <div class="queue-count" id="queue-count">0 bookings</div>
+  </div>
+  <div id="queue-list">
+    <div class="empty-state"><div class="empty-icon">📋</div>No bookings today</div>
+  </div>
+  <div style="height:20px"></div>
+</div>
+
+<!-- SCAN TAB -->
+<div id="screen-scan" class="screen">
+  <div class="screen-header">
+    <h2>Scan QR Code</h2>
+  </div>
+  <div class="scan-content">
+    <div id="qr-video-container">
+      <video id="qr-video" playsinline autoplay muted></video>
+      <div class="scan-overlay"><div class="scan-frame"></div></div>
+    </div>
+    <div class="scan-zone" id="scan-prompt">
+      <div class="scan-zone-icon">📷</div>
+      <h3>Ready to Scan</h3>
+      <p>Point camera at customer's QR wash pass to verify and redeem</p>
+      <button class="btn btn-gold" onclick="startCamera()" style="margin-top:18px;width:auto;padding:13px 30px">Open Camera</button>
+    </div>
+    <div id="scan-result" class="result-card"></div>
+    <div id="scan-actions" class="hidden">
+      <button class="btn btn-success" id="redeem-btn" onclick="redeemBooking()" style="margin-bottom:10px">✓ Mark Done</button>
+      <button class="btn btn-outline" onclick="resetScan()">Scan Another</button>
+    </div>
+  </div>
+</div>
+
+<!-- PLATE LOOKUP TAB -->
+<div id="screen-lookup" class="screen">
+  <div class="screen-header">
+    <h2>Plate Lookup</h2>
+  </div>
+  <div class="lookup-content">
+    <div class="form-group">
+      <label>Number Plate</label>
+      <input class="plate-input-big" type="text" id="plate-input" placeholder="KCA 123A"
+        oninput="this.value=this.value.toUpperCase()"
+        onkeyup="if(event.key==='Enter') lookupPlate()">
+    </div>
+    <button class="btn btn-gold" id="lookup-btn" onclick="lookupPlate()" style="margin-bottom:18px">Search</button>
+    <div id="lookup-result" class="result-card"></div>
+    <div id="lookup-actions" class="hidden">
+      <button class="btn btn-success" id="lookup-redeem-btn" onclick="redeemFromLookup()" style="margin-bottom:10px">✓ Mark Done</button>
+      <button class="btn btn-outline" onclick="resetLookup()">Search Another</button>
+    </div>
+    <div id="lookup-error" style="text-align:center;padding:18px;color:var(--danger);font-size:13px;display:none;background:rgba(239,68,68,.08);border-radius:14px;border:1px solid rgba(239,68,68,.15)"></div>
+  </div>
+</div>
+
+<!-- REVENUE TAB -->
+<div id="screen-revenue" class="screen">
+  <div class="screen-header">
+    <h2>Revenue</h2>
+    <button class="btn btn-xs btn-outline header-action" onclick="renderRevenue()">↻ Refresh</button>
+  </div>
+  <div class="revenue-content">
+    <div class="rev-period-tabs">
+      <div class="period-tab active" id="ptab-today" onclick="selectPeriod('today')">Today</div>
+      <div class="period-tab" id="ptab-week" onclick="selectPeriod('week')">This Week</div>
+      <div class="period-tab" id="ptab-month" onclick="selectPeriod('month')">This Month</div>
+    </div>
+    <div class="rev-hero">
+      <div class="rev-hero-label" id="rev-period-label">Today's Earnings</div>
+      <div class="rev-hero-num" id="rev-hero-num">—</div>
+      <div class="rev-hero-ksh">KSh after 20% commission</div>
+    </div>
+    <div class="rev-breakdown">
+      <div class="rev-item">
+        <div class="rev-item-num" id="rev-washes" style="color:var(--gold)">0</div>
+        <div class="rev-item-lbl">Washes</div>
+      </div>
+      <div class="rev-item">
+        <div class="rev-item-num" id="rev-gross" style="color:var(--text)">—</div>
+        <div class="rev-item-lbl">Gross KSh</div>
+      </div>
+      <div class="rev-item">
+        <div class="rev-item-num" id="rev-commission-amt" style="color:var(--warn)">—</div>
+        <div class="rev-item-lbl">Commission</div>
+      </div>
+      <div class="rev-item">
+        <div class="rev-item-num" id="rev-avg" style="color:var(--info)">—</div>
+        <div class="rev-item-lbl">Avg / Wash</div>
+      </div>
+    </div>
+    <div class="section-label" style="margin-bottom:10px;">Transaction Log</div>
+    <div class="rev-table-header">
+      <div>Customer</div>
+      <div style="text-align:right">Time</div>
+      <div style="text-align:right">KSh</div>
+    </div>
+    <div id="rev-transactions">
+      <div class="empty-state"><div class="empty-icon">💰</div>No transactions yet</div>
+    </div>
+  </div>
+</div>
+
+<!-- WASHERS TAB -->
+<div id="screen-washers" class="screen">
+  <div class="screen-header">
+    <h2>Washers</h2>
+    <button class="btn btn-xs btn-gold header-action" onclick="showAddWasherModal()">+ Add</button>
+  </div>
+  <div class="washers-content">
+    <div id="washers-list">
+      <div class="empty-state"><div class="empty-icon">👷</div>No washers added yet<br><br>
+        <button class="btn btn-gold btn-sm" onclick="showAddWasherModal()">Add First Washer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SERVICES TAB -->
+<div id="screen-services" class="screen">
+  <div class="screen-header">
+    <h2>Services & Pricing</h2>
+    <button class="btn btn-xs btn-gold header-action" onclick="showServiceModal(null)">+ Add</button>
+  </div>
+  <div class="services-content">
+    <div id="services-list">
+      <div class="empty-state"><div class="empty-icon">🚿</div>No services configured yet<br><br>
+        <button class="btn btn-gold btn-sm" onclick="showServiceModal(null)">Add First Service</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav" id="bottom-nav" style="display:none">
+  <button class="nav-item active" id="nav-home" onclick="showTab('home')">
+    <span class="nav-icon">🏠</span>
+    <span class="nav-label">Home</span>
+  </button>
+  <button class="nav-item" id="nav-scan" onclick="showTab('scan')">
+    <span class="nav-icon">📷</span>
+    <span class="nav-label">Scan</span>
+  </button>
+  <button class="nav-item" id="nav-lookup" onclick="showTab('lookup')">
+    <span class="nav-icon">🔍</span>
+    <span class="nav-label">Lookup</span>
+  </button>
+  <button class="nav-item" id="nav-revenue" onclick="showTab('revenue')">
+    <span class="nav-icon">💰</span>
+    <span class="nav-label">Revenue</span>
+  </button>
+  <button class="nav-item" id="nav-washers" onclick="showTab('washers')">
+    <span class="nav-icon">👷</span>
+    <span class="nav-label">Washers</span>
+  </button>
+  <button class="nav-item" id="nav-services" onclick="showTab('services')">
+    <span class="nav-icon">✂️</span>
+    <span class="nav-label">Services</span>
+  </button>
+</nav>
+
+<!-- MODALS -->
+
+<!-- Inflow / Bay Management Modal -->
+<div class="modal-overlay" id="modal-inflow">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Manage Bay Inflow</div>
+    <div class="form-group">
+      <label>Total Wash Bays</label>
+      <input type="number" id="inflow-total-bays" min="1" max="20" placeholder="e.g. 4">
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:16px;">
+      Set how many car bays your wash point has. The system will track free vs busy bays automatically based on active washes.
+    </div>
+    <div style="background:rgba(255,176,32,.06);border:1px solid rgba(255,176,32,.15);border-radius:14px;padding:14px;margin-bottom:20px;">
+      <div style="font-size:12px;font-weight:700;color:var(--gold);margin-bottom:6px;">⏱ Estimated Queue Free-Up</div>
+      <div style="font-size:13px;color:var(--muted)" id="inflow-eta-text">Set bays and average wash duration to see estimated wait times.</div>
+    </div>
+    <div class="form-group">
+      <label>Avg Wash Duration (minutes)</label>
+      <input type="number" id="inflow-avg-duration" min="5" max="120" placeholder="e.g. 20">
+    </div>
+    <button class="btn btn-gold" onclick="saveInflowSettings()">Save Settings</button>
+    <button class="btn btn-outline" style="margin-top:10px" onclick="closeModal('modal-inflow')">Cancel</button>
+  </div>
+</div>
+
+<!-- Assign Washer Modal -->
+<div class="modal-overlay" id="modal-assign">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Assign Washer</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:16px;" id="assign-booking-info">Booking: —</div>
+    <div id="assign-washer-list"></div>
+    <button class="btn btn-outline" style="margin-top:10px" onclick="closeModal('modal-assign')">Cancel</button>
+  </div>
+</div>
+
+<!-- Add/Edit Service Modal -->
+<div class="modal-overlay" id="modal-service">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="service-modal-title">Add Service</div>
+    <input type="hidden" id="service-edit-id">
+    <div class="form-group">
+      <label>Service Name</label>
+      <input type="text" id="svc-name" placeholder="e.g. Full Interior & Exterior">
+    </div>
+    <div class="form-group">
+      <label>Description</label>
+      <input type="text" id="svc-desc" placeholder="e.g. Vacuum, wipe, exterior wash">
+    </div>
+    <div class="form-group">
+      <label>Price (KSh)</label>
+      <input type="number" id="svc-price" min="0" placeholder="e.g. 800">
+    </div>
+    <div class="form-group">
+      <label>Duration (minutes)</label>
+      <input type="number" id="svc-duration" min="5" placeholder="e.g. 30">
+    </div>
+    <div class="form-group">
+      <label>Emoji Icon</label>
+      <input type="text" id="svc-icon" placeholder="🚗" maxlength="4">
+    </div>
+    <button class="btn btn-gold" onclick="saveService()" style="margin-bottom:10px">Save Service</button>
+    <button class="btn btn-outline" onclick="closeModal('modal-service')">Cancel</button>
+  </div>
+</div>
+
+<!-- Add Washer Modal -->
+<div class="modal-overlay" id="modal-add-washer">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="washer-modal-title">Add Washer</div>
+    <input type="hidden" id="washer-edit-id">
+    <div class="form-group">
+      <label>Full Name</label>
+      <input type="text" id="washer-name-input" placeholder="e.g. Brian Otieno">
+    </div>
+    <div class="form-group">
+      <label>Role / Notes</label>
+      <input type="text" id="washer-role-input" placeholder="e.g. Senior Washer">
+    </div>
+    <button class="btn btn-gold" onclick="saveWasher()" style="margin-bottom:10px">Save</button>
+    <button class="btn btn-outline" onclick="closeModal('modal-add-washer')">Cancel</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+var SUPABASE_URL = 'https://msdvyiqjoogafzyaoycg.supabase.co';
+var SUPABASE_KEY = 'sb_publishable_N_g24aU7TLHLNeu72gnfeg_1d7OleFW';
+
+var currentOperator = null;
+var foundBooking    = null;
+var lookupData      = null;
+var cameraStream    = null;
+var scanInterval    = null;
+var isOpen          = true;
+var currentPeriod   = 'today';
+var assigningBooking = null;
+
+// ── LOCAL STATE (persisted per wash point) ─────────
+function getLocalKey(k) { return 'splashpass_' + (currentOperator ? currentOperator.wash_point : 'op') + '_' + k; }
+function localGet(k, def) { try { var v = localStorage.getItem(getLocalKey(k)); return v ? JSON.parse(v) : def; } catch(e) { return def; } }
+function localSet(k, v) { try { localStorage.setItem(getLocalKey(k), JSON.stringify(v)); } catch(e) {} }
+
+// Washers: [{id, name, role, currentBookingId, washStartedAt, todayWashes, totalWashes}]
+function getWashers() { return localGet('washers', []); }
+function saveWashers(w) { localSet('washers', w); }
+
+// Services: [{id, name, desc, price, duration, icon}]
+function getServices() { return localGet('services', getDefaultServices()); }
+function saveServices(s) { localSet('services', s); }
+
+// Inflow settings: {totalBays, avgDuration}
+function getInflowSettings() { return localGet('inflow', { totalBays: 4, avgDuration: 20 }); }
+function saveInflowSettingsLocal(s) { localSet('inflow', s); }
+
+function getDefaultServices() {
+  return [
+    { id: uuid(), name: 'Exterior Wash', desc: 'Full exterior rinse & wipe', price: 350, duration: 15, icon: '🚿' },
+    { id: uuid(), name: 'Interior & Exterior', desc: 'Vacuum, wipe & exterior wash', price: 650, duration: 30, icon: '✨' },
+    { id: uuid(), name: 'Engine Wash', desc: 'Degreasing + rinse', price: 500, duration: 20, icon: '⚙️' },
+    { id: uuid(), name: 'Full Detail', desc: 'Deep clean inside & out', price: 1500, duration: 60, icon: '🏆' },
+  ];
+}
+
+function uuid() { return Math.random().toString(36).slice(2,10) + Date.now().toString(36); }
+
+// ── SUPABASE ──────────────────────────────────────
+async function sbFetch(path, options) {
+  options = options || {};
+  var res = await fetch(SUPABASE_URL + '/rest/v1/' + path, Object.assign({}, options, {
+    headers: Object.assign({
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': options.prefer || 'return=representation'
+    }, options.headers || {})
+  }));
+  if (!res.ok) {
+    var err = await res.json().catch(function() { return {}; });
+    throw new Error(err.message || 'Request failed');
+  }
+  var text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+
+async function getOperatorByEmail(email) {
+  var rows = await sbFetch('operators?email=eq.' + encodeURIComponent(email) + '&select=*');
+  return rows && rows[0] ? rows[0] : null;
+}
+
+async function getTodayBookings(washPoint) {
+  var today = new Date().toISOString().split('T')[0];
+  return await sbFetch('bookings?date=eq.' + today + '&location=eq.' + encodeURIComponent(washPoint) + '&select=*&order=time.asc');
+}
+
+async function getBookingsByDateRange(washPoint, from, to) {
+  return await sbFetch('bookings?date=gte.' + from + '&date=lte.' + to +
+    '&location=eq.' + encodeURIComponent(washPoint) + '&status=eq.completed&select=*&order=created_at.desc');
+}
+
+async function getBookingsByPlate(plate) {
+  var today = new Date().toISOString().split('T')[0];
+  var users = await sbFetch('profiles?plate=ilike.' + encodeURIComponent(plate.trim()) + '&select=*');
+  if (!users || !users.length) return null;
+  var user = users[0];
+  var bookings = await sbFetch('bookings?user_email=eq.' + encodeURIComponent(user.email) + '&date=eq.' + today + '&status=eq.confirmed&select=*');
+  return { user: user, booking: bookings && bookings[0] ? bookings[0] : null };
+}
+
+async function redeemBookingById(bookingId, userEmail) {
+  await sbFetch('bookings?id=eq.' + bookingId, {
+    method: 'PATCH',
+    body: JSON.stringify({ status: 'completed' }),
+    prefer: 'return=representation'
+  });
+  var users = await sbFetch('profiles?email=eq.' + encodeURIComponent(userEmail) + '&select=*');
+  if (users && users[0]) {
+    var u = users[0];
+    var updates = {};
+    if (u.plan !== 'Fleet' && u.credits > 0) updates.credits = u.credits - 1;
+    updates.loyalty_points = (u.loyalty_points || 0) + 10;
+    await sbFetch('profiles?email=eq.' + encodeURIComponent(userEmail), {
+      method: 'PATCH', body: JSON.stringify(updates), prefer: 'return=representation'
+    });
+  }
+}
+
+function sumRevenue(bookings) {
+  return (bookings || []).reduce(function(t,b) { return t + (b.operator_amount || 0); }, 0);
+}
+
+// ── STATUS ────────────────────────────────────────
+async function toggleStatus() {
+  isOpen = document.getElementById('status-toggle').checked;
+  updateStatusUI();
+  try {
+    await sbFetch('operators?email=eq.' + encodeURIComponent(currentOperator.email), {
+      method: 'PATCH',
+      body: JSON.stringify({ status: isOpen ? 'open' : 'paused' }),
+      prefer: 'return=representation'
+    });
+    toast(isOpen ? '🟢 Wash point is now Open' : '🔴 Wash point Paused — no new bookings');
+  } catch(e) { toast('Could not sync status: ' + e.message, true); }
+}
+
+function updateStatusUI() {
+  var dot = document.getElementById('status-dot');
+  var label = document.getElementById('status-label');
+  var sub   = document.getElementById('status-sub');
+  var track = document.getElementById('toggle-track');
+  var thumb = document.getElementById('toggle-thumb');
+  var toggle = document.getElementById('status-toggle');
+  if (isOpen) {
+    dot.className = 'status-dot'; label.textContent = 'Open'; sub.textContent = 'Accepting bookings';
+    track.className = 'toggle-track on'; thumb.className = 'toggle-thumb on'; toggle.checked = true;
+  } else {
+    dot.className = 'status-dot paused'; label.textContent = 'Paused'; sub.textContent = 'New bookings stopped';
+    track.className = 'toggle-track'; thumb.className = 'toggle-thumb'; toggle.checked = false;
+  }
+}
+
+// ── UI HELPERS ────────────────────────────────────
+function toast(msg, isError) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.borderLeftColor = isError ? 'var(--danger)' : 'var(--success)';
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 3000);
+}
+function setBtn(id, loading, label) {
+  var b = document.getElementById(id);
+  if (!b) return;
+  b.disabled = loading;
+  b.textContent = loading ? 'Please wait...' : label;
+}
+
+function showTab(name) {
+  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+  var el = document.getElementById('screen-' + name);
+  if (el) el.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+  var navEl = document.getElementById('nav-' + name);
+  if (navEl) navEl.classList.add('active');
+  if (name === 'home') renderHome();
+  if (name === 'revenue') renderRevenue();
+  if (name === 'washers') renderWashers();
+  if (name === 'services') renderServices();
+  if (name === 'scan') { resetScan(); }
+  if (name === 'lookup') { resetLookup(); }
+}
+
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// ── BOOT ─────────────────────────────────────────
+function showRaw(name) {
+  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+  document.getElementById('screen-' + name).classList.add('active');
+}
+
+// Boot immediately - no delay
+(function(){
+  try{
+    var saved=localStorage.getItem('splashpass_operator');
+    if(saved){
+      try{
+        currentOperator=JSON.parse(saved);
+        isOpen=currentOperator.status!=='paused';
+        bootLoggedIn();
+        return;
+      }catch(e){localStorage.removeItem('splashpass_operator')}
+    }
+  }catch(e){}
+  showRaw('auth');
+})();
+
+function bootLoggedIn() {
+  document.getElementById('bottom-nav').style.display = 'flex';
+  showTab('home');
+}
+
+// ── AUTH ─────────────────────────────────────────
+async function login() {
+  var email = document.getElementById('login-email').value.trim().toLowerCase();
+  var pass  = document.getElementById('login-pass').value;
+  var err   = document.getElementById('login-error');
+  if (!email || !pass) { err.textContent = 'Please enter email and password.'; return; }
+  setBtn('login-btn', true, 'Sign In');
+  err.textContent = '';
+  try {
+    var op = await getOperatorByEmail(email);
+    if (!op || op.password !== pass) { err.textContent = 'Invalid credentials.'; return; }
+    currentOperator = op;
+    isOpen = op.status !== 'paused';
+    localStorage.setItem('splashpass_operator', JSON.stringify(op));
+    bootLoggedIn();
+  } catch(e) { err.textContent = 'Error: ' + e.message; }
+  finally { setBtn('login-btn', false, 'Sign In'); }
+}
+
+function logout() {
+  if (!confirm('Log out?')) return;
+  currentOperator = null;
+  localStorage.removeItem('splashpass_operator');
+  document.getElementById('bottom-nav').style.display = 'none';
+  showRaw('auth');
+}
+
+// ── HOME RENDER ───────────────────────────────────
+async function renderHome() {
+  if (!currentOperator) return;
+  document.getElementById('home-name').textContent  = currentOperator.name || 'Operator';
+  document.getElementById('home-point').textContent = '📍 ' + (currentOperator.wash_point || 'Wash Point');
+  var now = new Date();
+  document.getElementById('home-date').textContent  =
+    now.toLocaleDateString('en-KE', { weekday:'long', day:'numeric', month:'long' });
+  updateStatusUI();
+
+  try {
+    var today  = new Date().toISOString().split('T')[0];
+    var weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate()-6);
+    var monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    var [bookings, weekB, monthB] = await Promise.all([
+      getTodayBookings(currentOperator.wash_point),
+      getBookingsByDateRange(currentOperator.wash_point, weekAgo.toISOString().split('T')[0], today),
+      getBookingsByDateRange(currentOperator.wash_point, monthStart.toISOString().split('T')[0], today),
+    ]);
+    bookings = bookings || []; weekB = weekB || []; monthB = monthB || [];
+
+    var done    = bookings.filter(function(b) { return b.status === 'completed'; });
+    var pending = bookings.filter(function(b) { return b.status !== 'completed'; });
+
+    document.getElementById('stat-today').textContent   = bookings.length;
+    document.getElementById('stat-done').textContent    = done.length;
+    document.getElementById('stat-pending').textContent = pending.length;
+    document.getElementById('queue-count').textContent  = bookings.length + ' booking' + (bookings.length !== 1 ? 's' : '');
+
+    var todayRev  = sumRevenue(done);
+    var weekRev   = sumRevenue(weekB);
+    var monthRev  = sumRevenue(monthB);
+    var gross     = done.reduce(function(t,b) { return t+(b.amount||0); }, 0);
+    var commission = gross - todayRev;
+
+    document.getElementById('rev-today').textContent      = todayRev.toLocaleString();
+    document.getElementById('rev-week').textContent       = weekRev.toLocaleString();
+    document.getElementById('rev-month').textContent      = monthRev.toLocaleString();
+    document.getElementById('rev-commission').textContent = 'KSh ' + commission.toLocaleString();
+
+    updateInflowWidget(bookings);
+    renderQueue(bookings);
+  } catch(e) { toast('Error loading dashboard: ' + e.message, true); }
+}
+
+// ── INFLOW WIDGET ─────────────────────────────────
+function updateInflowWidget(bookings) {
+  var settings = getInflowSettings();
+  var washers  = getWashers();
+  var activeWashers = washers.filter(function(w) { return !!w.currentBookingId; });
+  var activeWashes  = bookings.filter(function(b) {
+    return b.status === 'confirmed' && washers.some(function(w) { return w.currentBookingId == b.id && w.washStartedAt; });
+  });
+  var queued   = bookings.filter(function(b) { return b.status === 'confirmed'; });
+  var inProgress = activeWashers.length;
+  var free     = Math.max(0, settings.totalBays - inProgress);
+
+  document.getElementById('inflow-free').textContent = free;
+  document.getElementById('inflow-busy').textContent = inProgress;
+  document.getElementById('inflow-queue').textContent = Math.max(0, queued.length - inProgress);
+  document.getElementById('inflow-washers').textContent = activeWashers.length;
+
+  document.getElementById('inflow-free-sub').textContent  = free === 0 ? 'All bays occupied' : free + ' bay' + (free===1?'':'s') + ' available';
+  document.getElementById('inflow-busy-sub').textContent  = inProgress + ' active wash' + (inProgress===1?'':'es');
+  document.getElementById('inflow-queue-sub').textContent = queued.length + ' car' + (queued.length===1?'':'s') + ' waiting';
+  document.getElementById('inflow-washers-sub').textContent = activeWashers.length + ' on duty';
+}
+
+function showInflowModal() {
+  var s = getInflowSettings();
+  document.getElementById('inflow-total-bays').value = s.totalBays || '';
+  document.getElementById('inflow-avg-duration').value = s.avgDuration || '';
+  updateInflowETA();
+  openModal('modal-inflow');
+}
+
+function updateInflowETA() {
+  var bays = parseInt(document.getElementById('inflow-total-bays').value) || 0;
+  var dur  = parseInt(document.getElementById('inflow-avg-duration').value) || 0;
+  var el   = document.getElementById('inflow-eta-text');
+  if (bays && dur) {
+    el.innerHTML = '<strong style="color:var(--gold)">' + bays + ' bays × ' + dur + ' min avg</strong> — next slot frees in ~' + dur + ' min when busy. Queue moves every <strong>' + Math.ceil(dur/bays) + ' min</strong> per car.';
+  } else {
+    el.textContent = 'Enter bays and duration to see estimate.';
+  }
+}
+
+document.getElementById('inflow-total-bays').addEventListener('input', updateInflowETA);
+document.getElementById('inflow-avg-duration').addEventListener('input', updateInflowETA);
+
+function saveInflowSettings() {
+  var bays = parseInt(document.getElementById('inflow-total-bays').value);
+  var dur  = parseInt(document.getElementById('inflow-avg-duration').value);
+  if (!bays || bays < 1) { toast('Enter a valid number of bays', true); return; }
+  if (!dur  || dur < 1)  { toast('Enter valid avg duration', true); return; }
+  saveInflowSettingsLocal({ totalBays: bays, avgDuration: dur });
+  closeModal('modal-inflow');
+  toast('✓ Bay settings saved');
+  renderHome();
+}
+
+// ── QUEUE RENDER ──────────────────────────────────
+function renderQueue(bookings) {
+  var container = document.getElementById('queue-list');
+  if (!bookings.length) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div>No bookings today at this wash point</div>';
+    return;
+  }
+  var washers = getWashers();
+  container.innerHTML = bookings.map(function(b) {
+    var isDone    = b.status === 'completed';
+    var isGuest   = b.type === 'guest';
+    var washer    = washers.find(function(w) { return w.currentBookingId == b.id; });
+    var isWashing = !!washer && !!washer.washStartedAt;
+    var badgeCls  = isDone ? 'badge-completed' : (isWashing ? 'badge-washing' : 'badge-confirmed');
+    var badgeTxt  = isDone ? '✓ Done' : (isWashing ? '🫧 Washing' : 'Confirmed');
+    var timerTxt  = '';
+    if (isWashing && washer.washStartedAt) {
+      var elapsed = Math.floor((Date.now() - washer.washStartedAt) / 60000);
+      timerTxt = '<div class="wash-timer">⏱ ' + elapsed + ' min</div>';
+    }
+
+    var washerInfo = '';
+    if (washer && !isDone) {
+      washerInfo = '<div class="washer-row">' +
+        '<div class="washer-avatar">' + washer.name.charAt(0).toUpperCase() + '</div>' +
+        '<div class="washer-info"><div class="washer-name">' + washer.name + '</div>' +
+          '<div class="washer-status">' + (isWashing ? 'Washing now' : 'Assigned') + '</div></div>' +
+        timerTxt + '</div>';
+    }
+
+    var actions = '';
+    if (!isDone) {
+      if (!washer) {
+        actions = '<div class="booking-actions">' +
+          '<button class="assign-btn" onclick="openAssignModal(' + b.id + ',\'' + (b.user_name||'Guest') + '\')">👷 Assign Washer</button>' +
+          '<button class="mark-done-btn" onclick="quickRedeem(' + b.id + ',\'' + b.user_email + '\',this)">✓ Done</button>' +
+          '</div>';
+      } else if (!isWashing) {
+        actions = '<div class="booking-actions">' +
+          '<button class="start-btn" onclick="startWash(' + b.id + ')">▶ Start Wash</button>' +
+          '<button class="mark-done-btn" onclick="quickRedeem(' + b.id + ',\'' + b.user_email + '\',this)">✓ Done</button>' +
+          '</div>';
+      } else {
+        actions = '<div class="booking-actions">' +
+          '<button class="mark-done-btn" style="flex:1" onclick="quickRedeem(' + b.id + ',\'' + b.user_email + '\',this)">✓ Mark Complete</button>' +
+          '</div>';
+      }
+    }
+
+    var cardCls = isDone ? 'done' : (isWashing ? 'washing' : 'pending');
+
+    return '<div class="booking-card ' + cardCls + '">' +
+      '<div class="booking-top">' +
+        '<div class="booking-name">' + (b.user_name || 'Guest') + '</div>' +
+        '<div class="booking-time">' + b.time + '</div>' +
+      '</div>' +
+      '<div class="booking-meta">' +
+        '<span class="booking-plate">' + (b.plate || '— —') + '</span>' +
+        '<span class="status-badge ' + badgeCls + '">' + badgeTxt + '</span>' +
+        '<span class="booking-type-badge' + (isGuest ? ' guest' : '') + '">' + (isGuest ? '⚡ Guest' : (b.plan||'—')) + '</span>' +
+      '</div>' +
+      washerInfo + actions +
+    '</div>';
+  }).join('');
+}
+
+async function quickRedeem(bookingId, userEmail, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = 'Processing...'; }
+  try {
+    await redeemBookingById(bookingId, userEmail);
+    // Free up washer
+    var washers = getWashers();
+    washers.forEach(function(w) {
+      if (w.currentBookingId == bookingId) {
+        w.todayWashes = (w.todayWashes || 0) + 1;
+        w.totalWashes = (w.totalWashes || 0) + 1;
+        w.currentBookingId = null;
+        w.washStartedAt = null;
+      }
+    });
+    saveWashers(washers);
+    toast('✓ Wash complete! Points added.');
+    renderHome();
+  } catch(e) {
+    toast('Error: ' + e.message, true);
+    if (btn) { btn.disabled = false; btn.textContent = '✓ Done'; }
+  }
+}
+
+// ── WASHER ASSIGNMENT ─────────────────────────────
+function openAssignModal(bookingId, bookingName) {
+  assigningBooking = bookingId;
+  document.getElementById('assign-booking-info').textContent = 'Car: ' + bookingName;
+  var washers = getWashers();
+  var listEl  = document.getElementById('assign-washer-list');
+  if (!washers.length) {
+    listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">No washers added yet. Go to the Washers tab to add staff.</div>';
+  } else {
+    listEl.innerHTML = washers.map(function(w) {
+      var busy = !!w.currentBookingId;
+      return '<div class="washer-select-item' + (busy ? ' unavailable' : '') + '" onclick="' + (busy ? '' : 'assignWasher(\'' + w.id + '\')') + '">' +
+        '<div class="washer-avatar">' + w.name.charAt(0).toUpperCase() + '</div>' +
+        '<div><div class="washer-select-name">' + w.name + '</div>' +
+          '<div class="washer-select-status">' + (busy ? '🔵 Currently washing' : '✅ Available') + '</div></div>' +
+        '</div>';
+    }).join('');
+  }
+  openModal('modal-assign');
+}
+
+function assignWasher(washerId) {
+  var washers = getWashers();
+  washers.forEach(function(w) {
+    if (w.id === washerId) {
+      w.currentBookingId = assigningBooking;
+      w.washStartedAt    = null; // not started yet, just assigned
+    }
+  });
+  saveWashers(washers);
+  closeModal('modal-assign');
+  toast('✓ Washer assigned');
+  renderHome();
+}
+
+function startWash(bookingId) {
+  var washers = getWashers();
+  washers.forEach(function(w) {
+    if (w.currentBookingId == bookingId) {
+      w.washStartedAt = Date.now();
+    }
+  });
+  saveWashers(washers);
+  toast('▶ Wash started — timer running');
+  renderHome();
+}
+
+// ── QR SCAN ───────────────────────────────────────
+async function startCamera() {
+  try {
+    var stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    cameraStream = stream;
+    var video = document.getElementById('qr-video');
+    video.srcObject = stream;
+    document.getElementById('qr-video-container').style.display = 'block';
+    document.getElementById('scan-prompt').style.display = 'none';
+    toast('Camera active — point at QR code');
+    scanInterval = setInterval(function() { captureFrame(video); }, 500);
+  } catch(e) {
+    toast('Camera access denied. Use plate lookup instead.', true);
+  }
+}
+
+function stopCamera() {
+  if (cameraStream) { cameraStream.getTracks().forEach(function(t) { t.stop(); }); cameraStream = null; }
+  if (scanInterval) { clearInterval(scanInterval); scanInterval = null; }
+}
+
+function captureFrame(video) {
+  if (video.readyState !== 4) return;
+  var canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+  var ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0);
+  if ('BarcodeDetector' in window) {
+    var detector = new BarcodeDetector({ formats: ['qr_code'] });
+    detector.detect(canvas).then(function(codes) {
+      if (codes.length > 0) { stopCamera(); processQRCode(codes[0].rawValue); }
+    }).catch(function(){});
+  }
+}
+
+async function processQRCode(raw) {
+  try {
+    var data = JSON.parse(raw);
+    if (!data.id || !data.user) { toast('Invalid QR code.', true); return; }
+    var bookings = await sbFetch('bookings?id=eq.' + data.id + '&select=*');
+    if (!bookings || !bookings.length) { toast('Booking not found.', true); return; }
+    var b = bookings[0];
+    if (b.status === 'completed') { toast('Already redeemed.', true); return; }
+    var users = await sbFetch('profiles?email=eq.' + encodeURIComponent(b.user_email) + '&select=*');
+    var user  = users && users[0] ? users[0] : {};
+    foundBooking = { booking: b, user: user };
+    showScanResult(b, user);
+  } catch(e) { toast('Could not read QR code.', true); }
+}
+
+function showScanResult(b, user) {
+  var carInfo = [user.car_colour, user.car_make, user.car_model].filter(Boolean).join(' ') || 'Not on file';
+  var credits = user.plan === 'Fleet' ? 'Unlimited' : (user.credits || 0) + ' remaining';
+  var el = document.getElementById('scan-result');
+  el.style.display = 'block';
+  el.innerHTML =
+    '<div class="result-name">' + (b.user_name || 'Guest') + '</div>' +
+    '<div class="result-plate">' + (user.plate || b.plate || 'NO PLATE') + '</div>' +
+    '<div class="result-row"><span>Car</span><strong>' + carInfo + '</strong></div>' +
+    '<div class="result-row"><span>Slot</span><strong>' + b.time + '</strong></div>' +
+    '<div class="result-row"><span>Plan</span><strong>' + (b.plan || (b.type === 'guest' ? '⚡ Guest Wash' : '—')) + '</strong></div>' +
+    '<div class="result-row"><span>Credits</span><strong style="color:var(--gold)">' + credits + '</strong></div>';
+  document.getElementById('scan-actions').classList.remove('hidden');
+  document.getElementById('scan-prompt').style.display = 'none';
+  document.getElementById('qr-video-container').style.display = 'none';
+}
+
+async function redeemBooking() {
+  if (!foundBooking) return;
+  setBtn('redeem-btn', true, '✓ Mark Done');
+  try {
+    await redeemBookingById(foundBooking.booking.id, foundBooking.booking.user_email);
+    toast('✓ Wash marked done! Points added.');
+    resetScan();
+  } catch(e) { toast('Error: ' + e.message, true); }
+  finally { setBtn('redeem-btn', false, '✓ Mark Done'); }
+}
+
+function resetScan() {
+  foundBooking = null;
+  document.getElementById('scan-result').style.display = 'none';
+  document.getElementById('scan-actions').classList.add('hidden');
+  document.getElementById('scan-prompt').style.display = 'block';
+  document.getElementById('qr-video-container').style.display = 'none';
+  stopCamera();
+}
+
+// ── PLATE LOOKUP ──────────────────────────────────
+async function lookupPlate() {
+  var plate = document.getElementById('plate-input').value.trim();
+  var errEl = document.getElementById('lookup-error');
+  if (!plate) { errEl.style.display = 'block'; errEl.textContent = 'Please enter a plate number.'; return; }
+  setBtn('lookup-btn', true, 'Search');
+  errEl.style.display = 'none';
+  document.getElementById('lookup-result').style.display = 'none';
+  document.getElementById('lookup-actions').classList.add('hidden');
+  try {
+    var result = await getBookingsByPlate(plate);
+    if (!result || !result.user) {
+      errEl.style.display = 'block'; errEl.textContent = 'No customer found with plate ' + plate; return;
+    }
+    if (!result.booking) {
+      errEl.style.display = 'block'; errEl.textContent = 'No booking today for ' + plate + '. Customer: ' + result.user.name; return;
+    }
+    lookupData = result;
+    var u = result.user, b = result.booking;
+    var carInfo = [u.car_colour, u.car_make, u.car_model].filter(Boolean).join(' ') || 'Not on file';
+    var credits = u.plan === 'Fleet' ? 'Unlimited' : (u.credits || 0) + ' remaining';
+    var el = document.getElementById('lookup-result');
+    el.style.display = 'block';
+    el.innerHTML =
+      '<div class="result-name">' + u.name + '</div>' +
+      '<div class="result-plate">' + (u.plate || plate) + '</div>' +
+      '<div class="result-row"><span>Car</span><strong>' + carInfo + '</strong></div>' +
+      '<div class="result-row"><span>Slot</span><strong>' + b.time + '</strong></div>' +
+      '<div class="result-row"><span>Plan</span><strong>' + (b.plan || '—') + '</strong></div>' +
+      '<div class="result-row"><span>Credits</span><strong style="color:var(--gold)">' + credits + '</strong></div>';
+    document.getElementById('lookup-actions').classList.remove('hidden');
+  } catch(e) {
+    errEl.style.display = 'block'; errEl.textContent = 'Error: ' + e.message;
+  } finally { setBtn('lookup-btn', false, 'Search'); }
+}
+
+async function redeemFromLookup() {
+  if (!lookupData) return;
+  setBtn('lookup-redeem-btn', true, '✓ Mark Done');
+  try {
+    await redeemBookingById(lookupData.booking.id, lookupData.booking.user_email);
+    toast('✓ Wash marked done! Points added.');
+    resetLookup();
+  } catch(e) { toast('Error: ' + e.message, true); }
+  finally { setBtn('lookup-redeem-btn', false, '✓ Mark Done'); }
+}
+
+function resetLookup() {
+  lookupData = null;
+  document.getElementById('plate-input').value = '';
+  document.getElementById('lookup-result').style.display = 'none';
+  document.getElementById('lookup-actions').classList.add('hidden');
+  document.getElementById('lookup-error').style.display = 'none';
+}
+
+// ── REVENUE TAB ───────────────────────────────────
+function selectPeriod(p) {
+  currentPeriod = p;
+  ['today','week','month'].forEach(function(x) {
+    document.getElementById('ptab-'+x).classList.toggle('active', x===p);
+  });
+  renderRevenue();
+}
+
+async function renderRevenue() {
+  if (!currentOperator) return;
+  try {
+    var today  = new Date().toISOString().split('T')[0];
+    var from   = today;
+    var labels = { today:'Today\'s Earnings', week:'This Week\'s Earnings', month:'This Month\'s Earnings' };
+    if (currentPeriod === 'week') {
+      var d = new Date(); d.setDate(d.getDate()-6);
+      from = d.toISOString().split('T')[0];
+    } else if (currentPeriod === 'month') {
+      var n = new Date();
+      from = new Date(n.getFullYear(), n.getMonth(), 1).toISOString().split('T')[0];
+    }
+    document.getElementById('rev-period-label').textContent = labels[currentPeriod];
+    var bookings = await getBookingsByDateRange(currentOperator.wash_point, from, today);
+    bookings = bookings || [];
+    var opRev  = sumRevenue(bookings);
+    var gross  = bookings.reduce(function(t,b){return t+(b.amount||0);},0);
+    var comm   = gross - opRev;
+    var avg    = bookings.length ? Math.round(opRev / bookings.length) : 0;
+
+    document.getElementById('rev-hero-num').textContent     = opRev.toLocaleString();
+    document.getElementById('rev-washes').textContent       = bookings.length;
+    document.getElementById('rev-gross').textContent        = gross.toLocaleString();
+    document.getElementById('rev-commission-amt').textContent = comm.toLocaleString();
+    document.getElementById('rev-avg').textContent          = avg.toLocaleString();
+
+    var logEl = document.getElementById('rev-transactions');
+    if (!bookings.length) {
+      logEl.innerHTML = '<div class="empty-state"><div class="empty-icon">💰</div>No transactions yet</div>';
+    } else {
+      logEl.innerHTML = bookings.map(function(b) {
+        return '<div class="rev-table-row completed">' +
+          '<div><div class="rev-row-name">' + (b.user_name||'Guest') + '</div>' +
+            '<div class="rev-row-plan">' + (b.plan||b.type||'—') + '</div></div>' +
+          '<div class="rev-row-time">' + (b.time||'—') + '</div>' +
+          '<div class="rev-row-amount">+' + (b.operator_amount||0).toLocaleString() + '</div>' +
+        '</div>';
+      }).join('');
+    }
+  } catch(e) { toast('Error loading revenue: ' + e.message, true); }
+}
+
+// ── WASHERS TAB ───────────────────────────────────
+function renderWashers() {
+  var washers = getWashers();
+  var el = document.getElementById('washers-list');
+  if (!washers.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">👷</div>No washers added yet<br><br>' +
+      '<button class="btn btn-gold btn-sm" onclick="showAddWasherModal()">Add First Washer</button></div>';
+    return;
+  }
+  var avatarCls = ['av0','av1','av2','av3','av4'];
+  el.innerHTML = washers.map(function(w, i) {
+    var isWashing = !!w.currentBookingId && !!w.washStartedAt;
+    var isAssigned = !!w.currentBookingId && !w.washStartedAt;
+    var cardCls = isWashing ? 'active-wash' : ((!w.currentBookingId) ? 'available' : '');
+    var badgeCls = isWashing ? 'washing' : (isAssigned ? 'washing' : 'free');
+    var badgeTxt = isWashing ? '🫧 Washing' : (isAssigned ? '📋 Assigned' : '✅ Available');
+    var elapsed  = '';
+    if (isWashing && w.washStartedAt) {
+      elapsed = Math.floor((Date.now() - w.washStartedAt) / 60000) + ' min';
+    }
+    var currentJob = '';
+    if (w.currentBookingId) {
+      currentJob = '<div class="current-job">' +
+        '<div class="current-job-label">Current Job</div>' +
+        '<div class="current-job-car">Booking #' + w.currentBookingId + (elapsed ? ' · ' + elapsed + ' elapsed' : ' · Not started') + '</div>' +
+        '</div>';
+    }
+    return '<div class="washer-card ' + cardCls + '">' +
+      '<div class="washer-card-top">' +
+        '<div class="washer-big-avatar ' + avatarCls[i % avatarCls.length] + '">' + w.name.charAt(0).toUpperCase() + '</div>' +
+        '<div class="washer-main">' +
+          '<div class="washer-card-name">' + w.name + '</div>' +
+          '<div class="washer-card-role">' + (w.role || 'Washer') + '</div>' +
+        '</div>' +
+        '<span class="washer-badge ' + badgeCls + '">' + badgeTxt + '</span>' +
+      '</div>' +
+      '<div class="washer-stats">' +
+        '<div class="washer-stat"><div class="washer-stat-num">' + (w.todayWashes||0) + '</div><div class="washer-stat-lbl">Today</div></div>' +
+        '<div class="washer-stat"><div class="washer-stat-num">' + (w.totalWashes||0) + '</div><div class="washer-stat-lbl">Total</div></div>' +
+        '<div class="washer-stat"><div class="washer-stat-num">' + (w.currentBookingId ? '1' : '0') + '</div><div class="washer-stat-lbl">Active</div></div>' +
+      '</div>' +
+      currentJob +
+      '<div style="display:flex;gap:8px;margin-top:10px">' +
+        '<button class="btn btn-outline btn-sm" onclick="editWasher(\'' + w.id + '\')">✏ Edit</button>' +
+        '<button class="btn btn-danger btn-sm" onclick="deleteWasher(\'' + w.id + '\')">🗑 Remove</button>' +
+        (w.currentBookingId ? '<button class="btn btn-info btn-sm" onclick="freeWasher(\'' + w.id + '\')">↩ Free Up</button>' : '') +
+      '</div>' +
+    '</div>';
+  }).join('') +
+  '<div class="add-washer-area" onclick="showAddWasherModal()"><div style="font-size:28px;margin-bottom:8px">+</div><div style="font-size:14px;font-weight:700;font-family:Syne,sans-serif">Add Another Washer</div></div>';
+}
+
+function showAddWasherModal() {
+  document.getElementById('washer-modal-title').textContent = 'Add Washer';
+  document.getElementById('washer-edit-id').value = '';
+  document.getElementById('washer-name-input').value = '';
+  document.getElementById('washer-role-input').value = '';
+  openModal('modal-add-washer');
+}
+
+function editWasher(id) {
+  var washers = getWashers();
+  var w = washers.find(function(x){ return x.id === id; });
+  if (!w) return;
+  document.getElementById('washer-modal-title').textContent = 'Edit Washer';
+  document.getElementById('washer-edit-id').value = id;
+  document.getElementById('washer-name-input').value = w.name;
+  document.getElementById('washer-role-input').value = w.role || '';
+  openModal('modal-add-washer');
+}
+
+function saveWasher() {
+  var name = document.getElementById('washer-name-input').value.trim();
+  var role = document.getElementById('washer-role-input').value.trim();
+  if (!name) { toast('Please enter a name', true); return; }
+  var washers = getWashers();
+  var editId  = document.getElementById('washer-edit-id').value;
+  if (editId) {
+    washers = washers.map(function(w) { return w.id === editId ? Object.assign({}, w, {name: name, role: role}) : w; });
+  } else {
+    washers.push({ id: uuid(), name: name, role: role, currentBookingId: null, washStartedAt: null, todayWashes: 0, totalWashes: 0 });
+  }
+  saveWashers(washers);
+  closeModal('modal-add-washer');
+  toast('✓ Washer saved');
+  renderWashers();
+}
+
+function deleteWasher(id) {
+  if (!confirm('Remove this washer?')) return;
+  var washers = getWashers().filter(function(w){ return w.id !== id; });
+  saveWashers(washers);
+  toast('Washer removed');
+  renderWashers();
+}
+
+function freeWasher(id) {
+  var washers = getWashers();
+  washers.forEach(function(w) { if (w.id === id) { w.currentBookingId = null; w.washStartedAt = null; } });
+  saveWashers(washers);
+  toast('Washer freed up');
+  renderWashers();
+}
+
+// ── SERVICES TAB ──────────────────────────────────
+function renderServices() {
+  var services = getServices();
+  var el = document.getElementById('services-list');
+  if (!services.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🚿</div>No services yet<br><br>' +
+      '<button class="btn btn-gold btn-sm" onclick="showServiceModal(null)">Add First Service</button></div>';
+    return;
+  }
+  el.innerHTML = services.map(function(s) {
+    return '<div class="service-card">' +
+      '<div class="service-icon-box">' + (s.icon||'🚗') + '</div>' +
+      '<div class="service-info">' +
+        '<div class="service-name">' + s.name + '</div>' +
+        '<div class="service-desc">' + (s.desc||'') + '</div>' +
+        '<div class="service-duration">⏱ ' + (s.duration||'—') + ' min</div>' +
+      '</div>' +
+      '<div style="text-align:right">' +
+        '<div class="service-price">KSh ' + Number(s.price).toLocaleString() + '</div>' +
+        '<div style="display:flex;gap:6px;margin-top:8px;justify-content:flex-end">' +
+          '<button class="icon-btn edit" onclick="showServiceModal(\'' + s.id + '\')">✏</button>' +
+          '<button class="icon-btn del" onclick="deleteService(\'' + s.id + '\')">🗑</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('') +
+  '<div style="margin-top:16px">' +
+    '<button class="btn btn-outline" onclick="showServiceModal(null)">+ Add Another Service</button>' +
+  '</div>';
+}
+
+function showServiceModal(id) {
+  var services = getServices();
+  var s = id ? services.find(function(x){ return x.id === id; }) : null;
+  document.getElementById('service-modal-title').textContent = s ? 'Edit Service' : 'Add Service';
+  document.getElementById('service-edit-id').value   = s ? s.id : '';
+  document.getElementById('svc-name').value     = s ? s.name : '';
+  document.getElementById('svc-desc').value     = s ? s.desc : '';
+  document.getElementById('svc-price').value    = s ? s.price : '';
+  document.getElementById('svc-duration').value = s ? s.duration : '';
+  document.getElementById('svc-icon').value     = s ? s.icon : '🚗';
+  openModal('modal-service');
+}
+
+function saveService() {
+  var name     = document.getElementById('svc-name').value.trim();
+  var desc     = document.getElementById('svc-desc').value.trim();
+  var price    = parseFloat(document.getElementById('svc-price').value);
+  var duration = parseInt(document.getElementById('svc-duration').value);
+  var icon     = document.getElementById('svc-icon').value.trim() || '🚗';
+  if (!name) { toast('Please enter a service name', true); return; }
+  if (isNaN(price) || price < 0) { toast('Please enter a valid price', true); return; }
+  var services = getServices();
+  var editId   = document.getElementById('service-edit-id').value;
+  if (editId) {
+    services = services.map(function(s) {
+      return s.id === editId ? { id: s.id, name: name, desc: desc, price: price, duration: duration, icon: icon } : s;
+    });
+  } else {
+    services.push({ id: uuid(), name: name, desc: desc, price: price, duration: duration, icon: icon });
+  }
+  saveServices(services);
+  closeModal('modal-service');
+  toast('✓ Service saved');
+  renderServices();
+}
+
+function deleteService(id) {
+  if (!confirm('Delete this service?')) return;
+  var services = getServices().filter(function(s){ return s.id !== id; });
+  saveServices(services);
+  toast('Service deleted');
+  renderServices();
+}
+</script>
+</body>
+</html>
