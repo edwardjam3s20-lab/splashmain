@@ -178,6 +178,24 @@ export default function AdminPage() {
   }
 
   // ── DELETE OPERATOR ───────────────────────────────────────────────
+  async function handleResetOperatorPassword(op) {
+    const password = prompt(`New password for ${op.email}:`)
+    if (!password || password.length < 6) {
+      if (password !== null) showToast('Password must be at least 6 characters', true)
+      return
+    }
+    try {
+      const res = await fetch('/api/operators', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: op.id, password }),
+      })
+      const json = await res.json()
+      if (!res.ok) { showToast(json.error || 'Reset failed', true); return }
+      showToast('Operator password updated — they can sign in now.')
+    } catch (e) { showToast('Network error', true) }
+  }
+
   async function handleDeleteOperator(id) {
     if (!confirm('Remove this operator? They will lose access immediately.')) return
     try {
@@ -434,7 +452,8 @@ export default function AdminPage() {
                           <div className="op-card-name">{op.full_name || op.name || '—'}</div>
                           <div className="op-card-email">{op.email}</div>
                           <div className="op-card-point">📍 {op.wash_point}</div>
-                          <button className="btn btn-danger" style={{padding:'6px 14px',fontSize:12,width:'100%',marginTop:8}} onClick={() => handleDeleteOperator(op.id)}>Remove</button>
+                          <button className="btn btn-outline" style={{padding:'6px 14px',fontSize:12,width:'100%',marginTop:8}} onClick={() => handleResetOperatorPassword(op)}>Reset password</button>
+                          <button className="btn btn-danger" style={{padding:'6px 14px',fontSize:12,width:'100%',marginTop:6}} onClick={() => handleDeleteOperator(op.id)}>Remove</button>
                         </div>
                       ))
                   }

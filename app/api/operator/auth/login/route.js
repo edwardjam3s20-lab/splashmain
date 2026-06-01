@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server'
-import { getSupabaseAdmin } from '@/lib/supabase'
 import { checkRateLimit, resetRateLimit } from '@/lib/rateLimit'
-import { verifyOperatorPassword } from '@/lib/operatorPassword'
+import {
+  verifyOperatorPassword,
+  hashOperatorPassword,
+  isPlaintextPassword,
+} from '@/lib/operatorPassword'
+import { loadOperatorByEmail } from '@/lib/loadOperator'
+import { getSupabaseAdmin } from '@/lib/supabase'
 import {
   createOperatorSession,
   setOperatorSessionCookie,
@@ -19,19 +24,65 @@ export async function POST(request) {
   }
 
   const { email, password } = await request.json()
-  if (!email || !password) {
+  const normalizedEmail = String(email || '').toLowerCase().trim()
+  const normalizedPassword = String(password || '').trim()
+
+  if (!normalizedEmail || !normalizedPassword) {
     return NextResponse.json({ error: 'Email and password required.' }, { status: 400 })
   }
 
-  const supabase = getSupabaseAdmin()
-  const { data: op, error } = await supabase
-    .from('operators')
-    .select('id,name,email,password,wash_point,wash_point_id,status')
-    .eq('email', email.toLowerCase())
-    .single()
+  const { op, error: loadError } = await loadOperatorByEmail(normalizedEmail)
+  if (loadError) {
+    console.error('[operator login] load error:', loadError.message)
+    return NextResponse.json({ error: 'Could not sign in. Try again.' }, { status: 500 })
+  }
+  if (!op) {
+    const supabase = getSupabaseAdmin()
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('email')
+      .eq('email', normalizedEmail)
+      .maybeSingle()
 
-  if (error || !op || !verifyOperatorPassword(password, op.password)) {
-    return NextResponse.json({ error: 'Invalid credentials.' }, { status: 401 })
+    if (profile) {
+      return NextResponse.json({
+        error:
+          'This email is for the customer app, not the operator console. Ask admin to add you as an operator (or use a different operator email).',
+      }, { status: 401 })
+    }
+
+    return NextResponse.json({
+      error: 'No operator account for this email. Ask admin to add you under Operators.',
+    }, { status: 401 })
+  }
+
+  if (!verifyOperatorPassword(normalizedPassword, op.password)) {
+    const supabase = getSupabaseAdmin()
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('password')
+      .eq('email', normalizedEmail)
+      .maybeSingle()
+
+    if (profile?.password === normalizedPassword) {
+      return NextResponse.json({
+        error:
+          'That is your customer app password. Operator login uses a separate password — ask admin to click “Reset password” on your operator card.',
+      }, { status: 401 })
+    }
+
+    return NextResponse.json({
+      error:
+        'Wrong operator password. In Admin → Operators → “Reset password”, set a new one, then try again.',
+    }, { status: 401 })
+  }
+
+  if (isPlaintextPassword(op.password)) {
+    const supabase = getSupabaseAdmin()
+    await supabase
+      .from('operators')
+      .update({ password: hashOperatorPassword(normalizedPassword) })
+      .eq('id', op.id)
   }
 
   resetRateLimit(`op:${ip}`)

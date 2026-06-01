@@ -18,7 +18,7 @@ export async function PATCH(request) {
     .from('operators')
     .update({ status })
     .eq('id', result.operator.id)
-    .select('id,name,email,wash_point,wash_point_id,status')
+    .select('id,name,email,wash_point,status')
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
