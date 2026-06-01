@@ -2,7 +2,7 @@
   "name": "SplashPass Ops",
   "short_name": "SP Ops",
   "description": "SplashPass Operator Console — manage bookings and wash point status",
-  "start_url": "/operator.html",
+  "start_url": "/operator_v4.html",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
@@ -31,3 +31,4 @@
   "categories": ["business", "utilities"],
   "lang": "en"
 }
+
