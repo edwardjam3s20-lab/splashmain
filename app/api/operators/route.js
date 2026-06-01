@@ -65,15 +65,13 @@ export async function PATCH(request) {
 
   const supabase = getSupabaseAdmin()
   const hashedPassword = hashOperatorPassword(password)
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from('operators')
     .update({ password: hashedPassword })
     .eq('id', id)
-    .select('id,name,email,wash_point,status')
-    .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ operator: data })
+  return NextResponse.json({ success: true })
 }
 
 export async function DELETE(request) {

@@ -1,5 +1,9 @@
 -- Run once in Supabase SQL editor (SplashPass operator improvements)
 
+-- Open / paused toggle on operator app home screen
+alter table operators
+  add column if not exists status text default 'open';
+
 -- Link operators to wash_points by ID (admin can set wash_point_id when creating operators)
 alter table operators
   add column if not exists wash_point_id bigint references wash_points(id);
