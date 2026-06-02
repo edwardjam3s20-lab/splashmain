@@ -1,8 +1,8 @@
 import './globals.css'
 
 export const metadata = {
-  title: 'SplashPass Admin',
-  description: 'SplashPass Admin Panel',
+  title: 'SplashPass',
+  description: 'SplashPass — car wash membership',
 }
 
 export default function RootLayout({ children }) {
