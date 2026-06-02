@@ -1,10 +1,11 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import Intelligence from './splashpass-admin-intelligence'
+import AdminDashboard from './AdminDashboard'
 
 export default function AdminPage() {
   const [screen, setScreen] = useState('login')
-  const [adminTab, setAdminTab] = useState('overview')
+  const [adminTab, setAdminTab] = useState('dashboard')
   const [loginData, setLoginData] = useState({ email: '', password: '' })
   const [loginError, setLoginError] = useState('')
   const [loginLoading, setLoginLoading] = useState(false)
@@ -136,7 +137,7 @@ export default function AdminPage() {
     await fetch('/api/auth/logout', { method:'POST' })
     clearInterval(countdownRef.current)
     setScreen('login')
-    setAdminTab('overview')
+    setAdminTab('dashboard')
     setLoginData({ email:'', password:'' })
     setAdminEmail('')
     setData({ operators:[], subscribers:[], bookings:[], washPoints:[] })
@@ -265,8 +266,6 @@ export default function AdminPage() {
     } catch(e) { showToast('Network error', true) }
   }
 
-  const rev = data.subscribers.reduce((s,u) => s + (u.plan_price ? parseInt(u.plan_price)*4 : 0), 0)
-
   // ── MODAL OVERLAY COMPONENT ───────────────────────────────────────
   function Modal({ onClose, children }) {
     useEffect(() => {
@@ -357,145 +356,21 @@ export default function AdminPage() {
 
       {/* ADMIN DASHBOARD */}
       {screen === 'admin' && (
-        <div>
-          {/* TOP NAV */}
-          <div className="admin-nav">
-            <div style={{display:'flex',alignItems:'center',gap:10}}>
-              <div className="admin-nav-icon">S</div>
-              <div>
-                <div style={{fontFamily:'Syne,sans-serif',fontSize:16,fontWeight:800}}>SplashPass</div>
-                <div style={{fontSize:11,color:'var(--gold)',fontWeight:700}}>Admin Panel</div>
-              </div>
-            </div>
-            <div style={{display:'flex',alignItems:'center',gap:8}}>
-              <span style={{fontSize:12,color:'var(--grey)',marginRight:4}}>{adminEmail}</span>
-              <button className="btn btn-outline" onClick={handleLogout} style={{padding:'8px 16px',fontSize:13}}>Log Out</button>
-            </div>
-          </div>
-
-          {/* TAB BAR */}
-          <div style={{
-            display:'flex', gap:4, padding:'0 24px',
-            background:'var(--navy2,#0d1117)',
-            borderBottom:'1px solid rgba(255,255,255,.07)'
-          }}>
-            {[
-              { id:'overview', label:'⚙️  Overview' },
-              { id:'intelligence', label:'📊  Intelligence' },
-            ].map(t => (
-              <button
-                key={t.id}
-                onClick={() => setAdminTab(t.id)}
-                style={{
-                  padding:'14px 20px', fontSize:13, fontWeight:700,
-                  background:'none', border:'none', cursor:'pointer',
-                  borderBottom: adminTab === t.id ? '2px solid var(--gold,#f5c518)' : '2px solid transparent',
-                  color: adminTab === t.id ? 'var(--gold,#f5c518)' : 'var(--grey,#888)',
-                  transition:'all .15s', fontFamily:'inherit',
-                  pointerEvents:'all', position:'relative', zIndex:1
-                }}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-
-          {/* OVERVIEW TAB */}
-          {adminTab === 'overview' && (
-            <div className="admin-body">
-              {/* STATS */}
-              <div className="admin-stats">
-                <div className="stat-card"><div className="stat-num">{data.operators.length}</div><div className="stat-label">Operators</div></div>
-                <div className="stat-card"><div className="stat-num">{data.subscribers.length}</div><div className="stat-label">Subscribers</div></div>
-                <div className="stat-card"><div className="stat-num">{data.bookings.length}</div><div className="stat-label">Total Bookings</div></div>
-                <div className="stat-card"><div className="stat-num" style={{fontSize:20}}>KSh {rev.toLocaleString()}</div><div className="stat-label">Est. Revenue</div></div>
-              </div>
-
-              {/* WASH POINTS */}
-              <div className="section">
-                <div className="section-header">
-                  <div className="section-title">Wash Points</div>
-                  <button className="btn btn-gold" onClick={() => setAddPointModal(true)}>+ Add Wash Point</button>
-                </div>
-                <div className="op-grid">
-                  {dataLoading
-                    ? <div style={{color:'var(--grey)',fontSize:14}}>Loading...</div>
-                    : !data.washPoints.length
-                      ? <div style={{color:'var(--grey)',fontSize:14}}>No wash points yet.</div>
-                      : data.washPoints.map(p => (
-                        <div key={p.id} className="op-card">
-                          {p.image_url && <img src={p.image_url} style={{width:'100%',height:110,objectFit:'cover',borderRadius:8,marginBottom:10,border:'1px solid rgba(255,255,255,.06)'}} alt="" />}
-                          <div className="op-card-name">💧 {p.name}</div>
-                          <div className="op-card-email">{p.area}</div>
-                          <div className="op-card-point" style={{color:'var(--grey)'}}>📌 {parseFloat(p.lat).toFixed(4)}, {parseFloat(p.lng).toFixed(4)}</div>
-                          {p.description && <div style={{fontSize:12,color:'var(--grey)',marginBottom:10,lineHeight:1.4}}>{p.description}</div>}
-                          <button className="btn btn-danger" style={{padding:'6px 14px',fontSize:12,width:'100%'}} onClick={() => handleDeleteWashPoint(p.id)}>Remove</button>
-                        </div>
-                      ))
-                  }
-                </div>
-              </div>
-
-              {/* OPERATORS */}
-              <div className="section">
-                <div className="section-header">
-                  <div className="section-title">Wash Point Operators</div>
-                  <button className="btn btn-gold" onClick={() => setCreateModal(true)}>+ Add Operator</button>
-                </div>
-                <div className="op-grid">
-                  {dataLoading
-                    ? <div style={{color:'var(--grey)',fontSize:14}}>Loading...</div>
-                    : !data.operators.length
-                      ? <div style={{color:'var(--grey)',fontSize:14}}>No operators yet.</div>
-                      : data.operators.map(op => (
-                        <div key={op.id} className="op-card">
-                          <div className="op-card-name">{op.full_name || op.name || '—'}</div>
-                          <div className="op-card-email">{op.email}</div>
-                          <div className="op-card-point">📍 {op.wash_point}</div>
-                          <button className="btn btn-outline" style={{padding:'6px 14px',fontSize:12,width:'100%',marginTop:8}} onClick={() => handleResetOperatorPassword(op)}>Reset password</button>
-                          <button className="btn btn-danger" style={{padding:'6px 14px',fontSize:12,width:'100%',marginTop:6}} onClick={() => handleDeleteOperator(op.id)}>Remove</button>
-                        </div>
-                      ))
-                  }
-                </div>
-              </div>
-
-              {/* SUBSCRIBERS */}
-              <div className="section">
-                <div className="section-header">
-                  <div className="section-title">Subscribers</div>
-                  <button className="btn btn-outline" onClick={loadData}>↻ Refresh</button>
-                </div>
-                <div style={{overflowX:'auto'}}>
-                  <table className="sub-table">
-                    <thead>
-                      <tr><th>Name</th><th>Phone</th><th>Plan</th><th>Credits</th><th>Status</th><th>Plate</th></tr>
-                    </thead>
-                    <tbody>
-                      {dataLoading ? (
-                        <tr><td colSpan={6} style={{color:'var(--grey)',textAlign:'center',padding:20}}>Loading...</td></tr>
-                      ) : !data.subscribers.length ? (
-                        <tr><td colSpan={6} style={{color:'var(--grey)',textAlign:'center',padding:20}}>No subscribers yet</td></tr>
-                      ) : data.subscribers.map(u => (
-                        <tr key={u.id}>
-                          <td>{u.name||'—'}</td>
-                          <td>{u.phone||'—'}</td>
-                          <td>{u.plan||'—'}</td>
-                          <td style={{color:'var(--gold)',fontWeight:700}}>{u.plan==='Fleet'?'∞':(u.credits||0)}</td>
-                          <td><span className={`status-badge ${u.sub_status==='active'?'badge-active':'badge-pending'}`}>{u.sub_status||'pending'}</span></td>
-                          <td style={{fontWeight:700,letterSpacing:1}}>{u.plate||'—'}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* INTELLIGENCE TAB */}
-          {adminTab === 'intelligence' && <Intelligence />}
-        </div>
+        <AdminDashboard
+          adminEmail={adminEmail}
+          adminTab={adminTab}
+          setAdminTab={setAdminTab}
+          data={data}
+          dataLoading={dataLoading}
+          loadData={loadData}
+          onLogout={handleLogout}
+          onAddWashPoint={() => setAddPointModal(true)}
+          onAddOperator={() => setCreateModal(true)}
+          onDeleteWashPoint={handleDeleteWashPoint}
+          onDeleteOperator={handleDeleteOperator}
+          onResetOperatorPassword={handleResetOperatorPassword}
+          analyticsPanel={<Intelligence />}
+        />
       )}
 
       {/* CREATE OPERATOR MODAL */}

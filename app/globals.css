@@ -1,8 +1,9 @@
 :root {
-  --navy: #0d1b2a; --navy2: #152236; --navy3: #1e3050;
-  --gold: #f5a623; --white: #f0f4f8; --grey: #8a9bb0;
-  --success: #2ecc71; --danger: #e74c3c;
+  --navy: #0b0e14; --navy2: #12161f; --navy3: #181e2a;
+  --gold: #f59e0b; --white: #f0f4f8; --grey: #8a9bb0;
+  --success: #10b981; --danger: #ef4444;
 }
+html, body { background: #0b0e14; }
 * { margin:0; padding:0; box-sizing:border-box; }
 h1,h2,h3 { font-family:'Syne',sans-serif; }
 .hidden { display:none !important; }
