@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="/splashpass-commission.js"></script>
 <style>
 :root {
   /* ── Light theme palette from mockup ── */
@@ -1078,7 +1079,7 @@ var SUPABASE_URL = 'https://msdvyiqjoogafzyaoycg.supabase.co';
 var SUPABASE_KEY = 'sb_publishable_N_g24aU7TLHLNeu72gnfeg_1d7OleFW';
 var SLOTS = ['7:00 AM','8:00 AM','9:00 AM','10:00 AM','11:00 AM','12:00 PM','1:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM'];
 var APP_BOOKING_FEE = 30; // KSh fee per booking during trial
-var WASH_POINT_CUT  = 0.20; // 20% app commission on every wash
+// Commission: Tier 1 = 20% platform / 80% operator; Tier 2 = 10% / 90% (see splashpass-commission.js)
 
 // ── SUBSCRIPTION TIERS ───────────────────────────
 var SUB_PLANS = [
@@ -1152,7 +1153,8 @@ async function fetchWashPoints() {
         image_url: r.image_url || null,
         status: r.status || 'open',
         // Services this wash point offers (set by operator in admin panel)
-        services: services.filter(function(s) { return s.wash_point_id === r.id; })
+        services: services.filter(function(s) { return s.wash_point_id === r.id; }),
+        commission_tier: r.commission_tier != null ? Number(r.commission_tier) : 1
       };
     });
   } catch(e) {
@@ -1756,7 +1758,14 @@ async function confirmBooking() {
   var washPrice  = Number(selectedService.price);
   var onTrial    = isOnTrial(currentUser);
   var totalAmount= onTrial ? washPrice + APP_BOOKING_FEE : washPrice;
-  var opAmount   = Math.round(washPrice * (1 - WASH_POINT_CUT));
+  var tier = window.SplashPassCommission
+    ? window.SplashPassCommission.resolveTier(null, selectedPoint.commission_tier)
+    : 1;
+  var split = window.SplashPassCommission
+    ? window.SplashPassCommission.splitWashPrice(washPrice, tier)
+    : { operatorAmount: Math.round(washPrice * 0.8), platformAmount: Math.round(washPrice * 0.2), tier: 1 };
+  var opAmount = split.operatorAmount;
+  var splashCommission = split.platformAmount;
 
   setBtn('book-btn', true, 'Confirm Booking');
   try {
@@ -1777,6 +1786,8 @@ async function confirmBooking() {
       app_fee:         onTrial ? APP_BOOKING_FEE : 0,
       total_amount:    totalAmount,
       operator_amount: opAmount,
+      splash_commission: splashCommission,
+      commission_tier: split.tier,
       booking_type:    onTrial ? 'trial' : 'subscription',
       booking_code:    code
     });

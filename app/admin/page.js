@@ -19,7 +19,7 @@ export default function AdminPage() {
   const [toast, setToast] = useState({ msg:'', show:false, error:false })
   const [createModal, setCreateModal] = useState(false)
   const [addPointModal, setAddPointModal] = useState(false)
-  const [newOp, setNewOp] = useState({ name:'', email:'', password:'', wash_point:'', wash_point_id:'' })
+  const [newOp, setNewOp] = useState({ name:'', email:'', password:'', wash_point:'', wash_point_id:'', commission_tier:'1' })
   const [createError, setCreateError] = useState('')
   const [createLoading, setCreateLoading] = useState(false)
   const [newPoint, setNewPoint] = useState({ name:'', area:'', lat:'', lng:'', description:'' })
@@ -38,7 +38,7 @@ export default function AdminPage() {
   function closeCreateModal() {
     setCreateModal(false)
     setCreateError('')
-    setNewOp({ name:'', email:'', password:'', wash_point:'', wash_point_id:'' })
+    setNewOp({ name:'', email:'', password:'', wash_point:'', wash_point_id:'', commission_tier:'1' })
   }
 
   function closeAddPointModal() {
@@ -195,6 +195,25 @@ export default function AdminPage() {
       if (!res.ok) { showToast(json.error || 'Reset failed', true); return }
       showToast('Operator password updated — they can sign in now.')
     } catch (e) { showToast('Network error', true) }
+  }
+
+  async function handleAssignOperatorTier(opId, commission_tier) {
+    try {
+      const res = await fetch('/api/operators', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: opId, commission_tier }),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        showToast(json.error || 'Could not update tier', true)
+        return
+      }
+      showToast('Commission tier updated.')
+      loadData()
+    } catch (e) {
+      showToast('Network error', true)
+    }
   }
 
   async function handleAssignOperatorWashPoint(opId, wash_point, wash_point_id) {
@@ -393,6 +412,7 @@ export default function AdminPage() {
           onDeleteOperator={handleDeleteOperator}
           onResetOperatorPassword={handleResetOperatorPassword}
           onAssignOperatorWashPoint={handleAssignOperatorWashPoint}
+          onAssignOperatorTier={handleAssignOperatorTier}
           analyticsPanel={<Intelligence />}
         />
       )}
@@ -421,6 +441,13 @@ export default function AdminPage() {
             }}>
               <option value="">Select wash point</option>
               {data.washPoints.map(p=><option key={p.id} value={p.name}>{p.name}</option>)}
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Commission tier</label>
+            <select value={newOp.commission_tier} onChange={e=>setNewOp({...newOp, commission_tier: e.target.value})}>
+              <option value="1">Tier 1 — operator 80% / SplashPass 20%</option>
+              <option value="2">Tier 2 — operator 90% / SplashPass 10%</option>
             </select>
           </div>
           {createError && <div className="form-error">{createError}</div>}

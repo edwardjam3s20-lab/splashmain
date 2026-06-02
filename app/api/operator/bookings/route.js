@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase'
 import { requireOperator } from '@/lib/requireOperator'
+import { enrichBookingCommission } from '@/lib/commission'
 
 export async function GET(request) {
   const result = await requireOperator()
@@ -33,5 +34,11 @@ export async function GET(request) {
   const { data, error } = await query
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  return NextResponse.json({ bookings: data || [] })
+  const tier = result.operator.commission_tier ?? 1
+  const bookings = (data || []).map((b) => enrichBookingCommission(b, tier))
+
+  return NextResponse.json({
+    bookings,
+    commission_tier: tier,
+  })
 }

@@ -44,6 +44,10 @@ function isOperatorApi(pathname) {
   return pathname.startsWith('/api/operator')
 }
 
+function isAdminPaymentsApi(pathname) {
+  return pathname.startsWith('/api/operator-payments')
+}
+
 export async function middleware(request) {
   const hostname = hostnameFromRequest(request)
   const site = getSiteFromHost(hostname, {
@@ -58,6 +62,20 @@ export async function middleware(request) {
   const url = request.nextUrl.clone()
 
   if (pathname.startsWith('/api')) {
+    if (isAdminPaymentsApi(pathname)) {
+      if (site !== SITE.ADMIN) {
+        return NextResponse.json(
+          { error: 'Operator payments API is only available on the admin subdomain.' },
+          { status: 403 }
+        )
+      }
+      const session = await verifyAdminSession(request)
+      if (!session) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+      return NextResponse.next()
+    }
+
     if (isAdminProtectedApi(pathname) || isAdminAuthApi(pathname)) {
       if (site !== SITE.ADMIN) {
         return NextResponse.json(

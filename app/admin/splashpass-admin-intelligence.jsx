@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { enrichBookingCommission, COMMISSION_TIERS } from "@/lib/commission";
 
 // ─── CONFIG ──────────────────────────────────────────────────────────────────
 // Replace these with your actual Supabase credentials
@@ -445,7 +446,7 @@ function RevenueTab({ bookings }) {
         <div className="stat-card purple">
           <div className="stat-label">Commission</div>
           <div className="stat-value">{fmt(commissionRevenue)}</div>
-          <div className="stat-sub">20% of wash prices</div>
+          <div className="stat-sub">Tier 1: 20% · Tier 2: 10% of wash price</div>
         </div>
         <div className="stat-card blue">
           <div className="stat-label">Total Bookings</div>
@@ -607,6 +608,24 @@ function BookingsTab({ bookings }) {
 // ════════════════════════════════════════════════════════════════════════════
 //  TAB: OPERATOR PAYMENTS
 // ════════════════════════════════════════════════════════════════════════════
+function isEarnedBooking(b) {
+  return (
+    b.payment_status === "paid" ||
+    b.payment_status === "completed" ||
+    b.status === "completed"
+  );
+}
+
+function bookingOperatorShare(b, operatorTier) {
+  const enriched = enrichBookingCommission(b, b.commission_tier ?? operatorTier ?? 1);
+  return enriched.operator_amount || 0;
+}
+
+function bookingPlatformShare(b, operatorTier) {
+  const enriched = enrichBookingCommission(b, b.commission_tier ?? operatorTier ?? 1);
+  return enriched.splash_commission || 0;
+}
+
 function OperatorPaymentsTab({ bookings, operators, opPayments, onPaymentRecorded }) {
   const [modal, setModal] = useState(null); // { operator, owed }
   const [payForm, setPayForm] = useState({ amount: "", method: "mpesa", reference: "", notes: "" });
@@ -615,11 +634,13 @@ function OperatorPaymentsTab({ bookings, operators, opPayments, onPaymentRecorde
 
   // Build per-operator earnings from bookings
   const opEarnings = {};
-  bookings.filter(b => b.payment_status === "paid" || b.payment_status === "completed").forEach(b => {
+  bookings.filter(isEarnedBooking).forEach(b => {
     const loc = b.location || "Unknown";
+    const op = operators.find((o) => o.wash_point === loc);
+    const tier = op?.commission_tier ?? b.commission_tier ?? 1;
     if (!opEarnings[loc]) opEarnings[loc] = { totalEarned: 0, bookings: 0, commission: 0 };
-    opEarnings[loc].totalEarned += b.operator_amount || 0;
-    opEarnings[loc].commission += (b.amount || 0) - (b.operator_amount || 0);
+    opEarnings[loc].totalEarned += bookingOperatorShare(b, tier);
+    opEarnings[loc].commission += bookingPlatformShare(b, tier);
     opEarnings[loc].bookings += 1;
   });
 
@@ -633,7 +654,19 @@ function OperatorPaymentsTab({ bookings, operators, opPayments, onPaymentRecorde
     const loc = op.wash_point || op.name;
     const earned = opEarnings[loc] || { totalEarned: 0, bookings: 0, commission: 0 };
     const paid = paidByOp[loc] || 0;
-    return { ...op, loc, earned: earned.totalEarned, bookings: earned.bookings, commission: earned.commission, paid, owed: earned.totalEarned - paid };
+    const tier = op.commission_tier ?? 1;
+    const tierCfg = COMMISSION_TIERS[tier] || COMMISSION_TIERS[1];
+    return {
+      ...op,
+      loc,
+      earned: earned.totalEarned,
+      bookings: earned.bookings,
+      commission: earned.commission,
+      paid,
+      owed: earned.totalEarned - paid,
+      tierLabel: tierCfg.label,
+      splitLabel: `${tierCfg.operatorLabel} / ${tierCfg.platformLabel}`,
+    };
   });
 
   // Also include locations in bookings not mapped to operators
@@ -641,7 +674,18 @@ function OperatorPaymentsTab({ bookings, operators, opPayments, onPaymentRecorde
     if (!opList.find(o => o.loc === loc)) {
       const earned = opEarnings[loc];
       const paid = paidByOp[loc] || 0;
-      opList.push({ id: loc, name: loc, loc, earned: earned.totalEarned, bookings: earned.bookings, commission: earned.commission, paid, owed: earned.totalEarned - paid });
+      opList.push({
+        id: loc,
+        name: loc,
+        loc,
+        earned: earned.totalEarned,
+        bookings: earned.bookings,
+        commission: earned.commission,
+        paid,
+        owed: earned.totalEarned - paid,
+        tierLabel: "Tier 1",
+        splitLabel: "80% / 20%",
+      });
     }
   });
 
@@ -651,15 +695,22 @@ function OperatorPaymentsTab({ bookings, operators, opPayments, onPaymentRecorde
   async function recordPayment() {
     setSaving(true);
     try {
-      await postTable("operator_payments", {
-        wash_point: modal.operator.loc,
-        operator_name: modal.operator.name,
-        amount: Number(payForm.amount),
-        method: payForm.method,
-        reference: payForm.reference,
-        notes: payForm.notes,
-        paid_at: new Date().toISOString(),
+      const res = await fetch("/api/operator-payments", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          wash_point: modal.operator.loc,
+          operator_name: modal.operator.name,
+          operator_id: modal.operator.id,
+          amount: Number(payForm.amount),
+          method: payForm.method,
+          reference: payForm.reference,
+          notes: payForm.notes,
+        }),
       });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Payment failed");
       onPaymentRecorded();
       setModal(null);
       setPayForm({ amount: "", method: "mpesa", reference: "", notes: "" });
@@ -674,11 +725,11 @@ function OperatorPaymentsTab({ bookings, operators, opPayments, onPaymentRecorde
   return (
     <div>
       <div className="notice">
-        <strong>Note:</strong> This requires an <code>operator_payments</code> table. Run the SQL below once in Supabase if you haven't already.
+        <strong>Commission:</strong> Tier 1 — operators earn <strong>80%</strong> per wash (SplashPass 20%). Tier 2 — operators earn <strong>90%</strong> (SplashPass 10%). Set tier under <strong>Operators</strong> in the admin sidebar. Record M-Pesa (or other) payouts below.
       </div>
 
       <div style={{ background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "14px 18px", marginBottom: 20, fontSize: 12, fontFamily: "DM Mono, monospace", color: "var(--muted)" }}>
-        {`create table if not exists operator_payments (\n  id bigint generated always as identity primary key,\n  wash_point text not null,\n  operator_name text,\n  amount integer not null,\n  method text default 'mpesa',\n  reference text,\n  notes text,\n  paid_at timestamptz default now()\n);`}
+        First-time setup: run <code>supabase/operator_commission.sql</code> in the Supabase SQL editor (creates <code>operator_payments</code> and tier columns).
       </div>
 
       <div className="stats-grid">
@@ -701,6 +752,9 @@ function OperatorPaymentsTab({ bookings, operators, opPayments, onPaymentRecorde
               <div>
                 <div className="op-name">{op.name}</div>
                 <div className="op-location">📍 {op.loc}</div>
+                <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 4 }}>
+                  {op.tierLabel || "Tier 1"} · {op.splitLabel || "80% / 20%"}
+                </div>
               </div>
               {op.owed > 0
                 ? <span className="badge badge-orange">Owes {fmt(op.owed)}</span>
@@ -1021,9 +1075,12 @@ export default function App() {
 
       // operator_payments may not exist yet
       try {
-        const opp = await fetchTable("operator_payments", "?order=paid_at.desc");
-        setOpPayments(opp);
-      } catch { setOpPayments([]); }
+        const payRes = await fetch("/api/operator-payments", { credentials: "include" });
+        const payJson = await payRes.json();
+        setOpPayments(payRes.ok ? payJson.payments || [] : []);
+      } catch {
+        setOpPayments([]);
+      }
 
       setLastRefresh(new Date());
     } catch (e) {

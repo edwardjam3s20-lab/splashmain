@@ -12,6 +12,7 @@
 <title>SplashPass Ops</title>
 <link rel="stylesheet" href="/operator-ui.css">
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<script src="/splashpass-commission.js"></script>
 <style>
 /* legacy hooks — minimal */
 :root {
@@ -805,6 +806,7 @@ textarea { resize:vertical; min-height:80px; }
         <button type="button" class="period-pill" id="ptab-month" onclick="selectPeriod('month')">Month</button>
       </div>
       <p style="font-size:0.75rem;color:var(--slate-500);margin-bottom:4px" id="rev-period-label">This Week</p>
+      <p style="font-size:0.6875rem;color:var(--gold);font-weight:700;margin-bottom:6px" id="rev-tier-badge">Tier 1 · You keep 80%</p>
       <p style="font-size:1.75rem;font-weight:700;margin-bottom:12px">KES <span id="rev-hero-num">—</span></p>
       <div class="bar-chart" id="earnings-chart"></div>
     </div>
@@ -828,7 +830,7 @@ textarea { resize:vertical; min-height:80px; }
       </div>
       <div class="rev-item">
         <div class="rev-item-num" id="rev-commission-amt" style="color:var(--warn)">—</div>
-        <div class="rev-item-lbl">Commission</div>
+        <div class="rev-item-lbl" id="rev-platform-lbl">Platform share</div>
       </div>
       <div class="rev-item">
         <div class="rev-item-num" id="rev-avg" style="color:var(--info)">—</div>
@@ -1235,8 +1237,20 @@ function sanitizeOperator(op) {
     email: op.email,
     wash_point: op.wash_point,
     wash_point_id: op.wash_point_id || null,
-    status: op.status || 'open'
+    status: op.status || 'open',
+    commission_tier: op.commission_tier != null ? Number(op.commission_tier) : 1
   };
+}
+
+function getOperatorCommissionTier() {
+  return (currentOperator && currentOperator.commission_tier) ? Number(currentOperator.commission_tier) : 1;
+}
+
+function commissionLabelsForTier(tier) {
+  if (!window.SplashPassCommission) return { operatorLabel: '80%', platformLabel: '20%', tierLabel: 'Tier 1' };
+  var t = window.SplashPassCommission.normalizeTier(tier);
+  var cfg = window.SplashPassCommission.TIERS[t];
+  return { operatorLabel: cfg.operatorLabel, platformLabel: cfg.platformLabel, tierLabel: cfg.label };
 }
 
 function startHomePolling() {
@@ -1965,6 +1979,12 @@ function renderEarningsChart(bookings) {
 
 async function renderRevenue() {
   if (!currentOperator) return;
+  var tier = getOperatorCommissionTier();
+  var labels = commissionLabelsForTier(tier);
+  var tierEl = document.getElementById('rev-tier-badge');
+  if (tierEl) tierEl.textContent = labels.tierLabel + ' · You keep ' + labels.operatorLabel;
+  var platLbl = document.getElementById('rev-platform-lbl');
+  if (platLbl) platLbl.textContent = 'SplashPass ' + labels.platformLabel;
   try {
     var today  = new Date().toISOString().split('T')[0];
     var from   = today;

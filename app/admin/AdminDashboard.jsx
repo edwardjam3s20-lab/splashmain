@@ -113,15 +113,23 @@ function OperatorCard({
   onResetOperatorPassword,
   onDeleteOperator,
   onAssignOperatorWashPoint,
+  onAssignOperatorTier,
 }) {
   const [washPoint, setWashPoint] = useState(op.wash_point || '')
+  const [tier, setTier] = useState(String(op.commission_tier != null ? op.commission_tier : 1))
   const [saving, setSaving] = useState(false)
+  const [savingTier, setSavingTier] = useState(false)
 
   useEffect(() => {
     setWashPoint(op.wash_point || '')
   }, [op.wash_point])
 
+  useEffect(() => {
+    setTier(String(op.commission_tier != null ? op.commission_tier : 1))
+  }, [op.commission_tier])
+
   const unchanged = washPoint === (op.wash_point || '')
+  const tierUnchanged = tier === String(op.commission_tier != null ? op.commission_tier : 1)
 
   async function saveWashPoint() {
     const point = washPoints.find((wp) => wp.name === washPoint)
@@ -130,6 +138,15 @@ function OperatorCard({
       await onAssignOperatorWashPoint(op.id, washPoint, point?.id || '')
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function saveTier() {
+    setSavingTier(true)
+    try {
+      await onAssignOperatorTier(op.id, Number(tier))
+    } finally {
+      setSavingTier(false)
     }
   }
 
@@ -159,6 +176,26 @@ function OperatorCard({
           onClick={saveWashPoint}
         >
           {saving ? 'Saving…' : unchanged ? 'Assigned' : 'Save assignment'}
+        </button>
+        <label htmlFor={`tier-${op.id}`} style={{ marginTop: 12 }}>
+          Commission tier
+        </label>
+        <select
+          id={`tier-${op.id}`}
+          value={tier}
+          onChange={(e) => setTier(e.target.value)}
+          disabled={savingTier}
+        >
+          <option value="1">Tier 1 — operator 80% / SplashPass 20%</option>
+          <option value="2">Tier 2 — operator 90% / SplashPass 10%</option>
+        </select>
+        <button
+          type="button"
+          className="btn btn-outline adm-op-save"
+          disabled={savingTier || tierUnchanged}
+          onClick={saveTier}
+        >
+          {savingTier ? 'Saving…' : tierUnchanged ? 'Tier saved' : 'Save tier'}
         </button>
       </div>
       <button
@@ -195,6 +232,7 @@ export default function AdminDashboard({
   onDeleteOperator,
   onResetOperatorPassword,
   onAssignOperatorWashPoint,
+  onAssignOperatorTier,
   analyticsPanel,
 }) {
   const name = adminDisplayName(adminEmail)
@@ -582,6 +620,7 @@ export default function AdminDashboard({
                       onResetOperatorPassword={onResetOperatorPassword}
                       onDeleteOperator={onDeleteOperator}
                       onAssignOperatorWashPoint={onAssignOperatorWashPoint}
+                      onAssignOperatorTier={onAssignOperatorTier}
                     />
                   ))
                 )}

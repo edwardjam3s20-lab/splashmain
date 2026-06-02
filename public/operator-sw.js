@@ -5,6 +5,7 @@ const PRECACHE = [
   '/operator.html',
   '/operator-ui.css',
   '/operator-manifest.json',
+  '/splashpass-commission.js',
   '/icon.svg'
 ];
 

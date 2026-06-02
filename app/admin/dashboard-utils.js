@@ -1,3 +1,5 @@
+import { enrichBookingCommission } from '@/lib/commission'
+
 export function adminDisplayName(email) {
   if (!email) return 'Admin'
   const local = email.split('@')[0] || 'Admin'
@@ -45,17 +47,23 @@ export function buildLast7DaysSeries(items, valueFn) {
   return buckets
 }
 
+function earnedBooking(b) {
+  const status = (b.payment_status || b.status || '').toLowerCase()
+  return status === 'paid' || status === 'completed'
+}
+
 export function computeDashboardMetrics(data) {
   const operators = data.operators || []
   const subscribers = data.subscribers || []
   const bookings = data.bookings || []
   const washPoints = data.washPoints || []
 
-  const paidBookings = bookings.filter(
-    (b) => b.payment_status === 'paid' || b.payment_status === 'completed' || b.status === 'completed'
-  )
+  const paidBookings = bookings.filter(earnedBooking).map((b) => enrichBookingCommission(b))
 
-  const bookingRevenue = paidBookings.reduce((s, b) => s + (Number(b.amount) || 0), 0)
+  const bookingRevenue = paidBookings.reduce(
+    (s, b) => s + (Number(b.operator_amount) || 0) + (Number(b.splash_commission) || 0),
+    0
+  )
   const subRevenue = subscribers.reduce(
     (s, u) => s + (u.plan_price ? parseInt(u.plan_price, 10) * 4 : 0),
     0
@@ -77,7 +85,7 @@ export function computeDashboardMetrics(data) {
   washPoints.forEach((p) => {
     pointStats[p.id] = { id: p.id, name: p.name, area: p.area, image_url: p.image_url, bookings: 0, revenue: 0 }
   })
-  bookings.forEach((b) => {
+  paidBookings.forEach((b) => {
     const name = b.location || b.wash_point
     let entry = Object.values(pointStats).find((p) => p.name === name)
     if (!entry && name) {
@@ -86,7 +94,7 @@ export function computeDashboardMetrics(data) {
     }
     if (entry) {
       entry.bookings += 1
-      entry.revenue += Number(b.amount) || 0
+      entry.revenue += Number(b.operator_amount) || 0
     }
   })
 

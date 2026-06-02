@@ -2,12 +2,13 @@ import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { hashOperatorPassword } from '@/lib/operatorPassword'
+import { normalizeCommissionTier } from '@/lib/commission'
 
 export async function POST(request) {
   const session = await getSession()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { name, email, password, wash_point, wash_point_id } = await request.json()
+  const { name, email, password, wash_point, wash_point_id, commission_tier } = await request.json()
   if (!name || !email || !password || !wash_point) {
     return NextResponse.json({ error: 'All fields required.' }, { status: 400 })
   }
@@ -39,11 +40,13 @@ export async function POST(request) {
     wash_point,
   }
   if (resolvedWashPointId) insertRow.wash_point_id = resolvedWashPointId
+  if (commission_tier != null) insertRow.commission_tier = normalizeCommissionTier(commission_tier)
 
   let { data, error } = await supabase.from('operators').insert(insertRow).select().single()
 
-  if (error?.message?.includes('wash_point_id')) {
+  if (error?.message?.includes('wash_point_id') || error?.message?.includes('commission_tier')) {
     delete insertRow.wash_point_id
+    delete insertRow.commission_tier
     const retry = await supabase.from('operators').insert(insertRow).select().single()
     data = retry.data
     error = retry.error
@@ -58,12 +61,14 @@ export async function PATCH(request) {
   const session = await getSession()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { id, password, wash_point, wash_point_id } = await request.json()
+  const { id, password, wash_point, wash_point_id, commission_tier } = await request.json()
   if (!id) {
     return NextResponse.json({ error: 'Operator id required.' }, { status: 400 })
   }
-  if (!password && !wash_point) {
-    return NextResponse.json({ error: 'Provide a new password or wash point to update.' }, { status: 400 })
+  if (!password && !wash_point && commission_tier == null) {
+    return NextResponse.json({
+      error: 'Provide a new password, wash point, or commission tier to update.',
+    }, { status: 400 })
   }
 
   const supabase = getSupabaseAdmin()
@@ -90,6 +95,10 @@ export async function PATCH(request) {
     if (resolvedWashPointId) updates.wash_point_id = resolvedWashPointId
   }
 
+  if (commission_tier != null) {
+    updates.commission_tier = normalizeCommissionTier(commission_tier)
+  }
+
   let { data, error } = await supabase
     .from('operators')
     .update(updates)
@@ -98,13 +107,14 @@ export async function PATCH(request) {
     .single()
 
   if (error?.message?.includes('wash_point_id') && updates.wash_point_id) {
-    const { wash_point_id: _drop, ...withoutId } = updates
-    const retry = await supabase
-      .from('operators')
-      .update(withoutId)
-      .eq('id', id)
-      .select()
-      .single()
+    delete updates.wash_point_id
+    const retry = await supabase.from('operators').update(updates).eq('id', id).select().single()
+    data = retry.data
+    error = retry.error
+  }
+  if (error?.message?.includes('commission_tier') && updates.commission_tier != null) {
+    delete updates.commission_tier
+    const retry = await supabase.from('operators').update(updates).eq('id', id).select().single()
     data = retry.data
     error = retry.error
   }
