@@ -915,6 +915,7 @@ textarea { resize:vertical; min-height:80px; }
     </div>
     <div class="menu-group">
       <div class="menu-group-title">Account</div>
+      <button type="button" class="menu-row" onclick="showChangePasswordModal()"><span class="icon">🔒</span><span class="text"><strong>Change password</strong><small>Set your own login password</small></span><span class="chev">›</span></button>
       <button type="button" class="menu-row logout" onclick="logout()">Log Out</button>
     </div>
   </div>
@@ -1026,6 +1027,30 @@ textarea { resize:vertical; min-height:80px; }
     </div>
     <button class="btn btn-gold" id="save-service-btn" onclick="saveService()" style="margin-bottom:10px">Save Service</button>
     <button class="btn btn-outline" onclick="closeModal('modal-service')">Cancel</button>
+  </div>
+</div>
+
+<!-- Change password -->
+<div class="modal-overlay" id="modal-password">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Change password</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.45">Use the password admin gave you, then pick a new one only you know.</p>
+    <div class="form-group">
+      <label>Current password</label>
+      <input type="password" id="pw-current" placeholder="Password you sign in with now" autocomplete="current-password">
+    </div>
+    <div class="form-group">
+      <label>New password</label>
+      <input type="password" id="pw-new" placeholder="At least 6 characters" autocomplete="new-password">
+    </div>
+    <div class="form-group">
+      <label>Confirm new password</label>
+      <input type="password" id="pw-confirm" placeholder="Repeat new password" autocomplete="new-password">
+    </div>
+    <div id="pw-change-error" class="form-error" style="display:none;margin-bottom:12px"></div>
+    <button type="button" class="btn btn-gold" id="pw-change-btn" onclick="submitChangePassword()">Update password</button>
+    <button type="button" class="btn btn-outline" style="margin-top:10px" onclick="closeModal('modal-password')">Cancel</button>
   </div>
 </div>
 
@@ -1371,6 +1396,68 @@ async function login() {
     bootLoggedIn();
   } catch(e) { err.textContent = e.message || 'Sign in failed.'; }
   finally { setBtn('login-btn', false, 'Sign In'); }
+}
+
+function showChangePasswordModal() {
+  document.getElementById('pw-current').value = '';
+  document.getElementById('pw-new').value = '';
+  document.getElementById('pw-confirm').value = '';
+  var errEl = document.getElementById('pw-change-error');
+  errEl.style.display = 'none';
+  errEl.textContent = '';
+  openModal('modal-password');
+}
+
+async function submitChangePassword() {
+  var errEl = document.getElementById('pw-change-error');
+  var btn = document.getElementById('pw-change-btn');
+  errEl.style.display = 'none';
+  errEl.textContent = '';
+
+  var current = document.getElementById('pw-current').value.trim();
+  var next = document.getElementById('pw-new').value.trim();
+  var confirm = document.getElementById('pw-confirm').value.trim();
+
+  if (!current || !next || !confirm) {
+    errEl.textContent = 'Please fill in all fields.';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (next.length < 6) {
+    errEl.textContent = 'New password must be at least 6 characters.';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (next !== confirm) {
+    errEl.textContent = 'New passwords do not match.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Updating…';
+  try {
+    var res = await fetch('/api/operator/auth/change-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ currentPassword: current, newPassword: next })
+    });
+    var json = await res.json();
+    if (!res.ok) {
+      errEl.textContent = json.error || 'Could not update password.';
+      errEl.style.display = 'block';
+      return;
+    }
+    closeModal('modal-password');
+    toast('Password updated — use it next time you sign in.');
+  } catch (e) {
+    errEl.textContent = 'Network error. Try again.';
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Update password';
+  }
 }
 
 async function logout() {
