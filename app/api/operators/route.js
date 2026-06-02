@@ -58,20 +58,59 @@ export async function PATCH(request) {
   const session = await getSession()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { id, password } = await request.json()
-  if (!id || !password) {
-    return NextResponse.json({ error: 'Operator id and new password required.' }, { status: 400 })
+  const { id, password, wash_point, wash_point_id } = await request.json()
+  if (!id) {
+    return NextResponse.json({ error: 'Operator id required.' }, { status: 400 })
+  }
+  if (!password && !wash_point) {
+    return NextResponse.json({ error: 'Provide a new password or wash point to update.' }, { status: 400 })
   }
 
   const supabase = getSupabaseAdmin()
-  const hashedPassword = hashOperatorPassword(password)
-  const { error } = await supabase
+  const updates = {}
+
+  if (password) {
+    if (String(password).length < 6) {
+      return NextResponse.json({ error: 'Password must be at least 6 characters.' }, { status: 400 })
+    }
+    updates.password = hashOperatorPassword(password)
+  }
+
+  if (wash_point) {
+    updates.wash_point = wash_point
+    let resolvedWashPointId = wash_point_id || null
+    if (!resolvedWashPointId) {
+      const { data: wp } = await supabase
+        .from('wash_points')
+        .select('id')
+        .eq('name', wash_point)
+        .maybeSingle()
+      if (wp) resolvedWashPointId = wp.id
+    }
+    if (resolvedWashPointId) updates.wash_point_id = resolvedWashPointId
+  }
+
+  let { data, error } = await supabase
     .from('operators')
-    .update({ password: hashedPassword })
+    .update(updates)
     .eq('id', id)
+    .select()
+    .single()
+
+  if (error?.message?.includes('wash_point_id') && updates.wash_point_id) {
+    const { wash_point_id: _drop, ...withoutId } = updates
+    const retry = await supabase
+      .from('operators')
+      .update(withoutId)
+      .eq('id', id)
+      .select()
+      .single()
+    data = retry.data
+    error = retry.error
+  }
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ success: true })
+  return NextResponse.json({ success: true, operator: data })
 }
 
 export async function DELETE(request) {

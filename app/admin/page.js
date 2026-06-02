@@ -197,6 +197,29 @@ export default function AdminPage() {
     } catch (e) { showToast('Network error', true) }
   }
 
+  async function handleAssignOperatorWashPoint(opId, wash_point, wash_point_id) {
+    if (!wash_point) {
+      showToast('Select a wash point.', true)
+      return
+    }
+    try {
+      const res = await fetch('/api/operators', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: opId, wash_point, wash_point_id: wash_point_id || undefined }),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        showToast(json.error || 'Could not assign wash point', true)
+        return
+      }
+      showToast('Wash point assigned.')
+      loadData()
+    } catch (e) {
+      showToast('Network error', true)
+    }
+  }
+
   async function handleDeleteOperator(id) {
     if (!confirm('Remove this operator? They will lose access immediately.')) return
     try {
@@ -369,6 +392,7 @@ export default function AdminPage() {
           onDeleteWashPoint={handleDeleteWashPoint}
           onDeleteOperator={handleDeleteOperator}
           onResetOperatorPassword={handleResetOperatorPassword}
+          onAssignOperatorWashPoint={handleAssignOperatorWashPoint}
           analyticsPanel={<Intelligence />}
         />
       )}

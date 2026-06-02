@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   adminDisplayName,
   timeGreeting,
@@ -107,6 +107,80 @@ const NAV = [
 
 const AVATAR_COLORS = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#06b6d4']
 
+function OperatorCard({
+  op,
+  washPoints,
+  onResetOperatorPassword,
+  onDeleteOperator,
+  onAssignOperatorWashPoint,
+}) {
+  const [washPoint, setWashPoint] = useState(op.wash_point || '')
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    setWashPoint(op.wash_point || '')
+  }, [op.wash_point])
+
+  const unchanged = washPoint === (op.wash_point || '')
+
+  async function saveWashPoint() {
+    const point = washPoints.find((wp) => wp.name === washPoint)
+    setSaving(true)
+    try {
+      await onAssignOperatorWashPoint(op.id, washPoint, point?.id || '')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="op-card">
+      <div className="op-card-name">{op.full_name || op.name || '—'}</div>
+      <div className="op-card-email">{op.email}</div>
+      <div className="adm-op-assign">
+        <label htmlFor={`wp-${op.id}`}>Wash point</label>
+        <select
+          id={`wp-${op.id}`}
+          value={washPoint}
+          onChange={(e) => setWashPoint(e.target.value)}
+          disabled={saving || !washPoints.length}
+        >
+          <option value="">Select wash point</option>
+          {washPoints.map((p) => (
+            <option key={p.id} value={p.name}>
+              {p.name}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          className="btn btn-gold adm-op-save"
+          disabled={saving || !washPoint || unchanged}
+          onClick={saveWashPoint}
+        >
+          {saving ? 'Saving…' : unchanged ? 'Assigned' : 'Save assignment'}
+        </button>
+      </div>
+      <button
+        type="button"
+        className="btn btn-outline"
+        style={{ padding: '6px 14px', fontSize: 12, width: '100%', marginTop: 8 }}
+        onClick={() => onResetOperatorPassword(op)}
+      >
+        Reset password
+      </button>
+      <button
+        type="button"
+        className="btn btn-danger"
+        style={{ padding: '6px 14px', fontSize: 12, width: '100%', marginTop: 6 }}
+        onClick={() => onDeleteOperator(op.id)}
+      >
+        Remove
+      </button>
+    </div>
+  )
+}
+
 export default function AdminDashboard({
   adminEmail,
   adminTab,
@@ -120,6 +194,7 @@ export default function AdminDashboard({
   onDeleteWashPoint,
   onDeleteOperator,
   onResetOperatorPassword,
+  onAssignOperatorWashPoint,
   analyticsPanel,
 }) {
   const name = adminDisplayName(adminEmail)
@@ -500,27 +575,14 @@ export default function AdminDashboard({
                   <div className="adm-empty">No operators yet.</div>
                 ) : (
                   data.operators.map((op) => (
-                    <div key={op.id} className="op-card">
-                      <div className="op-card-name">{op.full_name || op.name || '—'}</div>
-                      <div className="op-card-email">{op.email}</div>
-                      <div className="op-card-point">📍 {op.wash_point}</div>
-                      <button
-                        type="button"
-                        className="btn btn-outline"
-                        style={{ padding: '6px 14px', fontSize: 12, width: '100%', marginTop: 8 }}
-                        onClick={() => onResetOperatorPassword(op)}
-                      >
-                        Reset password
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-danger"
-                        style={{ padding: '6px 14px', fontSize: 12, width: '100%', marginTop: 6 }}
-                        onClick={() => onDeleteOperator(op.id)}
-                      >
-                        Remove
-                      </button>
-                    </div>
+                    <OperatorCard
+                      key={op.id}
+                      op={op}
+                      washPoints={data.washPoints}
+                      onResetOperatorPassword={onResetOperatorPassword}
+                      onDeleteOperator={onDeleteOperator}
+                      onAssignOperatorWashPoint={onAssignOperatorWashPoint}
+                    />
                   ))
                 )}
               </div>

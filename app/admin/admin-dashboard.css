@@ -571,3 +571,47 @@
   padding: 16px;
   border: 1px solid var(--adm-border);
 }
+
+.adm-op-assign {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--adm-border);
+}
+
+.adm-op-assign label {
+  display: block;
+  font-size: 11px;
+  color: var(--adm-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.adm-op-assign select {
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 10px 12px;
+  background: var(--adm-bg);
+  border: 1px solid var(--adm-border);
+  border-radius: 8px;
+  color: var(--adm-text);
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.adm-op-assign select:focus {
+  outline: none;
+  border-color: var(--adm-gold);
+}
+
+.adm-op-save {
+  width: 100%;
+  padding: 8px 12px !important;
+  font-size: 12px !important;
+}
+
+.adm-op-save:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
