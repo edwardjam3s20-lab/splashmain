@@ -8,7 +8,7 @@ export async function POST(request) {
   const session = await getSession()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { name, email, password, wash_point, wash_point_id, commission_tier } = await request.json()
+  const { name, email, password, wash_point, wash_point_id, commission_tier, mpesa_phone } = await request.json()
   if (!name || !email || !password || !wash_point) {
     return NextResponse.json({ error: 'All fields required.' }, { status: 400 })
   }
@@ -41,12 +41,18 @@ export async function POST(request) {
   }
   if (resolvedWashPointId) insertRow.wash_point_id = resolvedWashPointId
   if (commission_tier != null) insertRow.commission_tier = normalizeCommissionTier(commission_tier)
+  if (mpesa_phone) insertRow.mpesa_phone = String(mpesa_phone).trim()
 
   let { data, error } = await supabase.from('operators').insert(insertRow).select().single()
 
-  if (error?.message?.includes('wash_point_id') || error?.message?.includes('commission_tier')) {
+  if (
+    error?.message?.includes('wash_point_id') ||
+    error?.message?.includes('commission_tier') ||
+    error?.message?.includes('mpesa_phone')
+  ) {
     delete insertRow.wash_point_id
     delete insertRow.commission_tier
+    delete insertRow.mpesa_phone
     const retry = await supabase.from('operators').insert(insertRow).select().single()
     data = retry.data
     error = retry.error
@@ -61,13 +67,13 @@ export async function PATCH(request) {
   const session = await getSession()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { id, password, wash_point, wash_point_id, commission_tier } = await request.json()
+  const { id, password, wash_point, wash_point_id, commission_tier, mpesa_phone } = await request.json()
   if (!id) {
     return NextResponse.json({ error: 'Operator id required.' }, { status: 400 })
   }
-  if (!password && !wash_point && commission_tier == null) {
+  if (!password && !wash_point && commission_tier == null && mpesa_phone === undefined) {
     return NextResponse.json({
-      error: 'Provide a new password, wash point, or commission tier to update.',
+      error: 'Provide a new password, wash point, commission tier, or M-Pesa phone to update.',
     }, { status: 400 })
   }
 
@@ -99,6 +105,10 @@ export async function PATCH(request) {
     updates.commission_tier = normalizeCommissionTier(commission_tier)
   }
 
+  if (mpesa_phone !== undefined) {
+    updates.mpesa_phone = String(mpesa_phone || '').trim() || null
+  }
+
   let { data, error } = await supabase
     .from('operators')
     .update(updates)
@@ -114,6 +124,12 @@ export async function PATCH(request) {
   }
   if (error?.message?.includes('commission_tier') && updates.commission_tier != null) {
     delete updates.commission_tier
+    const retry = await supabase.from('operators').update(updates).eq('id', id).select().single()
+    data = retry.data
+    error = retry.error
+  }
+  if (error?.message?.includes('mpesa_phone') && updates.mpesa_phone !== undefined) {
+    delete updates.mpesa_phone
     const retry = await supabase.from('operators').update(updates).eq('id', id).select().single()
     data = retry.data
     error = retry.error

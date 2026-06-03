@@ -291,6 +291,7 @@ const avatarColor = (str) => AVATAR_COLORS[(str || "").charCodeAt(0) % AVATAR_CO
 function StatusBadge({ v }) {
   const map = {
     confirmed: "badge-green", completed: "badge-green",
+    submitted: "badge-blue", manual: "badge-blue",
     pending: "badge-yellow", pending_payment: "badge-yellow",
     cancelled: "badge-red", failed: "badge-red",
     paid: "badge-blue", unpaid: "badge-orange",
@@ -628,7 +629,7 @@ function bookingPlatformShare(b, operatorTier) {
 
 function OperatorPaymentsTab({ bookings, operators, opPayments, onPaymentRecorded }) {
   const [modal, setModal] = useState(null); // { operator, owed }
-  const [payForm, setPayForm] = useState({ amount: "", method: "mpesa", reference: "", notes: "" });
+  const [payForm, setPayForm] = useState({ amount: "", method: "mpesa", phone: "", reference: "", notes: "" });
   const [saving, setSaving] = useState(false);
   const [historyOp, setHistoryOp] = useState(null);
 
@@ -647,6 +648,7 @@ function OperatorPaymentsTab({ bookings, operators, opPayments, onPaymentRecorde
   // Total paid per operator from payment records
   const paidByOp = {};
   opPayments.forEach(p => {
+    if (p.status && !["completed", "success", "manual"].includes(p.status)) return;
     paidByOp[p.wash_point] = (paidByOp[p.wash_point] || 0) + (p.amount || 0);
   });
 
@@ -703,6 +705,7 @@ function OperatorPaymentsTab({ bookings, operators, opPayments, onPaymentRecorde
           wash_point: modal.operator.loc,
           operator_name: modal.operator.name,
           operator_id: modal.operator.id,
+          operator_phone: payForm.phone,
           amount: Number(payForm.amount),
           method: payForm.method,
           reference: payForm.reference,
@@ -713,7 +716,7 @@ function OperatorPaymentsTab({ bookings, operators, opPayments, onPaymentRecorde
       if (!res.ok) throw new Error(json.error || "Payment failed");
       onPaymentRecorded();
       setModal(null);
-      setPayForm({ amount: "", method: "mpesa", reference: "", notes: "" });
+      setPayForm({ amount: "", method: "mpesa", phone: "", reference: "", notes: "" });
     } catch (e) {
       alert("Error: " + e.message);
     }
@@ -725,11 +728,11 @@ function OperatorPaymentsTab({ bookings, operators, opPayments, onPaymentRecorde
   return (
     <div>
       <div className="notice">
-        <strong>Commission:</strong> Tier 1 — operators earn <strong>80%</strong> per wash (SplashPass 20%). Tier 2 — operators earn <strong>90%</strong> (SplashPass 10%). Set tier under <strong>Operators</strong> in the admin sidebar. Record M-Pesa (or other) payouts below.
+        <strong>Operator payouts:</strong> customers pay SplashPass through the customer app. This screen settles the operator share from those paid/completed bookings. M-Pesa payouts are sent through Daraja B2C; bank and cash entries are manual records.
       </div>
 
       <div style={{ background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "14px 18px", marginBottom: 20, fontSize: 12, fontFamily: "DM Mono, monospace", color: "var(--muted)" }}>
-        First-time setup: run <code>supabase/operator_commission.sql</code> in the Supabase SQL editor (creates <code>operator_payments</code> and tier columns).
+        First-time setup: run <code>supabase/operator_commission.sql</code> in the Supabase SQL editor, then add the M-Pesa B2C environment variables in Vercel.
       </div>
 
       <div className="stats-grid">
@@ -779,8 +782,8 @@ function OperatorPaymentsTab({ bookings, operators, opPayments, onPaymentRecorde
               </div>
             </div>
             <div className="op-actions">
-              <button className="btn btn-primary" onClick={() => { setModal({ operator: op }); setPayForm(f => ({ ...f, amount: String(Math.max(0, op.owed)) })); }} disabled={op.owed <= 0}>
-                Record Payment
+              <button className="btn btn-primary" onClick={() => { setModal({ operator: op }); setPayForm(f => ({ ...f, amount: String(Math.max(0, op.owed)), phone: op.mpesa_phone || op.phone || "" })); }} disabled={op.owed <= 0}>
+                Pay Operator
               </button>
               <button className="btn btn-secondary" onClick={() => setHistoryOp(historyOp?.id === op.id ? null : op)}>
                 History
@@ -796,6 +799,7 @@ function OperatorPaymentsTab({ bookings, operators, opPayments, onPaymentRecorde
                       <span style={{ fontFamily: "DM Mono, monospace" }}>{fmtDate(p.paid_at)}</span>
                       <span style={{ color: "var(--accent)", fontWeight: 700 }}>{fmt(p.amount)}</span>
                       <StatusBadge v={p.method} />
+                      <StatusBadge v={p.status || "manual"} />
                       <span style={{ color: "var(--muted)" }}>{p.reference || "—"}</span>
                     </div>
                   ))}
@@ -808,7 +812,7 @@ function OperatorPaymentsTab({ bookings, operators, opPayments, onPaymentRecorde
       {modal && (
         <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setModal(null)}>
           <div className="modal">
-            <div className="modal-title">Record Payment — {modal.operator.name}</div>
+            <div className="modal-title">Pay Operator — {modal.operator.name}</div>
             <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 16 }}>
               Outstanding balance: <strong style={{ color: "var(--warn)" }}>{fmt(modal.operator.owed)}</strong>
             </div>
@@ -824,17 +828,23 @@ function OperatorPaymentsTab({ bookings, operators, opPayments, onPaymentRecorde
                 <option value="cash">Cash</option>
               </select>
             </div>
+            {payForm.method === "mpesa" && (
+              <div className="field">
+                <label>Operator M-Pesa Phone</label>
+                <input placeholder="0712 345 678" value={payForm.phone} onChange={e => setPayForm(f => ({ ...f, phone: e.target.value }))} />
+              </div>
+            )}
             <div className="field">
               <label>Reference / Transaction ID</label>
-              <input placeholder="e.g. QEX123ABC" value={payForm.reference} onChange={e => setPayForm(f => ({ ...f, reference: e.target.value }))} />
+              <input placeholder={payForm.method === "mpesa" ? "Filled by M-Pesa callback when available" : "e.g. QEX123ABC"} value={payForm.reference} onChange={e => setPayForm(f => ({ ...f, reference: e.target.value }))} />
             </div>
             <div className="field">
               <label>Notes</label>
               <input placeholder="Optional" value={payForm.notes} onChange={e => setPayForm(f => ({ ...f, notes: e.target.value }))} />
             </div>
             <div className="modal-actions">
-              <button className="btn btn-primary" onClick={recordPayment} disabled={saving || !payForm.amount}>
-                {saving ? "Saving…" : "Confirm Payment"}
+              <button className="btn btn-primary" onClick={recordPayment} disabled={saving || !payForm.amount || (payForm.method === "mpesa" && !payForm.phone)}>
+                {saving ? "Sending…" : payForm.method === "mpesa" ? "Send M-Pesa Payout" : "Confirm Payment"}
               </button>
               <button className="btn btn-secondary" onClick={() => setModal(null)}>Cancel</button>
             </div>
@@ -1045,12 +1055,12 @@ function CustomerBehaviourTab({ bookings, profiles }) {
 const TABS = [
   { id: "revenue", label: "Revenue", icon: "💰" },
   { id: "bookings", label: "Bookings", icon: "📋" },
-  { id: "operators", label: "Operator Payments", icon: "🤝" },
+  { id: "operators", label: "Operator Payouts", icon: "🤝" },
   { id: "customers", label: "Customer Behaviour", icon: "👥" },
 ];
 
-export default function App() {
-  const [tab, setTab] = useState("revenue");
+export default function App({ initialTab = "revenue", compact = false }) {
+  const [tab, setTab] = useState(initialTab);
   const [bookings, setBookings] = useState([]);
   const [operators, setOperators] = useState([]);
   const [profiles, setProfiles] = useState([]);
@@ -1090,26 +1100,29 @@ export default function App() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+  useEffect(() => { setTab(initialTab); }, [initialTab]);
 
   function onPaymentRecorded() {
     load();
-    setToast("Payment recorded successfully!");
+    setToast("Operator payout submitted successfully!");
   }
 
   return (
     <>
       <style>{css}</style>
-      <div className="shell">
-        <nav className="sidebar">
-          <div className="sidebar-logo">Splash<span>Pass</span></div>
-          <div className="sidebar-label">Intelligence</div>
-          {TABS.map(t => (
-            <div key={t.id} className={`nav-item ${tab === t.id ? "active" : ""}`} onClick={() => setTab(t.id)}>
-              <span className="nav-icon">{t.icon}</span>
-              {t.label}
-            </div>
-          ))}
-        </nav>
+      <div className={`shell ${compact ? "compact-shell" : ""}`}>
+        {!compact && (
+          <nav className="sidebar">
+            <div className="sidebar-logo">Splash<span>Pass</span></div>
+            <div className="sidebar-label">Intelligence</div>
+            {TABS.map(t => (
+              <div key={t.id} className={`nav-item ${tab === t.id ? "active" : ""}`} onClick={() => setTab(t.id)}>
+                <span className="nav-icon">{t.icon}</span>
+                {t.label}
+              </div>
+            ))}
+          </nav>
+        )}
 
         <div className="main">
           <div className="topbar">

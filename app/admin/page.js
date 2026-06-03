@@ -19,7 +19,7 @@ export default function AdminPage() {
   const [toast, setToast] = useState({ msg:'', show:false, error:false })
   const [createModal, setCreateModal] = useState(false)
   const [addPointModal, setAddPointModal] = useState(false)
-  const [newOp, setNewOp] = useState({ name:'', email:'', password:'', wash_point:'', wash_point_id:'', commission_tier:'1' })
+  const [newOp, setNewOp] = useState({ name:'', email:'', password:'', wash_point:'', wash_point_id:'', commission_tier:'1', mpesa_phone:'' })
   const [createError, setCreateError] = useState('')
   const [createLoading, setCreateLoading] = useState(false)
   const [newPoint, setNewPoint] = useState({ name:'', area:'', lat:'', lng:'', description:'' })
@@ -38,7 +38,7 @@ export default function AdminPage() {
   function closeCreateModal() {
     setCreateModal(false)
     setCreateError('')
-    setNewOp({ name:'', email:'', password:'', wash_point:'', wash_point_id:'', commission_tier:'1' })
+    setNewOp({ name:'', email:'', password:'', wash_point:'', wash_point_id:'', commission_tier:'1', mpesa_phone:'' })
   }
 
   function closeAddPointModal() {
@@ -414,6 +414,7 @@ export default function AdminPage() {
           onAssignOperatorWashPoint={handleAssignOperatorWashPoint}
           onAssignOperatorTier={handleAssignOperatorTier}
           analyticsPanel={<Intelligence />}
+          operatorPayoutsPanel={<Intelligence initialTab="operators" compact />}
         />
       )}
 
@@ -432,6 +433,10 @@ export default function AdminPage() {
           <div className="form-group">
             <label>Password</label>
             <input type="password" placeholder="Temporary password" value={newOp.password} onChange={e=>setNewOp({...newOp,password:e.target.value})} />
+          </div>
+          <div className="form-group">
+            <label>M-Pesa Phone</label>
+            <input type="tel" placeholder="0712 345 678" value={newOp.mpesa_phone} onChange={e=>setNewOp({...newOp,mpesa_phone:e.target.value})} />
           </div>
           <div className="form-group">
             <label>Assign Wash Point</label>

@@ -100,7 +100,7 @@ const NAV = [
   { id: 'subscribers', label: 'Subscribers', icon: '◉' },
   { id: 'bookings', label: 'Bookings', icon: '📅' },
   { id: 'analytics', label: 'Analytics', icon: '📈' },
-  { id: 'transactions', label: 'Transactions', icon: '💳', soon: true },
+  { id: 'operator-payouts', label: 'Operator Payouts', icon: '💳' },
   { id: 'coupons', label: 'Coupons', icon: '🏷', soon: true },
   { id: 'settings', label: 'Settings', icon: '⚙', soon: true },
 ]
@@ -234,6 +234,7 @@ export default function AdminDashboard({
   onAssignOperatorWashPoint,
   onAssignOperatorTier,
   analyticsPanel,
+  operatorPayoutsPanel,
 }) {
   const name = adminDisplayName(adminEmail)
   const metrics = useMemo(() => computeDashboardMetrics(data), [data])
@@ -756,6 +757,10 @@ export default function AdminDashboard({
 
           {adminTab === 'analytics' && (
             <div className="adm-analytics-wrap">{analyticsPanel}</div>
+          )}
+
+          {adminTab === 'operator-payouts' && (
+            <div className="adm-analytics-wrap">{operatorPayoutsPanel}</div>
           )}
         </div>
       </div>
