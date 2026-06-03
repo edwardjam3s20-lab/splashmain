@@ -3,8 +3,6 @@ import { getSupabaseAdmin } from '@/lib/supabase'
 import { Resend } from 'resend'
 import { checkRateLimit } from '@/lib/rateLimit'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-
 function generateCode() {
   return Math.floor(100000 + Math.random() * 900000).toString()
 }
@@ -23,6 +21,12 @@ export async function POST(request) {
   if (!email || !pendingToken) {
     return NextResponse.json({ error: 'Invalid request.' }, { status: 400 })
   }
+
+  if (!process.env.RESEND_API_KEY) {
+    console.error('Email error: RESEND_API_KEY is not configured')
+    return NextResponse.json({ error: 'Email service is not configured.' }, { status: 503 })
+  }
+  const resend = new Resend(process.env.RESEND_API_KEY)
 
   // Verify the pending token
   const supabase = getSupabaseAdmin()

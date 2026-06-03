@@ -1,9 +1,9 @@
-const CONSUMER_KEY = 'QsatvnHq12HCc39of3iWd3p7Fo1yciQqWqRSG429wVhUQG3f';
-const CONSUMER_SECRET = 'oRlGLC3FeAUKeisB2qAQCG23tWCCSdZXWiDO5RsZ7ySAlJBvhgDqHqxmUBe291R9';
-const SHORTCODE = '174379';
-const PASSKEY = 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919';
-const CALLBACK_URL = 'https://splashmain.vercel.app/api/mpesa-callback';
-const MPESA_BASE = 'https://sandbox.safaricom.co.ke';
+const CONSUMER_KEY = process.env.MPESA_CONSUMER_KEY;
+const CONSUMER_SECRET = process.env.MPESA_CONSUMER_SECRET;
+const PASSKEY = process.env.MPESA_PASSKEY;
+const SHORTCODE = process.env.MPESA_SHORTCODE || '174379';
+const CALLBACK_URL = process.env.MPESA_CALLBACK_URL || 'https://splashmain.vercel.app/api/mpesa-callback';
+const MPESA_BASE = process.env.MPESA_BASE_URL || 'https://sandbox.safaricom.co.ke';
 
 async function getAccessToken() {
   const credentials = Buffer.from(CONSUMER_KEY + ':' + CONSUMER_SECRET).toString('base64');
@@ -34,6 +34,11 @@ export default async function handler(req, res) {
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ message: 'Method not allowed' });
+
+  if (!CONSUMER_KEY || !CONSUMER_SECRET || !PASSKEY) {
+    console.error('M-Pesa error: MPESA_CONSUMER_KEY, MPESA_CONSUMER_SECRET and MPESA_PASSKEY must be configured');
+    return res.status(503).json({ message: 'Payment service is not configured' });
+  }
 
   try {
     const { phone, amount } = req.body;
