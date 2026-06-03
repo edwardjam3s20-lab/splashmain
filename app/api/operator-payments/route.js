@@ -16,10 +16,7 @@ export async function GET() {
     .order('paid_at', { ascending: false })
 
   if (error) {
-    if (error.message?.includes('operator_payments')) {
-      return NextResponse.json({ payments: [], tableMissing: true })
-    }
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: error.message, code: error.code, details: error.details, hint: error.hint }, { status: 500 })
   }
 
   return NextResponse.json({ payments: data || [] })
@@ -79,16 +76,7 @@ export async function POST(request) {
   const { data, error } = await supabase.from('operator_payments').insert(row).select().single()
 
   if (error) {
-    if (error.message?.includes('operator_payments')) {
-      return NextResponse.json(
-        {
-          error:
-            'operator_payments table missing. Run supabase/operator_commission.sql in Supabase.',
-        },
-        { status: 500 }
-      )
-    }
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: error.message, code: error.code, details: error.details, hint: error.hint }, { status: 500 })
   }
 
   if (!shouldSendMpesa) {
