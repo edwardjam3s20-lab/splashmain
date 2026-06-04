@@ -1,9 +1,14 @@
-const SUPABASE_URL = 'https://msdvyiqjoogafzyaoycg.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_N_g24aU7TLHLNeu72gnfeg_1d7OleFW';
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
+  }
+
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
+    console.error('Callback error: NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be configured');
+    return res.status(503).json({ message: 'Supabase is not configured' });
   }
 
   try {
