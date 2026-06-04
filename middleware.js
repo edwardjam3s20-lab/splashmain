@@ -147,7 +147,14 @@ export async function middleware(request) {
     return NextResponse.next()
   }
 
+  // CUSTOMER site (splashpass.site and app.splashpass.site)
   if (pathname === '/' || pathname === '') {
+    if (hostname === 'splashpass.site' || hostname === 'www.splashpass.site') {
+      // Root domain → landing page
+      url.pathname = '/splashpass-landing-page.html'
+      return NextResponse.rewrite(url)
+    }
+    // app.splashpass.site (and any other subdomain) → customer app
     url.pathname = '/index.html'
     return NextResponse.rewrite(url)
   }
