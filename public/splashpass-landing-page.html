@@ -3,294 +3,238 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>SplashPass — Book Car Washes. Grow Car Wash Businesses.</title>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Bricolage+Grotesque:opsz,wght scheduled;12..96,400;12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet"/>
+<title>SplashPass — Book Your Car Wash in Seconds</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#04080f;
-  --bg2:#080e1a;
-  --bg3:#0b1220;
-  --surface:#0f1929;
-  --surface2:#131f30;
-  --border:rgba(255,255,255,0.07);
-  --border2:rgba(255,255,255,0.12);
-  --cyan:#06b6d4;
-  --cyan2:#0891b2;
-  --cyan3:#cffafe;
-  --blue:#3b82f6;
-  --blue2:#1d4ed8;
-  --text:#f1f5f9;
-  --text2:#94a3b8;
-  --text3:#64748b;
-  --green:#10b981;
-  --amber:#f59e0b;
-  --red:#ef4444;
-  --purple:#a78bfa;
-  --font-display:'Bricolage Grotesque',sans-serif;
-  --font-body:'Plus Jakarta Sans',sans-serif;
+  --blue:#2563EB;--blue-dark:#1D4ED8;--blue-light:#DBEAFE;--blue-mid:#3B82F6;
+  --cyan:#06B6D4;--cyan-light:#CFFAFE;
+  --purple:#7C3AED;--purple-light:#EDE9FE;
+  --text:#0F172A;--text2:#475569;--text3:#94A3B8;
+  --border:#E2E8F0;--border2:#CBD5E1;
+  --bg:#FFFFFF;--bg2:#F8FAFC;--bg3:#F1F5F9;
+  --radius:16px;--radius-sm:10px;--radius-lg:24px;
 }
 html{scroll-behavior:smooth}
-body{font-family:var(--font-body);background:var(--bg);color:var(--text);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;-webkit-font-smoothing:antialiased;line-height:1.6}
 
-body::before{
-  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
-  background-image:
-    linear-gradient(rgba(6,182,212,0.03) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(6,182,212,0.03) 1px,transparent 1px);
-  background-size:60px 60px;
-}
+/* BLOBS */
+.blob-wrap{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+.blob{position:absolute;border-radius:50%;filter:blur(80px);opacity:0.35;animation:float 8s ease-in-out infinite}
+.blob-1{width:600px;height:600px;background:radial-gradient(circle,#2563EB,transparent 70%);top:-200px;left:-100px;animation-delay:0s}
+.blob-2{width:500px;height:500px;background:radial-gradient(circle,#7C3AED,transparent 70%);top:-100px;right:-100px;animation-delay:2s}
+.blob-3{width:400px;height:400px;background:radial-gradient(circle,#06B6D4,transparent 70%);bottom:0;left:40%;animation-delay:4s}
+@keyframes float{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-30px) scale(1.05)}}
 
-nav{
-  position:fixed;top:0;left:0;right:0;z-index:200;
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 3rem;height:64px;
-  background:rgba(4,8,15,0.75);
-  backdrop-filter:blur(20px);
-  border-bottom:1px solid var(--border);
-}
-.nav-logo{font-family:var(--font-display);font-weight:800;font-size:1.35rem;color:var(--text);letter-spacing:-0.03em;display:flex;align-items:center;gap:12px;text-decoration:none}
-
-/* OFFICIAL SPLASHPASS SITE LOGO GEOMETRY */
-.nav-logo-mark {
-  position: relative;
-  width: 34px;
-  height: 34px;
-  background: linear-gradient(135deg, #0284c7, #06b6d4);
-  border-radius: 9px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);
-  overflow: hidden;
-}
-.nav-logo-mark::before {
-  content: '';
-  position: absolute;
-  width: 14px;
-  height: 14px;
-  background: #fff;
-  border-radius: 50% 50% 0 50%;
-  transform: rotate(-45deg);
-  margin-top: -2px;
-}
-.nav-logo-mark::after {
-  content: '';
-  position: absolute;
-  bottom: 4px;
-  width: 16px;
-  height: 3px;
-  background: rgba(255,255,255,0.4);
-  border-radius: 2px;
-}
-
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 4rem;height:68px;background:rgba(255,255,255,0.8);backdrop-filter:blur(20px);border-bottom:1px solid rgba(226,232,240,0.8)}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;font-weight:800;font-size:1.2rem;color:var(--text);letter-spacing:-0.03em}
+.nav-logo-mark{width:32px;height:32px;flex-shrink:0}
 .nav-links{display:flex;gap:0;list-style:none}
-.nav-links a{color:var(--text2);text-decoration:none;font-size:0.875rem;padding:0.5rem 1rem;border-radius:6px;transition:all 0.15s;font-weight:500}
-.nav-links a:hover{color:var(--text);background:rgba(255,255,255,0.05)}
+.nav-links a{color:var(--text2);text-decoration:none;font-size:0.875rem;padding:0.5rem 1rem;border-radius:8px;transition:all 0.15s;font-weight:500}
+.nav-links a:hover{color:var(--text);background:var(--bg3)}
 .nav-right{display:flex;align-items:center;gap:0.75rem}
-.btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--text);padding:0.5rem 1.25rem;border-radius:8px;font-size:0.875rem;font-weight:600;cursor:pointer;font-family:var(--font-body);text-decoration:none;transition:all 0.15s}
-.btn-ghost:hover{border-color:rgba(255,255,255,0.25);background:rgba(255,255,255,0.05)}
-.btn-cyan{background:var(--cyan);color:#000;padding:0.5rem 1.25rem;border-radius:8px;font-size:0.875rem;font-weight:700;cursor:pointer;font-family:var(--font-body);text-decoration:none;transition:all 0.15s;border:none}
-.btn-cyan:hover{background:#22d3ee;transform:translateY(-1px)}
+.btn-ghost{background:transparent;border:1.5px solid var(--border2);color:var(--text);padding:0.5rem 1.25rem;border-radius:10px;font-size:0.875rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;text-decoration:none;transition:all 0.15s}
+.btn-ghost:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-light)}
+.btn-blue{background:var(--blue);color:#fff;padding:0.5rem 1.25rem;border-radius:10px;font-size:0.875rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;text-decoration:none;transition:all 0.15s;border:none;box-shadow:0 2px 8px rgba(37,99,235,0.3)}
+.btn-blue:hover{background:var(--blue-dark);transform:translateY(-1px);box-shadow:0 4px 16px rgba(37,99,235,0.4)}
 
+/* LAYOUT */
 section{position:relative;z-index:1}
-.container{max-width:1200px;margin:0 auto;padding:0 3rem}
-.section-eyebrow{display:inline-flex;align-items:center;gap:6px;font-size:0.75rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--cyan);margin-bottom:1rem}
-.eyebrow-dot{width:5px;height:5px;border-radius:50%;background:var(--cyan);animation:blink 2s infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
-.section-h2{font-family:var(--font-display);font-size:clamp(2rem,4vw,3rem);font-weight:800;letter-spacing:-0.03em;line-height:1.1;margin-bottom:1rem}
-.section-sub{color:var(--text2);font-size:1.05rem;line-height:1.7;font-weight:400;max-width:650px}
-.highlight{background:linear-gradient(135deg,var(--cyan),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.container{max-width:1160px;margin:0 auto;padding:0 2.5rem}
 
 /* HERO */
-.hero{
-  min-height:90vh;display:flex;flex-direction:column;
-  align-items:center;justify-content:flex-start;
-  padding:140px 3rem 0;text-align:center;
-  position:relative;overflow:hidden;
-}
-.hero-glow{
-  position:absolute;top:0;left:50%;transform:translateX(-50%);
-  width:900px;height:600px;
-  background:radial-gradient(ellipse at center top,rgba(6,182,212,0.18) 0%,rgba(59,130,246,0.08) 40%,transparent 70%);
-  pointer-events:none;
-}
-.hero-badge{
-  display:inline-flex;align-items:center;gap:8px;
-  background:rgba(6,182,212,0.08);border:1px solid rgba(6,182,212,0.2);
-  padding:6px 16px;border-radius:100px;
-  font-size:0.8rem;font-weight:600;color:var(--cyan);letter-spacing:0.02em;
-  margin-bottom:2rem;animation:fadeUp 0.5s ease both}
-.hero h1{
-  font-family:var(--font-display);font-size:clamp(3rem,6.5vw,5.5rem);
-  font-weight:800;letter-spacing:-0.03em;line-height:1.05;max-width:1050px;
-  animation:fadeUp 0.6s 0.05s ease both}
-.hero-sub{
-  max-width:720px;margin:1.5rem auto 0;font-size:1.15rem;line-height:1.7;color:var(--text2);
-  font-weight:400;animation:fadeUp 0.6s 0.1s ease both}
-.hero-actions{
-  display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;margin-top:2.5rem;
-  animation:fadeUp 0.6s 0.15s ease both}
-.btn-hero-primary{
-  background:var(--cyan);color:#000;padding:0.9rem 2.25rem;border-radius:10px;
-  font-size:1rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:8px;
-  transition:all 0.2s;font-family:var(--font-body);box-shadow:0 0 30px rgba(6,182,212,0.25)}
-.btn-hero-primary:hover{background:#22d3ee;transform:translateY(-2px);box-shadow:0 0 45px rgba(6,182,212,0.4)}
-.btn-hero-secondary{
-  background:rgba(255,255,255,0.03);color:var(--text);padding:0.9rem 2.25rem;border-radius:10px;
-  font-size:1rem;font-weight:600;text-decoration:none;border:1px solid var(--border2);
-  display:inline-flex;align-items:center;gap:8px;transition:all 0.2s;font-family:var(--font-body)}
-.btn-hero-secondary:hover{background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.2);transform:translateY(-1px)}
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:120px 2.5rem 80px;text-align:center;background:linear-gradient(160deg,#EFF6FF 0%,#F5F3FF 40%,#ECFEFF 100%);position:relative;overflow:hidden}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1.5px solid var(--border2);padding:6px 16px;border-radius:100px;font-size:0.78rem;font-weight:600;color:var(--blue);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:2rem;box-shadow:0 2px 8px rgba(0,0,0,0.06);animation:fadeUp 0.5s ease both}
+.badge-dot{width:6px;height:6px;border-radius:50%;background:var(--cyan);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}
+.hero h1{font-size:clamp(2.8rem,6vw,5rem);font-weight:900;letter-spacing:-0.04em;line-height:1.05;max-width:900px;color:var(--text);animation:fadeUp 0.6s 0.05s ease both}
+.hero h1 .grad{background:linear-gradient(135deg,var(--blue),var(--cyan),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{max-width:600px;margin:1.5rem auto 0;font-size:1.125rem;line-height:1.75;color:var(--text2);font-weight:400;animation:fadeUp 0.6s 0.1s ease both}
+.hero-actions{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;margin-top:2.5rem;animation:fadeUp 0.6s 0.15s ease both}
+.btn-hero-primary{background:var(--blue);color:#fff;padding:0.875rem 2rem;border-radius:12px;font-size:1rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:10px;transition:all 0.2s;font-family:'Inter',sans-serif;box-shadow:0 4px 20px rgba(37,99,235,0.35)}
+.btn-hero-primary:hover{background:var(--blue-dark);transform:translateY(-2px);box-shadow:0 8px 30px rgba(37,99,235,0.45)}
+.btn-hero-secondary{background:#fff;color:var(--text);padding:0.875rem 2rem;border-radius:12px;font-size:1rem;font-weight:600;text-decoration:none;border:1.5px solid var(--border2);display:inline-flex;align-items:center;gap:10px;transition:all 0.2s;font-family:'Inter',sans-serif;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+.btn-hero-secondary:hover{border-color:var(--blue);color:var(--blue);transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,0.1)}
+.btn-arrow{font-size:1.1rem;transition:transform 0.2s}
+.btn-hero-primary:hover .btn-arrow,.btn-hero-secondary:hover .btn-arrow{transform:translateX(3px)}
 
-/* SHOWCASE */
-.hero-mockups{position:relative;margin-top:4rem;width:100%;max-width:1100px;height:340px;animation:fadeUp 0.8s 0.25s ease both}
-.mockup-dash{position:absolute;left:0;top:0;right:220px;height:100%;background:var(--surface);border:1px solid var(--border2);border-radius:16px;overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,0.6)}
-.mockup-mobile{position:absolute;right:0;top:20px;width:200px;height:310px;background:var(--bg2);border:1.5px solid var(--border2);border-radius:24px;overflow:hidden;box-shadow:0 30px 60px rgba(0,0,0,0.6),0 0 40px rgba(6,182,212,0.1);z-index:10}
-.dash-topbar{background:var(--bg3);border-bottom:1px solid var(--border);padding:0 1.25rem;height:40px;display:flex;align-items:center;justify-content:space-between}
-.dash-logo{font-family:var(--font-display);font-weight:700;font-size:0.85rem;color:var(--cyan)}
-.dash-body{display:flex;height:calc(100% - 40px)}
-.dash-sidebar{width:140px;border-right:1px solid var(--border);padding:0.5rem;display:flex;flex-direction:column;gap:2px;background:rgba(4,8,15,0.2)}
-.sb-item{display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:6px;font-size:0.65rem;color:var(--text3);font-weight:500}
-.sb-item.active{background:rgba(6,182,212,0.08);color:var(--cyan)}
-.dash-main{flex:1;padding:0.85rem;overflow:hidden}
-.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0.5rem;margin-bottom:0.8rem}
-.kpi{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:0.5rem 0.6rem}
-.kpi-label{font-size:0.55rem;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:0.02em}
-.kpi-val{font-family:var(--font-display);font-size:1.1rem;font-weight:700;line-height:1.1;margin-top:2px}
-.chart-row{display:grid;grid-template-columns:1fr;gap:0.5rem}
-.chart-box{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:0.6rem 0.8rem}
-.bar-chart{display:flex;align-items:flex-end;gap:6px;height:120px;padding-top:10px}
-.bar{border-radius:3px 3px 0 0;flex:1;background:linear-gradient(180deg,var(--cyan),var(--blue))}
-.mob-notch{width:60px;height:14px;background:var(--bg);border-radius:0 0 10px 10px;margin:0 auto}
-.mob-screen{padding:0.5rem;display:flex;flex-direction:column;gap:0.4rem}
-.mob-logo{font-family:var(--font-display);font-weight:800;font-size:0.75rem;color:var(--cyan)}
-.mob-card{background:linear-gradient(135deg,#0891b2,#1d4ed8);border-radius:8px;padding:0.6rem;position:relative}
-.mob-card-pts{font-family:var(--font-display);font-size:1.2rem;font-weight:800}
+/* FLOATING CARDS */
+.hero-cards{position:relative;margin-top:4rem;width:100%;max-width:960px;animation:fadeUp 0.8s 0.25s ease both}
+.cards-row{display:flex;justify-content:center;gap:1.25rem;flex-wrap:wrap}
+.float-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem 1.5rem;box-shadow:0 8px 30px rgba(0,0,0,0.08);min-width:200px;flex:1;max-width:260px;transition:transform 0.3s;animation:floatCard 6s ease-in-out infinite}
+.float-card:nth-child(2){animation-delay:1s}
+.float-card:nth-child(3){animation-delay:2s}
+.float-card:hover{transform:translateY(-6px)}
+@keyframes floatCard{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.fc-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:0.75rem;font-size:1.2rem}
+.fc-icon-blue{background:var(--blue-light)}
+.fc-icon-cyan{background:var(--cyan-light)}
+.fc-icon-purple{background:var(--purple-light)}
+.fc-label{font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-bottom:4px}
+.fc-value{font-size:1.4rem;font-weight:800;color:var(--text);letter-spacing:-0.02em}
+.fc-sub{font-size:0.78rem;color:var(--text3);margin-top:2px}
+.fc-bar{height:4px;border-radius:2px;background:var(--bg3);margin-top:0.75rem;overflow:hidden}
+.fc-bar-fill{height:100%;border-radius:2px;transition:width 1s ease}
+.fc-badge{display:inline-flex;align-items:center;gap:4px;background:var(--blue-light);color:var(--blue);padding:3px 10px;border-radius:100px;font-size:0.72rem;font-weight:600;margin-top:0.5rem}
+.fc-badge-green{background:#DCFCE7;color:#16A34A}
 
-/* VALUE MATRICES */
-.operator-choose{padding:6rem 0;background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
-.choose-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.25rem;margin-top:2.5rem}
-.choose-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.5rem;transition:all 0.2s}
-.choose-card:hover{border-color:var(--border2);transform:translateY(-2px)}
-.choose-icon{font-size:1.5rem;margin-bottom:1rem;display:block}
-.choose-card h3{font-family:var(--font-display);font-size:1.1rem;font-weight:700;margin-bottom:0.5rem}
-.choose-card p{font-size:0.85rem;color:var(--text2);line-height:1.5}
+/* SOCIAL PROOF */
+.social-proof{padding:3rem 0;background:#fff;border-bottom:1px solid var(--border)}
+.sp-inner{display:flex;align-items:center;justify-content:center;gap:3rem;flex-wrap:wrap}
+.sp-stat{text-align:center}
+.sp-num{font-size:1.75rem;font-weight:800;color:var(--text);letter-spacing:-0.03em}
+.sp-label{font-size:0.8rem;color:var(--text3);font-weight:500;margin-top:2px}
+.sp-divider{width:1px;height:40px;background:var(--border)}
 
-/* TIMELINES */
-.how-it-works{padding:8rem 0}
-.timeline-block{margin-top:4rem}
-.timeline-title-sub{font-size:0.9rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text3);font-weight:700;margin-bottom:1.5rem}
-.timeline-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;position:relative}
-.timeline-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.5rem;position:relative;z-index:2}
-.step-num{position:absolute;top:-15px;left:20px;width:30px;height:30px;background:var(--bg3);border:1px solid var(--border2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:700;color:var(--cyan)}
-.timeline-card h4{font-family:var(--font-display);font-size:1rem;font-weight:700;margin-top:0.5rem;margin-bottom:0.5rem}
-.timeline-card p{font-size:0.82rem;color:var(--text2);line-height:1.4}
-.timeline-arrow{position:absolute;top:45%;right:-15px;width:30px;height:2px;background:dashed rgba(6,182,212,0.2);z-index:1}
+/* FEATURES */
+.features{padding:7rem 0;background:#fff}
+.section-eyebrow{display:inline-flex;align-items:center;gap:6px;font-size:0.72rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--blue);margin-bottom:1rem;background:var(--blue-light);padding:5px 12px;border-radius:100px}
+.section-h2{font-size:clamp(1.8rem,3.5vw,2.6rem);font-weight:800;letter-spacing:-0.03em;line-height:1.15;margin-bottom:1rem;color:var(--text)}
+.section-sub{color:var(--text2);font-size:1rem;line-height:1.75;max-width:560px}
+.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:3.5rem}
+.feat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;transition:all 0.25s;position:relative;overflow:hidden}
+.feat-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(37,99,235,0.03),rgba(124,58,237,0.03));opacity:0;transition:opacity 0.25s}
+.feat-card:hover{transform:translateY(-6px);box-shadow:0 20px 40px rgba(0,0,0,0.08);border-color:var(--border2)}
+.feat-card:hover::before{opacity:1}
+.feat-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:1.25rem;font-size:1.5rem}
+.fi-blue{background:linear-gradient(135deg,#DBEAFE,#EFF6FF)}
+.fi-cyan{background:linear-gradient(135deg,#CFFAFE,#ECFEFF)}
+.fi-purple{background:linear-gradient(135deg,#EDE9FE,#F5F3FF)}
+.feat-card h3{font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:0.5rem;letter-spacing:-0.01em}
+.feat-card p{font-size:0.9rem;color:var(--text2);line-height:1.7}
+.feat-link{display:inline-flex;align-items:center;gap:4px;color:var(--blue);font-size:0.85rem;font-weight:600;text-decoration:none;margin-top:1rem;transition:gap 0.2s}
+.feat-link:hover{gap:8px}
 
-/* QR SEC */
-.qr-section{padding:8rem 0;background:var(--bg3);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
-.qr-container{display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center}
-.qr-flow{display:flex;flex-direction:column;gap:0.75rem;margin-top:2rem}
-.qr-node{display:flex;align-items:center;gap:1rem;background:var(--surface);border:1px solid var(--border);padding:1rem;border-radius:12px}
-.qr-node-icon{width:36px;height:36px;background:rgba(6,182,212,0.1);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--cyan);font-weight:700;font-size:0.9rem}
-.qr-node-text{font-size:0.9rem;font-weight:600}
-.qr-arrow-down{text-align:center;color:var(--text3);font-size:0.8rem;margin:-0.25rem 0}
-.qr-visual-card{background:var(--surface);border:2px solid rgba(6,182,212,0.25);border-radius:24px;padding:2.5rem;text-align:center;box-shadow:0 30px 60px rgba(0,0,0,0.4)}
-.qr-box-mock{width:160px;height:160px;background:#fff;margin:0 auto 1.5rem;border-radius:16px;padding:12px;display:flex;flex-direction:column;justify-content:space-between}
-.qr-line-mock{height:6px;background:#000;border-radius:2px}
+/* HOW IT WORKS */
+.how{padding:7rem 0;background:linear-gradient(180deg,var(--bg2) 0%,#fff 100%)}
+.steps-row{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;margin-top:4rem;position:relative}
+.steps-row::before{content:'';position:absolute;top:36px;left:calc(16.66% + 1rem);right:calc(16.66% + 1rem);height:2px;background:linear-gradient(90deg,var(--blue),var(--cyan),var(--purple));border-radius:1px;z-index:0}
+.step{text-align:center;position:relative;z-index:1}
+.step-num{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:900;margin:0 auto 1.5rem;box-shadow:0 8px 24px rgba(0,0,0,0.12);position:relative}
+.sn-1{background:linear-gradient(135deg,var(--blue),var(--blue-mid));color:#fff}
+.sn-2{background:linear-gradient(135deg,var(--cyan),#0891B2);color:#fff}
+.sn-3{background:linear-gradient(135deg,var(--purple),#6D28D9);color:#fff}
+.step h3{font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:0.5rem}
+.step p{font-size:0.875rem;color:var(--text2);line-height:1.7}
+.step-icon{font-size:1.75rem;margin-bottom:0.5rem}
 
-/* COMPARISONS */
-.comparison-section{padding:8rem 0}
-.comp-table{width:100%;border-collapse:collapse;margin-top:3rem;text-align:left}
-.comp-table th{padding:1.25rem;font-family:var(--font-display);font-size:1.1rem;font-weight:700;border-bottom:1px solid var(--border2)}
-.comp-table td{padding:1.25rem;font-size:0.95rem;border-bottom:1px solid var(--border);line-height:1.5}
-.comp-table tr:hover td{background:rgba(255,255,255,0.01)}
-.td-traditional{color:var(--text3);text-decoration:line-through;opacity:0.7}
-.td-splashpass{color:var(--cyan);font-weight:600}
+/* OPERATOR */
+.operator{padding:7rem 0;background:#fff}
+.op-grid{display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center;margin-top:1rem}
+.op-features{display:flex;flex-direction:column;gap:1rem;margin-top:2rem}
+.op-feat{display:flex;align-items:flex-start;gap:1rem;padding:1.25rem;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);transition:all 0.2s}
+.op-feat:hover{border-color:var(--blue);background:#fff;box-shadow:0 4px 16px rgba(37,99,235,0.08)}
+.op-feat-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.1rem}
+.op-feat-icon-1{background:linear-gradient(135deg,#DBEAFE,#EFF6FF)}
+.op-feat-icon-2{background:linear-gradient(135deg,#DCFCE7,#F0FDF4)}
+.op-feat-icon-3{background:linear-gradient(135deg,#FEF3C7,#FFFBEB)}
+.op-feat-icon-4{background:linear-gradient(135deg,#EDE9FE,#F5F3FF)}
+.op-feat h4{font-size:0.9rem;font-weight:700;color:var(--text);margin-bottom:2px}
+.op-feat p{font-size:0.82rem;color:var(--text2);line-height:1.6}
 
-/* APPS */
-.app-section{padding:8rem 0;background:var(--bg2)}
-.app-grid{display:grid;grid-template-columns:1fr 1fr;gap:2.5rem;margin-top:3.5rem}
-.app-box{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:2.5rem}
-.app-box h3{font-family:var(--font-display);font-size:1.4rem;font-weight:700;margin-bottom:1rem}
-.app-box ul{list-style:none;display:flex;flex-direction:column;gap:0.75rem;margin-bottom:2rem}
-.app-box li{font-size:0.95rem;color:var(--text2);display:flex;align-items:center;gap:8px}
-.app-box li::before{content:'✓';color:var(--cyan);font-weight:bold}
-.btn-market{display:inline-flex;align-items:center;gap:10px;background:#000;color:#fff;border:1px solid var(--border2);padding:0.6rem 1.25rem;border-radius:8px;text-decoration:none;font-size:0.85rem;font-weight:600}
-.btn-disabled{opacity:0.4;cursor:not-allowed}
+/* DASHBOARD MOCK */
+.dash-mock{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.1)}
+.dm-topbar{background:#fff;border-bottom:1px solid var(--border);padding:0 1.25rem;height:44px;display:flex;align-items:center;justify-content:space-between}
+.dm-logo{font-weight:800;font-size:0.85rem;color:var(--blue);letter-spacing:-0.02em}
+.dm-dots{display:flex;gap:5px}
+.dm-dot{width:10px;height:10px;border-radius:50%}
+.dm-body{display:grid;grid-template-columns:130px 1fr;height:260px}
+.dm-sidebar{background:#fff;border-right:1px solid var(--border);padding:0.75rem 0.5rem;display:flex;flex-direction:column;gap:2px}
+.dm-item{display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:6px;font-size:0.65rem;font-weight:500;color:var(--text3);cursor:pointer;transition:all 0.15s}
+.dm-item:hover,.dm-item.active{background:var(--blue-light);color:var(--blue)}
+.dm-main{padding:1rem;overflow:hidden}
+.dm-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;margin-bottom:0.75rem}
+.dm-kpi{background:#fff;border:1px solid var(--border);border-radius:8px;padding:0.6rem 0.75rem}
+.dm-kpi-label{font-size:0.55rem;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:0.05em}
+.dm-kpi-val{font-size:1.05rem;font-weight:800;color:var(--text);margin-top:2px;letter-spacing:-0.02em}
+.dm-kpi-badge{font-size:0.55rem;font-weight:700;color:#16A34A;margin-top:1px}
+.dm-chart-wrap{background:#fff;border:1px solid var(--border);border-radius:8px;padding:0.75rem}
+.dm-chart-title{font-size:0.6rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.5rem}
+.dm-bars{display:flex;align-items:flex-end;gap:4px;height:90px}
+.dm-bar{border-radius:3px 3px 0 0;flex:1;min-height:10px;background:linear-gradient(180deg,var(--blue),var(--cyan))}
 
-/* RESTRUCTURED PRICING TIERS */
-.pricing-section{padding:8rem 0}
-.pricing-layout-group {margin-top:4rem}
-.pricing-group-title {font-family:var(--font-display);font-size:1.5rem;font-weight:700;margin-bottom:1.5rem;color:var(--text);display:flex;align-items:center;gap:10px}
-.pricing-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.25rem}
-.pricing-grid.operators-grid {grid-template-columns:repeat(3,1fr)}
-.price-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2rem 1.5rem;position:relative;transition:all 0.3s;display:flex;flex-direction:column;justify-content:between}
-.price-card:hover{transform:translateY(-4px);border-color:var(--border2)}
-.price-card.featured{border:2px solid var(--cyan);box-shadow:0 0 40px rgba(6,182,212,0.15)}
-.badge-popular{position:absolute;top:15px;right:15px;background:var(--cyan);color:#000;font-size:0.65rem;font-weight:800;padding:4px 10px;border-radius:100px;text-transform:uppercase}
-.price-card h3{font-family:var(--font-display);font-size:1.3rem;font-weight:700;margin-bottom:0.25rem}
-.price-sub{font-size:0.8rem;color:var(--text3);margin-bottom:1.25rem}
-.price-amt {font-family:var(--font-display);font-size:1.8rem;font-weight:800;color:var(--text)}
-.price-amt span {font-size:0.85rem;color:var(--text3);font-family:var(--font-body);font-weight:400}
-.price-features{display:flex;flex-direction:column;gap:0.65rem;margin:1.5rem 0;list-style:none;flex-grow:1}
-.price-features li{font-size:0.85rem;color:var(--text2);display:flex;align-items:center;gap:8px}
-.price-features li::before{content:'✓';color:var(--cyan);font-weight:bold}
-.btn-price{display:block;text-align:center;padding:0.7rem;border-radius:8px;font-weight:700;text-decoration:none;font-size:0.85rem;transition:all 0.15s}
-.btn-price-outline{border:1px solid var(--border2);color:var(--text)}
-.btn-price-outline:hover{background:rgba(255,255,255,0.05)}
-.btn-price-filled{background:var(--cyan);color:#000}
-.btn-price-filled:hover{background:#22d3ee}
+/* PRICING */
+.pricing{padding:7rem 0;background:linear-gradient(180deg,#fff 0%,var(--bg2) 100%)}
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:3.5rem;align-items:start}
+.price-card{background:#fff;border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:2rem;transition:all 0.25s;position:relative}
+.price-card:hover{box-shadow:0 16px 40px rgba(0,0,0,0.08);transform:translateY(-4px)}
+.price-card.featured{border-color:var(--blue);box-shadow:0 8px 32px rgba(37,99,235,0.15)}
+.featured-badge{position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--blue),var(--cyan));color:#fff;padding:5px 18px;border-radius:100px;font-size:0.72rem;font-weight:700;letter-spacing:0.04em;white-space:nowrap}
+.price-plan{font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-bottom:0.5rem}
+.price-amt{font-size:2.2rem;font-weight:900;color:var(--text);letter-spacing:-0.04em;line-height:1;margin:0.75rem 0 0.25rem}
+.price-amt span{font-size:1rem;font-weight:500;color:var(--text2)}
+.price-commission{display:inline-flex;align-items:center;gap:4px;background:var(--blue-light);color:var(--blue);padding:4px 10px;border-radius:6px;font-size:0.75rem;font-weight:700;margin-bottom:1rem}
+.price-sub{font-size:0.85rem;color:var(--text2);margin-bottom:1.5rem;line-height:1.6}
+.price-divider{height:1px;background:var(--border);margin-bottom:1.5rem}
+.price-features{list-style:none;display:flex;flex-direction:column;gap:0.6rem;margin-bottom:2rem}
+.price-features li{display:flex;align-items:center;gap:8px;font-size:0.875rem;color:var(--text2)}
+.pf-check{width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--cyan));display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.6rem;color:#fff}
+.price-features li.dim{color:var(--text3)}
+.price-features li.dim .pf-check{background:var(--bg3);color:var(--text3)}
+.btn-price{display:block;text-align:center;padding:0.75rem;border-radius:10px;font-size:0.9rem;font-weight:700;cursor:pointer;text-decoration:none;font-family:'Inter',sans-serif;transition:all 0.2s}
+.btn-price-outline{border:1.5px solid var(--border2);color:var(--text);background:#fff}
+.btn-price-outline:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-light)}
+.btn-price-filled{border:none;background:linear-gradient(135deg,var(--blue),var(--blue-mid));color:#fff;box-shadow:0 4px 16px rgba(37,99,235,0.3)}
+.btn-price-filled:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(37,99,235,0.4)}
 
-/* NEW REVIEWS SECTION */
-.reviews-section{padding:8rem 0;background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+/* REVIEWS */
+.reviews{padding:7rem 0;background:#fff}
 .reviews-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:3.5rem}
-.review-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2rem;display:flex;flex-direction:column;gap:1.25rem;transition:all 0.2s}
-.review-card:hover{border-color:var(--border2);transform:translateY(-2px)}
-.review-stars{color:var(--amber);font-size:1rem;letter-spacing:2px}
-.review-text{font-size:0.95rem;color:var(--text2);line-height:1.6;font-style:italic}
-.review-user{display:flex;align-items:center;gap:12px;margin-top:auto}
-.review-avatar{width:40px;height:40px;background:var(--bg3);border:1px solid var(--border2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;color:var(--cyan)}
-.review-user-info h4{font-size:0.9rem;font-weight:700;color:var(--text)}
-.review-user-info p{font-size:0.75rem;color:var(--text3)}
+.review-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:1.75rem;transition:all 0.2s}
+.review-card:hover{box-shadow:0 12px 32px rgba(0,0,0,0.07);transform:translateY(-3px)}
+.review-stars{color:#F59E0B;font-size:0.9rem;margin-bottom:1rem;letter-spacing:2px}
+.review-text{font-size:0.875rem;color:var(--text2);line-height:1.75;margin-bottom:1.5rem}
+.review-user{display:flex;align-items:center;gap:10px}
+.review-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--cyan));color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;flex-shrink:0}
+.review-user h4{font-size:0.875rem;font-weight:700;color:var(--text)}
+.review-user p{font-size:0.75rem;color:var(--text3)}
 
-/* CONTACT SECTION */
-.contact-section{padding:8rem 0;background:var(--bg3)}
-.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:start}
-.contact-info-cards{display:flex;flex-direction:column;gap:1.5rem}
-.contact-meta-card{background:var(--surface);border:1px solid var(--border);padding:1.5rem;border-radius:12px;display:flex;align-items:center;gap:1.5rem}
-.contact-meta-icon{width:48px;height:48px;background:rgba(6,182,212,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--cyan);font-size:1.3rem}
-.contact-meta-details h4{font-size:0.85rem;text-transform:uppercase;color:var(--text3);letter-spacing:0.05em;margin-bottom:0.25rem}
-.contact-meta-details a{color:var(--text);font-family:var(--font-display);font-size:1.15rem;font-weight:700;text-decoration:none;transition:color 0.15s}
-.contact-meta-details a:hover{color:var(--cyan)}
-.contact-form{background:var(--surface);border:1px solid var(--border);padding:2.5rem;border-radius:20px;display:flex;flex-direction:column;gap:1.25rem}
-.form-group{display:flex;flex-direction:column;gap:0.5rem}
-.form-group label{font-size:0.8rem;font-weight:600;color:var(--text2)}
-.form-group input, .form-group textarea{background:var(--bg);border:1px solid var(--border2);padding:0.75rem 1rem;border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:0.9rem;transition:border-color 0.15s}
-.form-group input:focus, .form-group textarea:focus{outline:none;border-color:var(--cyan)}
+/* CONTACT */
+.contact{padding:7rem 0;background:linear-gradient(160deg,#EFF6FF 0%,#F5F3FF 100%);position:relative;overflow:hidden}
+.contact-grid{display:grid;grid-template-columns:1fr 1.4fr;gap:4rem;align-items:start;margin-top:3rem}
+.contact-info-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;display:flex;align-items:center;gap:1rem;transition:all 0.2s;margin-bottom:1rem}
+.contact-info-card:hover{box-shadow:0 8px 24px rgba(0,0,0,0.07);transform:translateX(4px)}
+.ci-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.25rem;flex-shrink:0}
+.ci-icon-email{background:linear-gradient(135deg,#DBEAFE,#EFF6FF)}
+.ci-icon-phone{background:linear-gradient(135deg,#DCFCE7,#F0FDF4)}
+.ci-label{font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-bottom:2px}
+.ci-val{font-size:0.9rem;font-weight:600;color:var(--text);text-decoration:none}
+.ci-val:hover{color:var(--blue)}
+.contact-form-wrap{background:#fff;border:1px solid var(--border);border-radius:var(--radius-lg);padding:2rem;box-shadow:0 8px 32px rgba(0,0,0,0.06)}
+.form-group{margin-bottom:1.25rem}
+.form-group label{display:block;font-size:0.8rem;font-weight:600;color:var(--text);margin-bottom:6px}
+.form-group input,.form-group textarea{width:100%;background:var(--bg2);border:1.5px solid var(--border);border-radius:10px;padding:0.75rem 1rem;font-size:0.9rem;font-family:'Inter',sans-serif;color:var(--text);outline:none;transition:border-color 0.15s;resize:none}
+.form-group input:focus,.form-group textarea:focus{border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px rgba(37,99,235,0.1)}
 
 /* FOOTER */
-footer{background:var(--bg);border-top:1px solid var(--border);padding:5rem 0 3rem}
-.footer-grid{display:grid;grid-template-columns:2fr repeat(3,1fr);gap:4rem;margin-bottom:4rem}
-.footer-brand p{font-size:0.9rem;color:var(--text3);margin-top:1rem;line-height:1.5;max-width:280px}
-.footer-col h4{font-size:0.85rem;color:var(--text);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:1.25rem}
-.footer-col ul{list-style:none;display:flex;flex-direction:column;gap:0.75rem}
-.footer-col a{color:var(--text2);text-decoration:none;font-size:0.88rem;transition:color 0.15s}
-.footer-col a:hover{color:var(--cyan)}
-.footer-bottom{display:flex;justify-content:space-between;align-items:center;padding-top:2rem;border-top:1px solid var(--border);color:var(--text3);font-size:0.82rem}
+footer{background:var(--text);color:rgba(255,255,255,0.7);padding:4rem 0 2rem}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:3rem;margin-bottom:3rem}
+.footer-brand p{font-size:0.85rem;margin-top:1rem;line-height:1.7;max-width:260px}
+.footer-col h4{font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#fff;margin-bottom:1rem}
+.footer-col ul{list-style:none;display:flex;flex-direction:column;gap:0.5rem}
+.footer-col ul li a{color:rgba(255,255,255,0.6);text-decoration:none;font-size:0.875rem;transition:color 0.15s}
+.footer-col ul li a:hover{color:#fff}
+.footer-bottom{border-top:1px solid rgba(255,255,255,0.1);padding-top:2rem;display:flex;justify-content:space-between;align-items:center;font-size:0.8rem}
+.footer-logo{display:flex;align-items:center;gap:8px;text-decoration:none;font-weight:800;font-size:1.1rem;color:#fff;letter-spacing:-0.02em}
+.footer-logo svg{width:28px;height:28px;flex-shrink:0}
 
-@media(max-width:1024px){
-  .pricing-grid{grid-template-columns:repeat(2,1fr)}
-  .pricing-grid.operators-grid{grid-template-columns:repeat(2,1fr)}
-  .reviews-grid{grid-template-columns:repeat(2,1fr)}
-}
+/* ANIMATIONS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+
+/* MOBILE */
 @media(max-width:900px){
-  nav{padding:0 1.25rem}
+  nav{padding:0 1.5rem}
   .nav-links,.nav-right .btn-ghost{display:none}
-  .container{padding:0 1.25rem}
-  .hero-mockups{display:none}
-  .choose-grid,.timeline-grid,.qr-container,.app-grid,.pricing-grid,.pricing-grid.operators-grid,.reviews-grid,.contact-grid{grid-template-columns:1fr}
-  .timeline-arrow{display:none}
+  .hero{padding:100px 1.5rem 60px}
+  .container{padding:0 1.5rem}
+  .features-grid,.pricing-grid,.reviews-grid,.steps-row{grid-template-columns:1fr}
+  .steps-row::before{display:none}
+  .op-grid,.contact-grid{grid-template-columns:1fr}
+  .footer-grid{grid-template-columns:1fr 1fr}
+  .cards-row{gap:0.75rem}
+  .float-card{min-width:140px}
 }
 </style>
 </head>
@@ -299,312 +243,335 @@ footer{background:var(--bg);border-top:1px solid var(--border);padding:5rem 0 3r
 <!-- NAV -->
 <nav>
   <a href="#" class="nav-logo">
-    <div class="nav-logo-mark"></div>
+    <svg class="nav-logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+      <rect width="512" height="512" rx="80" fill="#0d1b2a"/>
+      <path d="M256 100 C256 100 160 220 160 300 C160 355 203 400 256 400 C309 400 352 355 352 300 C352 220 256 100 256 100Z" fill="#f5a623"/>
+      <text x="256" y="340" font-family="Arial Black, sans-serif" font-size="140" font-weight="900" text-anchor="middle" fill="#0d1b2a">S</text>
+    </svg>
     SplashPass
   </a>
   <ul class="nav-links">
-    <li><a href="#why-choose">Why SplashPass</a></li>
-    <li><a href="#how-it-works">Workflow</a></li>
-    <li><a href="#pricing">Plans</a></li>
-    <li><a href="#reviews">Reviews</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#how">How It Works</a></li>
+    <li><a href="#pricing">Pricing</a></li>
     <li><a href="#contact">Contact</a></li>
   </ul>
   <div class="nav-right">
-    <a href="#" class="btn-ghost">Sign in</a>
-    <a href="#pricing" class="btn-cyan">Become a Partner</a>
+    <a href="#" class="btn-ghost">Log In</a>
+    <a href="https://app.splashpass.site" class="btn-blue">Get Started →</a>
   </div>
 </nav>
 
 <!-- HERO -->
 <section class="hero">
-  <div class="hero-glow"></div>
-  <div class="hero-badge">
-    <div class="eyebrow-dot"></div>
-    Over 1,000+ Active Users Across Kenya
+  <div class="blob-wrap">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
   </div>
-  <h1>Book Car Washes.<br><span class="highlight">Grow Car Wash Businesses.</span></h1>
-  <p class="hero-sub">SplashPass connects car owners with trusted wash operators while providing powerful software for bookings, payments, loyalty programs, customer retention, and business growth.</p>
-  
+  <div class="hero-badge"><div class="badge-dot"></div> Now live in Kenya — Book your first wash today</div>
+  <h1>Book Your Car Wash<br><span class="grad">in Seconds</span></h1>
+  <p class="hero-sub">Find trusted car washes, skip the queues, and earn rewards with every wash. Built for drivers and car wash businesses across Kenya.</p>
   <div class="hero-actions">
-    <a href="#" class="btn-hero-primary">Book a Wash</a>
-    <a href="#pricing" class="btn-hero-secondary">Become a Wash Partner</a>
+    <a href="https://app.splashpass.site" class="btn-hero-primary">Download App <span class="btn-arrow">→</span></a>
+    <a href="#contact" class="btn-hero-secondary">Partner With Us <span class="btn-arrow">→</span></a>
   </div>
 
-  <!-- DASHBOARD PREVIEW -->
-  <div class="hero-mockups">
-    <div class="mockup-dash">
-      <div class="dash-topbar">
-        <div class="dash-logo">SplashPass Hub</div>
-        <div style="font-size:0.65rem;color:var(--text3)">Nairobi Core HQ</div>
+  <div class="hero-cards">
+    <div class="cards-row">
+      <div class="float-card">
+        <div class="fc-icon fc-icon-blue">💧</div>
+        <div class="fc-label">Today's Bookings</div>
+        <div class="fc-value">247</div>
+        <div class="fc-sub">Across 18 wash stations</div>
+        <div class="fc-bar"><div class="fc-bar-fill" style="width:78%;background:linear-gradient(90deg,#2563EB,#06B6D4)"></div></div>
+        <div class="fc-badge fc-badge-green">↑ 12% this week</div>
       </div>
-      <div class="dash-body">
-        <div class="dash-sidebar">
-          <div class="sb-item active">📈 Analytics Dashboard</div>
-          <div class="sb-item">🫧 Active Wash Queue</div>
-          <div class="sb-item">🎯 Loyalty Engines</div>
-          <div class="sb-item">💳 Revenue Flows</div>
-        </div>
-        <div class="dash-main">
-          <div class="kpi-grid">
-            <div class="kpi"><div class="kpi-label">Revenue</div><div class="kpi-val">KSh 148.5k</div></div>
-            <div class="kpi"><div class="kpi-label">Bookings</div><div class="kpi-val">342</div></div>
-            <div class="kpi"><div class="kpi-label">Loyalty Metric</div><div class="kpi-val">92%</div></div>
-            <div class="kpi"><div class="kpi-label">Customer Retention</div><div class="kpi-val">88.4%</div></div>
+      <div class="float-card">
+        <div class="fc-icon fc-icon-cyan">✨</div>
+        <div class="fc-label">Your Loyalty Points</div>
+        <div class="fc-value">1,840</div>
+        <div class="fc-sub">2 free washes available</div>
+        <div class="fc-bar"><div class="fc-bar-fill" style="width:62%;background:linear-gradient(90deg,#06B6D4,#7C3AED)"></div></div>
+        <div class="fc-badge">Redeem Now →</div>
+      </div>
+      <div class="float-card">
+        <div class="fc-icon fc-icon-purple">📈</div>
+        <div class="fc-label">Monthly Revenue</div>
+        <div class="fc-value">KSh 84K</div>
+        <div class="fc-sub">Operator dashboard</div>
+        <div class="fc-bar"><div class="fc-bar-fill" style="width:88%;background:linear-gradient(90deg,#7C3AED,#2563EB)"></div></div>
+        <div class="fc-badge fc-badge-green">↑ 31% vs last month</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SOCIAL PROOF -->
+<section class="social-proof">
+  <div class="container">
+    <div class="sp-inner">
+      <div class="sp-stat"><div class="sp-num">10,000+</div><div class="sp-label">Happy Drivers</div></div>
+      <div class="sp-divider"></div>
+      <div class="sp-stat"><div class="sp-num">50+</div><div class="sp-label">Partner Wash Stations</div></div>
+      <div class="sp-divider"></div>
+      <div class="sp-stat"><div class="sp-num">KSh 2M+</div><div class="sp-label">Processed Monthly</div></div>
+      <div class="sp-divider"></div>
+      <div class="sp-stat"><div class="sp-num">4.8 ★</div><div class="sp-label">Average Rating</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features" class="features">
+  <div class="container">
+    <div style="text-align:center">
+      <div class="section-eyebrow">✦ Core Features</div>
+      <h2 class="section-h2" style="margin:0 auto">Everything You Need for a<br>Seamless Wash Experience</h2>
+      <p class="section-sub" style="margin:0.75rem auto 0">Designed for both drivers who want convenience and operators who want growth.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feat-card">
+        <div class="feat-icon fi-blue">⚡</div>
+        <h3>Instant Booking</h3>
+        <p>Find and book nearby car washes in seconds. Real-time availability, zero phone calls, zero waiting in line.</p>
+        <a href="https://app.splashpass.site" class="feat-link">Try it now →</a>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon fi-cyan">🔒</div>
+        <h3>Cashless Payments</h3>
+        <p>Secure digital payments with instant receipts. Pay via M-Pesa or card — fast, safe, and fully tracked.</p>
+        <a href="https://app.splashpass.site" class="feat-link">Learn more →</a>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon fi-purple">🎁</div>
+        <h3>Loyalty Rewards</h3>
+        <p>Earn points with every wash and redeem them for free services. The more you wash, the more you save.</p>
+        <a href="https://app.splashpass.site" class="feat-link">See rewards →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how" class="how">
+  <div class="container">
+    <div style="text-align:center">
+      <div class="section-eyebrow">✦ How It Works</div>
+      <h2 class="section-h2" style="margin:0 auto">Three Simple Steps to<br>a Spotless Car</h2>
+    </div>
+    <div class="steps-row">
+      <div class="step">
+        <div class="step-num sn-1">1</div>
+        <div class="step-icon">🔍</div>
+        <h3>Find a Car Wash</h3>
+        <p>Browse trusted wash stations near you. See ratings, services, and real-time availability on the map.</p>
+      </div>
+      <div class="step">
+        <div class="step-num sn-2">2</div>
+        <div class="step-icon">💳</div>
+        <h3>Book & Pay</h3>
+        <p>Pick your time slot, choose your service package, and pay securely in-app. Your booking is confirmed instantly.</p>
+      </div>
+      <div class="step">
+        <div class="step-num sn-3">3</div>
+        <div class="step-icon">✨</div>
+        <h3>Get Washed</h3>
+        <p>Arrive, scan your QR code, and drive away spotless. No queues, no hassle, and loyalty points added automatically.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- OPERATOR -->
+<section id="operator" class="operator">
+  <div class="container">
+    <div class="op-grid">
+      <div>
+        <div class="section-eyebrow">✦ For Operators</div>
+        <h2 class="section-h2">Grow Your Car Wash<br>Business with SplashPass</h2>
+        <p class="section-sub">Join a platform built to help car wash businesses in Kenya thrive — more bookings, better management, and powerful analytics.</p>
+        <div class="op-features">
+          <div class="op-feat">
+            <div class="op-feat-icon op-feat-icon-1">📲</div>
+            <div>
+              <h4>Receive Bookings Instantly</h4>
+              <p>Get real-time booking notifications and manage your schedule from one simple dashboard.</p>
+            </div>
           </div>
-          <div class="chart-row">
-            <div class="chart-box">
-              <div class="bar-chart">
-                <div class="bar" style="height:40%"></div>
-                <div class="bar" style="height:65%"></div>
-                <div class="bar" style="height:50%"></div>
-                <div class="bar" style="height:85%"></div>
-                <div class="bar" style="height:70%"></div>
-                <div class="bar" style="height:100%"></div>
+          <div class="op-feat">
+            <div class="op-feat-icon op-feat-icon-2">👥</div>
+            <div>
+              <h4>Manage Customers</h4>
+              <p>Build a loyal customer base with a built-in CRM, loyalty tools, and automated follow-ups.</p>
+            </div>
+          </div>
+          <div class="op-feat">
+            <div class="op-feat-icon op-feat-icon-3">💰</div>
+            <div>
+              <h4>Track Earnings</h4>
+              <p>Monitor daily, weekly, and monthly revenue in real time. Get paid quickly and reliably.</p>
+            </div>
+          </div>
+          <div class="op-feat">
+            <div class="op-feat-icon op-feat-icon-4">📊</div>
+            <div>
+              <h4>Business Analytics Dashboard</h4>
+              <p>Understand your peak hours, top services, and customer trends with beautiful visual reports.</p>
+            </div>
+          </div>
+        </div>
+        <a href="#contact" class="btn-hero-primary" style="margin-top:2rem;display:inline-flex">Become a Partner →</a>
+      </div>
+      <div>
+        <div class="dash-mock">
+          <div class="dm-topbar">
+            <div class="dm-logo">SplashPass Operator</div>
+            <div class="dm-dots">
+              <div class="dm-dot" style="background:#FF5F57"></div>
+              <div class="dm-dot" style="background:#FEBC2E"></div>
+              <div class="dm-dot" style="background:#28C840"></div>
+            </div>
+          </div>
+          <div class="dm-body">
+            <div class="dm-sidebar">
+              <div class="dm-item active">📊 Dashboard</div>
+              <div class="dm-item">📅 Bookings</div>
+              <div class="dm-item">👥 Customers</div>
+              <div class="dm-item">💰 Earnings</div>
+              <div class="dm-item">⚙️ Settings</div>
+            </div>
+            <div class="dm-main">
+              <div class="dm-kpis">
+                <div class="dm-kpi">
+                  <div class="dm-kpi-label">Today</div>
+                  <div class="dm-kpi-val">KSh 4.2K</div>
+                  <div class="dm-kpi-badge">↑ 8%</div>
+                </div>
+                <div class="dm-kpi">
+                  <div class="dm-kpi-label">Bookings</div>
+                  <div class="dm-kpi-val">34</div>
+                  <div class="dm-kpi-badge">↑ 5</div>
+                </div>
+                <div class="dm-kpi">
+                  <div class="dm-kpi-label">Rating</div>
+                  <div class="dm-kpi-val">4.9 ★</div>
+                  <div class="dm-kpi-badge">Top 10%</div>
+                </div>
+              </div>
+              <div class="dm-chart-wrap">
+                <div class="dm-chart-title">Weekly Revenue — KSh</div>
+                <div class="dm-bars" id="dashBars"></div>
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-    <div class="mockup-mobile">
-      <div class="mob-notch"></div>
-      <div class="mob-screen">
-        <div class="mob-logo">SplashPass Mobile</div>
-        <div class="mob-card">
-          <div style="font-size:0.5rem;opacity:0.8">CUSTOMER REWARDS</div>
-          <div class="mob-card-pts">5,240 Pts</div>
-        </div>
-        <div style="font-size:0.55rem;background:rgba(255,255,255,0.05);padding:6px;border-radius:4px;margin-top:10px">
-          ✓ Slots Verified via System QR
-        </div>
-      </div>
-    </div>
   </div>
 </section>
 
-<!-- WHY OPERATORS CHOOSE SPLASHPASS -->
-<section id="why-choose" class="operator-choose">
-  <div class="container">
-    <div class="section-eyebrow"><div class="eyebrow-dot"></div> Business Value Matrix</div>
-    <h2 class="section-h2">Why Operators Choose SplashPass</h2>
-    <div class="choose-grid">
-      <div class="choose-card">
-        <span class="choose-icon">📈</span>
-        <h3>More Bookings</h3>
-        <p>Receive online bookings 24/7</p>
-      </div>
-      <div class="choose-card">
-        <span class="choose-icon">⚡</span>
-        <h3>Faster Operations</h3>
-        <p>QR verification and digital workflows</p>
-      </div>
-      <div class="choose-card">
-        <span class="choose-icon">🎯</span>
-        <h3>Better Customer Retention</h3>
-        <p>Built-in loyalty and rewards</p>
-      </div>
-      <div class="choose-card">
-        <span class="choose-icon">📊</span>
-        <h3>Business Intelligence</h3>
-        <p>Revenue and customer analytics</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- HOW SPLASHPASS WORKS -->
-<section id="how-it-works" class="how-it-works">
-  <div class="container">
-    <div class="section-eyebrow"><div class="eyebrow-dot"></div> Product Framework</div>
-    <h2 class="section-h2">How SplashPass Works</h2>
-    
-    <!-- Customers -->
-    <div class="timeline-block">
-      <div class="timeline-title-sub">For Customers</div>
-      <div class="timeline-grid">
-        <div class="timeline-card">
-          <div class="step-num">1</div>
-          <h4>Find Nearby Car Washes</h4>
-          <p>Discover premier local wash locations using dynamic positioning tools.</p>
-          <div class="timeline-arrow"></div>
-        </div>
-        <div class="timeline-card">
-          <div class="step-num">2</div>
-          <h4>Book Instantly</h4>
-          <p>Secure a guaranteed slot that fits seamlessly into your daily timeline.</p>
-          <div class="timeline-arrow"></div>
-        </div>
-        <div class="timeline-card">
-          <div class="step-num">3</div>
-          <h4>Scan QR on Arrival</h4>
-          <p>Present your automated booking token for high-speed terminal validation.</p>
-          <div class="timeline-arrow"></div>
-        </div>
-        <div class="timeline-card">
-          <div class="step-num">4</div>
-          <h4>Earn Loyalty Rewards</h4>
-          <p>Accumulate value points systematically on every automated transaction sequence.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-<!-- PRICING TIERS -->
-<section id="pricing" class="pricing-section">
+<!-- PRICING -->
+<section id="pricing" class="pricing">
   <div class="container">
     <div style="text-align:center">
-      <div class="section-eyebrow" style="justify-content:center"><div class="eyebrow-dot"></div> Tier Matrices</div>
-      <h2 class="section-h2">Flexible Pricing Plans Built For You</h2>
+      <div class="section-eyebrow">✦ Operator Pricing</div>
+      <h2 class="section-h2" style="margin:0 auto">Simple, Transparent Pricing<br>for Every Business</h2>
+      <p class="section-sub" style="margin:0.75rem auto 0">No hidden fees. Start free and scale as your business grows.</p>
     </div>
-    
-    <!-- CUSTOMER PLANS -->
-    <div class="pricing-layout-group">
-      <div class="pricing-group-title">🚗 Driver & Customer Subscriptions</div>
-      <div class="pricing-grid">
-        <div class="price-card">
-          <h3>Mini Plan</h3>
-          <p class="price-sub">Perfect for quick weekly top-ups</p>
-          <div class="price-amt">KSh 199<span>/week</span></div>
-          <ul class="price-features">
-            <li>1 Verified Eco-Wash slot</li>
-            <li>Priority local matching</li>
-            <li>Basic loyalty points</li>
-          </ul>
-          <a href="#" class="btn-price btn-price-outline">Select Mini</a>
-        </div>
-        
-        <div class="price-card featured">
-          <div class="badge-popular">Best Value</div>
-          <h3>Individual</h3>
-          <p class="price-sub">For regular vehicle maintenance</p>
-          <div class="price-amt">KSh 500<span>/month</span></div>
-          <ul class="price-features">
-            <li>4 Full-Service wash bookings</li>
-            <li>Dashboard analytics access</li>
-            <li>2x Loyalty rewards acceleration</li>
-            <li>Instant QR processing</li>
-          </ul>
-          <a href="#" class="btn-price btn-price-filled">Select Individual</a>
-        </div>
-        
-        <div class="price-card">
-          <h3>Duo Plan</h3>
-          <p class="price-sub">Ideal for couples & two-car homes</p>
-          <div class="price-amt">KSh 1,000<span>/month</span></div>
-          <ul class="price-features">
-            <li>8 Full-Service wash bookings</li>
-            <li>Dual-vehicle registration</li>
-            <li>Rollover unused slots</li>
-            <li>Priority terminal scanning</li>
-          </ul>
-          <a href="#" class="btn-price btn-price-outline">Select Duo</a>
-        </div>
+    <div class="pricing-grid">
 
-        <div class="price-card">
-          <h3>Family Plan</h3>
-          <p class="price-sub">Complete coverage for multi-cars</p>
-          <div class="price-amt">KSh 1,999<span>/month</span></div>
-          <ul class="price-features">
-            <li>Unlimited standard bookings</li>
-            <li>Up to 5 family vehicles</li>
-            <li>Premium interior vacuum features</li>
-            <li>24/7 Priority support hotline</li>
-          </ul>
-          <a href="#" class="btn-price btn-price-outline">Select Family</a>
-        </div>
+      <div class="price-card">
+        <div class="price-plan">Starter</div>
+        <div class="price-commission">20% commission</div>
+        <div class="price-amt">Free <span>to join</span></div>
+        <p class="price-sub">Perfect for new operators getting started on SplashPass.</p>
+        <div class="price-divider"></div>
+        <ul class="price-features">
+          <li><div class="pf-check">✓</div> Basic booking management</li>
+          <li><div class="pf-check">✓</div> Customer QR check-ins</li>
+          <li><div class="pf-check">✓</div> Digital receipts</li>
+          <li class="dim"><div class="pf-check">✗</div> Analytics dashboard</li>
+          <li class="dim"><div class="pf-check">✗</div> Loyalty tools</li>
+        </ul>
+        <a href="#contact" class="btn-price btn-price-outline">Get Started Free</a>
       </div>
-    </div>
 
-    <!-- OPERATOR PLANS -->
-    <div class="pricing-layout-group" style="margin-top: 6rem;">
-      <div class="pricing-group-title">🏢 Car Wash Operator Matrix</div>
-      <div class="pricing-grid operators-grid">
-        <div class="price-card">
-          <h3>Starter Operator</h3>
-          <p class="price-sub">For newly established wash bays</p>
-          <div class="price-amt">Free Base</div>
-          <ul class="price-features">
-            <li>Standard queue manager</li>
-            <li>Basic QR scanner validation</li>
-            <li>Pay-per-booking commission fee</li>
-          </ul>
-          <a href="#" class="btn-price btn-price-outline">Get Started</a>
-        </div>
-        
-        <div class="price-card featured">
-          <div class="badge-popular">Pro Choice</div>
-          <h3>Premium Operator</h3>
-          <p class="price-sub">For established operational centers</p>
-          <div class="price-amt">KSh 2,999<span>/month</span></div>
-          <ul class="price-features">
-            <li>0% Platform booking commissions</li>
-            <li>Full CRM & loyalty engine access</li>
-            <li>Staff efficiency tracking trackers</li>
-            <li>Advanced business analytics</li>
-            <li>Priority map discoverability</li>
-          </ul>
-          <a href="#" class="btn-price btn-price-filled">Upgrade Facility</a>
-        </div>
-
-        <div class="price-card">
-          <h3>Enterprise Hub</h3>
-          <p class="price-sub">For multi-location wash operations</p>
-          <div class="price-amt">Custom Quotation</div>
-          <ul class="price-features">
-            <li>Multi-branch sync capabilities</li>
-            <li>Custom white-labeled analytics</li>
-            <li>Dedicated financial account manager</li>
-          </ul>
-          <a href="#" class="btn-price btn-price-outline">Contact Matrix</a>
-        </div>
+      <div class="price-card featured">
+        <div class="featured-badge">⭐ Most Popular</div>
+        <div class="price-plan">Growth</div>
+        <div class="price-commission">10% commission</div>
+        <div class="price-amt">KSh 2,999 <span>/ month</span></div>
+        <p class="price-sub">For growing operators who want more customers and deeper insights.</p>
+        <div class="price-divider"></div>
+        <ul class="price-features">
+          <li><div class="pf-check">✓</div> Everything in Starter</li>
+          <li><div class="pf-check">✓</div> Full analytics dashboard</li>
+          <li><div class="pf-check">✓</div> Loyalty tools & CRM</li>
+          <li><div class="pf-check">✓</div> Priority map listing</li>
+          <li><div class="pf-check">✓</div> Revenue reports</li>
+        </ul>
+        <a href="#contact" class="btn-price btn-price-filled">Upgrade to Growth</a>
       </div>
-    </div>
 
+      <div class="price-card">
+        <div class="price-plan">Pro</div>
+        <div class="price-commission">Flat subscription</div>
+        <div class="price-amt">Custom <span>quote</span></div>
+        <p class="price-sub">For multi-location enterprises and high-volume wash operations.</p>
+        <div class="price-divider"></div>
+        <ul class="price-features">
+          <li><div class="pf-check">✓</div> Everything in Growth</li>
+          <li><div class="pf-check">✓</div> Multi-branch sync</li>
+          <li><div class="pf-check">✓</div> Advanced analytics</li>
+          <li><div class="pf-check">✓</div> Priority support</li>
+          <li><div class="pf-check">✓</div> Dedicated account manager</li>
+        </ul>
+        <a href="#contact" class="btn-price btn-price-outline">Contact Us</a>
+      </div>
+
+    </div>
   </div>
 </section>
 
-<!-- REVIEWS PLACE -->
-<section id="reviews" class="reviews-section">
+<!-- REVIEWS -->
+<section id="reviews" class="reviews">
   <div class="container">
     <div style="text-align:center">
-      <div class="section-eyebrow" style="justify-content:center"><div class="eyebrow-dot"></div> User Testimonials</div>
-      <h2 class="section-h2">See How Amazing SplashPass Is</h2>
-      <p class="section-sub" style="margin:0 auto">Read verified updates from drivers and station owners running workflows natively on our technology ecosystem.</p>
+      <div class="section-eyebrow">✦ Testimonials</div>
+      <h2 class="section-h2" style="margin:0 auto">Loved by Drivers and<br>Operators Across Kenya</h2>
     </div>
-
     <div class="reviews-grid">
       <div class="review-card">
-        <div class="review-stars">⭐⭐⭐⭐⭐</div>
-        <p class="review-text">"SplashPass is absolutely amazing! Booking my car wash using the Individual Plan saves me hours of waiting in line every single weekend. I just slide in, they scan my QR code, and the crew gets right to work."</p>
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">"SplashPass is amazing. I just scan my QR code at the gate and they get right to work. No more waiting in line for 45 minutes on Saturday mornings."</p>
         <div class="review-user">
           <div class="review-avatar">KM</div>
-          <div class="review-user-info">
+          <div>
             <h4>Kevin Mwangi</h4>
-            <p>Subaru Forester Owner — Nairobi</p>
+            <p>Subaru Forester Owner, Nairobi</p>
           </div>
         </div>
       </div>
-
       <div class="review-card">
-        <div class="review-stars">⭐⭐⭐⭐⭐</div>
-        <p class="review-text">"Upgrading our business to the KSh 2,999/month operator tier was a complete turning point. Our booking tracking is entirely digital now, and customers absolutely love earning loyalty reward points."</p>
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">"Upgrading to the Growth plan was a turning point. Our bookings are fully digital, revenue is up 31%, and customers love earning loyalty points."</p>
         <div class="review-user">
           <div class="review-avatar">AO</div>
-          <div class="review-user-info">
+          <div>
             <h4>Amara Okech</h4>
             <p>Founder, Sparkle Wash Hub</p>
           </div>
         </div>
       </div>
-
       <div class="review-card">
-        <div class="review-stars">⭐⭐⭐⭐⭐</div>
-        <p class="review-text">"The Family Plan is incredibly convenient. I managed to bundle my car, my wife's, and our daughter's car under one billing cycle. The interface is clean, rapid, and incredibly intuitive."</p>
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">"The Family Plan lets me bundle three cars under one account. The interface is clean and the whole family loves earning points together."</p>
         <div class="review-user">
           <div class="review-avatar">JN</div>
-          <div class="review-user-info">
+          <div>
             <h4>Joseph Njuguna</h4>
-            <p>Family Plan Subscriber</p>
+            <p>Family Plan Subscriber, Mombasa</p>
           </div>
         </div>
       </div>
@@ -612,49 +579,56 @@ footer{background:var(--bg);border-top:1px solid var(--border);padding:5rem 0 3r
   </div>
 </section>
 
-<!-- CONTACT US SECTION -->
-<section id="contact" class="contact-section">
+<!-- CONTACT -->
+<section id="contact" class="contact">
+  <div class="blob-wrap">
+    <div class="blob blob-1" style="opacity:0.12"></div>
+    <div class="blob blob-2" style="opacity:0.1"></div>
+  </div>
   <div class="container">
-    <div style="text-align:center; margin-bottom: 4rem;">
-      <div class="section-eyebrow" style="justify-content:center"><div class="eyebrow-dot"></div> Connect with Us</div>
-      <h2 class="section-h2">Get in Touch with SplashPass</h2>
-      <p class="section-sub" style="margin: 0 auto;">Have questions about integrating your car wash business or managing your bookings? Reach out directly via phone, email, or our contact interface.</p>
+    <div style="text-align:center">
+      <div class="section-eyebrow">✦ Get in Touch</div>
+      <h2 class="section-h2" style="margin:0 auto">Have Questions?<br>We'd Love to Hear From You</h2>
+      <p class="section-sub" style="margin:0.75rem auto 0">Whether you're a driver or a car wash operator, reach out and we'll get back to you quickly.</p>
     </div>
-
     <div class="contact-grid">
-      <div class="contact-info-cards">
-        <div class="contact-meta-card">
-          <div class="contact-meta-icon">✉️</div>
-          <div class="contact-meta-details">
-            <h4>Email Support</h4>
-            <a href="mailto:splashpass.site@gmail.com">splashpass.site@gmail.com</a>
+      <div>
+        <div class="contact-info-card">
+          <div class="ci-icon ci-icon-email">✉️</div>
+          <div>
+            <div class="ci-label">Email Support</div>
+            <a href="mailto:splashpass.site@gmail.com" class="ci-val">splashpass.site@gmail.com</a>
           </div>
         </div>
-
-        <div class="contact-meta-card">
-          <div class="contact-meta-icon">📞</div>
-          <div class="contact-meta-details">
-            <h4>Telephone Hotline</h4>
-            <a href="tel:+254768154892">+254 768 154892</a>
+        <div class="contact-info-card">
+          <div class="ci-icon ci-icon-phone">📞</div>
+          <div>
+            <div class="ci-label">Telephone</div>
+            <a href="tel:+254768154892" class="ci-val">+254 768 154892</a>
           </div>
+        </div>
+        <div style="margin-top:2rem;padding:1.5rem;background:#fff;border:1px solid var(--border);border-radius:var(--radius)">
+          <p style="font-size:0.85rem;font-weight:700;color:var(--text);margin-bottom:0.5rem">🕐 Response Time</p>
+          <p style="font-size:0.82rem;color:var(--text2);line-height:1.6">We typically respond within 2–4 hours on weekdays. For urgent matters, please call directly.</p>
         </div>
       </div>
-
-      <form class="contact-form" onsubmit="event.preventDefault(); alert('Message sent successfully!');">
-        <div class="form-group">
-          <label for="name">Your Name / Business Title</label>
-          <input type="text" id="name" placeholder="e.g. John Doe / Spin Wash Lounge" required />
-        </div>
-        <div class="form-group">
-          <label for="form-email">Email Address</label>
-          <input type="email" id="form-email" placeholder="you@example.com" required />
-        </div>
-        <div class="form-group">
-          <label for="message">Your Message</label>
-          <textarea id="message" rows="4" placeholder="How can our development and operations matrix help you?" required></textarea>
-        </div>
-        <button type="submit" class="btn-cyan" style="padding: 0.85rem; font-size: 1rem;">Transmit Message</button>
-      </form>
+      <div class="contact-form-wrap">
+        <form onsubmit="event.preventDefault();this.innerHTML='<div style=\'text-align:center;padding:2rem\'><div style=\'font-size:2rem\'>✅</div><h3 style=\'margin:1rem 0 0.5rem;font-weight:700\'>Message Sent!</h3><p style=\'color:#475569\'>We\'ll get back to you within 2–4 hours.</p></div>'">
+          <div class="form-group">
+            <label>Your Name or Business</label>
+            <input type="text" placeholder="e.g. John Doe / Shine Wash Station" required/>
+          </div>
+          <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" placeholder="you@example.com" required/>
+          </div>
+          <div class="form-group">
+            <label>Message</label>
+            <textarea rows="4" placeholder="How can we help you?" required></textarea>
+          </div>
+          <button type="submit" class="btn-hero-primary" style="width:100%;justify-content:center">Send Message →</button>
+        </form>
+      </div>
     </div>
   </div>
 </section>
@@ -664,48 +638,83 @@ footer{background:var(--bg);border-top:1px solid var(--border);padding:5rem 0 3r
   <div class="container">
     <div class="footer-grid">
       <div class="footer-brand">
-        <a href="#" class="nav-logo">
-          <div class="nav-logo-mark"></div>
+        <a href="#" class="footer-logo">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+            <rect width="512" height="512" rx="80" fill="#0d1b2a"/>
+            <path d="M256 100 C256 100 160 220 160 300 C160 355 203 400 256 400 C309 400 352 355 352 300 C352 220 256 100 256 100Z" fill="#f5a623"/>
+            <text x="256" y="340" font-family="Arial Black, sans-serif" font-size="140" font-weight="900" text-anchor="middle" fill="#0d1b2a">S</text>
+          </svg>
           SplashPass
         </a>
-        <p>"Built in Kenya for the next generation of car wash businesses."</p>
+        <p>Built in Kenya for the next generation of car wash businesses. Book smarter. Wash better. Grow faster.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Product</h4>
+        <ul>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#how">How It Works</a></li>
+          <li><a href="#pricing">Pricing</a></li>
+          <li><a href="https://app.splashpass.site">Customer App</a></li>
+        </ul>
       </div>
       <div class="footer-col">
         <h4>Company</h4>
         <ul>
-          <li><a href="#">About SplashPass</a></li>
+          <li><a href="#">About Us</a></li>
           <li><a href="#">Careers</a></li>
-          <li><a href="#contact">Contact Us</a></li>
+          <li><a href="#contact">Contact</a></li>
+          <li><a href="#">Privacy Policy</a></li>
         </ul>
       </div>
       <div class="footer-col">
-        <h4>Direct Contact</h4>
+        <h4>Contact</h4>
         <ul>
-          <li><a href="mailto:splashpass.site@gmail.com" style="font-size:0.8rem; word-break: break-all;">splashpass.site@gmail.com</a></li>
+          <li><a href="mailto:splashpass.site@gmail.com">splashpass.site@gmail.com</a></li>
           <li><a href="tel:+254768154892">+254 768 154892</a></li>
-        </ul>
-      </div>
-      <div class="footer-col">
-        <h4>Partners</h4>
-        <ul>
-          <li><a href="#">Become a Wash Partner</a></li>
-          <li><a href="#">Operator Pricing</a></li>
+          <li><a href="#contact">Send us a message</a></li>
         </ul>
       </div>
     </div>
     <div class="footer-bottom">
-      <div>&copy; 2026 SplashPass Technologies Ltd. All rights reserved.</div>
-      <div style="color:var(--text3)">Designed for Operational Supremacy</div>
+      <div>© 2026 SplashPass Technologies Ltd. All rights reserved.</div>
+      <div>Made with ❤️ in Kenya</div>
     </div>
   </div>
 </footer>
 
 <script>
-document.querySelectorAll('.sb-item').forEach(el=>{
+const bars = document.getElementById('dashBars');
+if(bars){
+  const vals=[42,58,35,71,88,64,76];
+  const max=Math.max(...vals);
+  vals.forEach(v=>{
+    const b=document.createElement('div');
+    b.className='dm-bar';
+    b.style.height=(v/max*100)+'%';
+    bars.appendChild(b);
+  });
+}
+
+document.querySelectorAll('.dm-item').forEach(el=>{
   el.addEventListener('click',function(){
-    this.parentElement.querySelectorAll('.sb-item').forEach(e=>e.classList.remove('active'));
+    this.parentElement.querySelectorAll('.dm-item').forEach(e=>e.classList.remove('active'));
     this.classList.add('active');
   });
+});
+
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.style.opacity='1';
+      e.target.style.transform='translateY(0)';
+    }
+  });
+},{threshold:0.1});
+document.querySelectorAll('.feat-card,.price-card,.review-card,.step,.op-feat').forEach(el=>{
+  el.style.opacity='0';
+  el.style.transform='translateY(20px)';
+  el.style.transition='opacity 0.5s ease, transform 0.5s ease';
+  observer.observe(el);
 });
 </script>
 </body>
