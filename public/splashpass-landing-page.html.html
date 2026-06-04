@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>SplashPass — Book Car Washes. Grow Car Wash Businesses.</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Bricolage+Grotesque:opsz,wght scheduled;12..96,400;12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#04080f;
+  --bg2:#080e1a;
+  --bg3:#0b1220;
+  --surface:#0f1929;
+  --surface2:#131f30;
+  --border:rgba(255,255,255,0.07);
+  --border2:rgba(255,255,255,0.12);
+  --cyan:#06b6d4;
+  --cyan2:#0891b2;
+  --cyan3:#cffafe;
+  --blue:#3b82f6;
+  --blue2:#1d4ed8;
+  --text:#f1f5f9;
+  --text2:#94a3b8;
+  --text3:#64748b;
+  --green:#10b981;
+  --amber:#f59e0b;
+  --red:#ef4444;
+  --purple:#a78bfa;
+  --font-display:'Bricolage Grotesque',sans-serif;
+  --font-body:'Plus Jakarta Sans',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{font-family:var(--font-body);background:var(--bg);color:var(--text);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    linear-gradient(rgba(6,182,212,0.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(6,182,212,0.03) 1px,transparent 1px);
+  background-size:60px 60px;
+}
+
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:200;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 3rem;height:64px;
+  background:rgba(4,8,15,0.75);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+}
+.nav-logo{font-family:var(--font-display);font-weight:800;font-size:1.35rem;color:var(--text);letter-spacing:-0.03em;display:flex;align-items:center;gap:12px;text-decoration:none}
+
+/* OFFICIAL SPLASHPASS SITE LOGO GEOMETRY */
+.nav-logo-mark {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  background: linear-gradient(135deg, #0284c7, #06b6d4);
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);
+  overflow: hidden;
+}
+.nav-logo-mark::before {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border-radius: 50% 50% 0 50%;
+  transform: rotate(-45deg);
+  margin-top: -2px;
+}
+.nav-logo-mark::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  width: 16px;
+  height: 3px;
+  background: rgba(255,255,255,0.4);
+  border-radius: 2px;
+}
+
+.nav-links{display:flex;gap:0;list-style:none}
+.nav-links a{color:var(--text2);text-decoration:none;font-size:0.875rem;padding:0.5rem 1rem;border-radius:6px;transition:all 0.15s;font-weight:500}
+.nav-links a:hover{color:var(--text);background:rgba(255,255,255,0.05)}
+.nav-right{display:flex;align-items:center;gap:0.75rem}
+.btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--text);padding:0.5rem 1.25rem;border-radius:8px;font-size:0.875rem;font-weight:600;cursor:pointer;font-family:var(--font-body);text-decoration:none;transition:all 0.15s}
+.btn-ghost:hover{border-color:rgba(255,255,255,0.25);background:rgba(255,255,255,0.05)}
+.btn-cyan{background:var(--cyan);color:#000;padding:0.5rem 1.25rem;border-radius:8px;font-size:0.875rem;font-weight:700;cursor:pointer;font-family:var(--font-body);text-decoration:none;transition:all 0.15s;border:none}
+.btn-cyan:hover{background:#22d3ee;transform:translateY(-1px)}
+
+section{position:relative;z-index:1}
+.container{max-width:1200px;margin:0 auto;padding:0 3rem}
+.section-eyebrow{display:inline-flex;align-items:center;gap:6px;font-size:0.75rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--cyan);margin-bottom:1rem}
+.eyebrow-dot{width:5px;height:5px;border-radius:50%;background:var(--cyan);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+.section-h2{font-family:var(--font-display);font-size:clamp(2rem,4vw,3rem);font-weight:800;letter-spacing:-0.03em;line-height:1.1;margin-bottom:1rem}
+.section-sub{color:var(--text2);font-size:1.05rem;line-height:1.7;font-weight:400;max-width:650px}
+.highlight{background:linear-gradient(135deg,var(--cyan),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+/* HERO */
+.hero{
+  min-height:90vh;display:flex;flex-direction:column;
+  align-items:center;justify-content:flex-start;
+  padding:140px 3rem 0;text-align:center;
+  position:relative;overflow:hidden;
+}
+.hero-glow{
+  position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:900px;height:600px;
+  background:radial-gradient(ellipse at center top,rgba(6,182,212,0.18) 0%,rgba(59,130,246,0.08) 40%,transparent 70%);
+  pointer-events:none;
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(6,182,212,0.08);border:1px solid rgba(6,182,212,0.2);
+  padding:6px 16px;border-radius:100px;
+  font-size:0.8rem;font-weight:600;color:var(--cyan);letter-spacing:0.02em;
+  margin-bottom:2rem;animation:fadeUp 0.5s ease both}
+.hero h1{
+  font-family:var(--font-display);font-size:clamp(3rem,6.5vw,5.5rem);
+  font-weight:800;letter-spacing:-0.03em;line-height:1.05;max-width:1050px;
+  animation:fadeUp 0.6s 0.05s ease both}
+.hero-sub{
+  max-width:720px;margin:1.5rem auto 0;font-size:1.15rem;line-height:1.7;color:var(--text2);
+  font-weight:400;animation:fadeUp 0.6s 0.1s ease both}
+.hero-actions{
+  display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;margin-top:2.5rem;
+  animation:fadeUp 0.6s 0.15s ease both}
+.btn-hero-primary{
+  background:var(--cyan);color:#000;padding:0.9rem 2.25rem;border-radius:10px;
+  font-size:1rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:8px;
+  transition:all 0.2s;font-family:var(--font-body);box-shadow:0 0 30px rgba(6,182,212,0.25)}
+.btn-hero-primary:hover{background:#22d3ee;transform:translateY(-2px);box-shadow:0 0 45px rgba(6,182,212,0.4)}
+.btn-hero-secondary{
+  background:rgba(255,255,255,0.03);color:var(--text);padding:0.9rem 2.25rem;border-radius:10px;
+  font-size:1rem;font-weight:600;text-decoration:none;border:1px solid var(--border2);
+  display:inline-flex;align-items:center;gap:8px;transition:all 0.2s;font-family:var(--font-body)}
+.btn-hero-secondary:hover{background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.2);transform:translateY(-1px)}
+
+/* SHOWCASE */
+.hero-mockups{position:relative;margin-top:4rem;width:100%;max-width:1100px;height:340px;animation:fadeUp 0.8s 0.25s ease both}
+.mockup-dash{position:absolute;left:0;top:0;right:220px;height:100%;background:var(--surface);border:1px solid var(--border2);border-radius:16px;overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,0.6)}
+.mockup-mobile{position:absolute;right:0;top:20px;width:200px;height:310px;background:var(--bg2);border:1.5px solid var(--border2);border-radius:24px;overflow:hidden;box-shadow:0 30px 60px rgba(0,0,0,0.6),0 0 40px rgba(6,182,212,0.1);z-index:10}
+.dash-topbar{background:var(--bg3);border-bottom:1px solid var(--border);padding:0 1.25rem;height:40px;display:flex;align-items:center;justify-content:space-between}
+.dash-logo{font-family:var(--font-display);font-weight:700;font-size:0.85rem;color:var(--cyan)}
+.dash-body{display:flex;height:calc(100% - 40px)}
+.dash-sidebar{width:140px;border-right:1px solid var(--border);padding:0.5rem;display:flex;flex-direction:column;gap:2px;background:rgba(4,8,15,0.2)}
+.sb-item{display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:6px;font-size:0.65rem;color:var(--text3);font-weight:500}
+.sb-item.active{background:rgba(6,182,212,0.08);color:var(--cyan)}
+.dash-main{flex:1;padding:0.85rem;overflow:hidden}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0.5rem;margin-bottom:0.8rem}
+.kpi{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:0.5rem 0.6rem}
+.kpi-label{font-size:0.55rem;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:0.02em}
+.kpi-val{font-family:var(--font-display);font-size:1.1rem;font-weight:700;line-height:1.1;margin-top:2px}
+.chart-row{display:grid;grid-template-columns:1fr;gap:0.5rem}
+.chart-box{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:0.6rem 0.8rem}
+.bar-chart{display:flex;align-items:flex-end;gap:6px;height:120px;padding-top:10px}
+.bar{border-radius:3px 3px 0 0;flex:1;background:linear-gradient(180deg,var(--cyan),var(--blue))}
+.mob-notch{width:60px;height:14px;background:var(--bg);border-radius:0 0 10px 10px;margin:0 auto}
+.mob-screen{padding:0.5rem;display:flex;flex-direction:column;gap:0.4rem}
+.mob-logo{font-family:var(--font-display);font-weight:800;font-size:0.75rem;color:var(--cyan)}
+.mob-card{background:linear-gradient(135deg,#0891b2,#1d4ed8);border-radius:8px;padding:0.6rem;position:relative}
+.mob-card-pts{font-family:var(--font-display);font-size:1.2rem;font-weight:800}
+
+/* VALUE MATRICES */
+.operator-choose{padding:6rem 0;background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.choose-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.25rem;margin-top:2.5rem}
+.choose-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.5rem;transition:all 0.2s}
+.choose-card:hover{border-color:var(--border2);transform:translateY(-2px)}
+.choose-icon{font-size:1.5rem;margin-bottom:1rem;display:block}
+.choose-card h3{font-family:var(--font-display);font-size:1.1rem;font-weight:700;margin-bottom:0.5rem}
+.choose-card p{font-size:0.85rem;color:var(--text2);line-height:1.5}
+
+/* TIMELINES */
+.how-it-works{padding:8rem 0}
+.timeline-block{margin-top:4rem}
+.timeline-title-sub{font-size:0.9rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text3);font-weight:700;margin-bottom:1.5rem}
+.timeline-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;position:relative}
+.timeline-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.5rem;position:relative;z-index:2}
+.step-num{position:absolute;top:-15px;left:20px;width:30px;height:30px;background:var(--bg3);border:1px solid var(--border2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:700;color:var(--cyan)}
+.timeline-card h4{font-family:var(--font-display);font-size:1rem;font-weight:700;margin-top:0.5rem;margin-bottom:0.5rem}
+.timeline-card p{font-size:0.82rem;color:var(--text2);line-height:1.4}
+.timeline-arrow{position:absolute;top:45%;right:-15px;width:30px;height:2px;background:dashed rgba(6,182,212,0.2);z-index:1}
+
+/* QR SEC */
+.qr-section{padding:8rem 0;background:var(--bg3);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.qr-container{display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center}
+.qr-flow{display:flex;flex-direction:column;gap:0.75rem;margin-top:2rem}
+.qr-node{display:flex;align-items:center;gap:1rem;background:var(--surface);border:1px solid var(--border);padding:1rem;border-radius:12px}
+.qr-node-icon{width:36px;height:36px;background:rgba(6,182,212,0.1);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--cyan);font-weight:700;font-size:0.9rem}
+.qr-node-text{font-size:0.9rem;font-weight:600}
+.qr-arrow-down{text-align:center;color:var(--text3);font-size:0.8rem;margin:-0.25rem 0}
+.qr-visual-card{background:var(--surface);border:2px solid rgba(6,182,212,0.25);border-radius:24px;padding:2.5rem;text-align:center;box-shadow:0 30px 60px rgba(0,0,0,0.4)}
+.qr-box-mock{width:160px;height:160px;background:#fff;margin:0 auto 1.5rem;border-radius:16px;padding:12px;display:flex;flex-direction:column;justify-content:space-between}
+.qr-line-mock{height:6px;background:#000;border-radius:2px}
+
+/* COMPARISONS */
+.comparison-section{padding:8rem 0}
+.comp-table{width:100%;border-collapse:collapse;margin-top:3rem;text-align:left}
+.comp-table th{padding:1.25rem;font-family:var(--font-display);font-size:1.1rem;font-weight:700;border-bottom:1px solid var(--border2)}
+.comp-table td{padding:1.25rem;font-size:0.95rem;border-bottom:1px solid var(--border);line-height:1.5}
+.comp-table tr:hover td{background:rgba(255,255,255,0.01)}
+.td-traditional{color:var(--text3);text-decoration:line-through;opacity:0.7}
+.td-splashpass{color:var(--cyan);font-weight:600}
+
+/* APPS */
+.app-section{padding:8rem 0;background:var(--bg2)}
+.app-grid{display:grid;grid-template-columns:1fr 1fr;gap:2.5rem;margin-top:3.5rem}
+.app-box{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:2.5rem}
+.app-box h3{font-family:var(--font-display);font-size:1.4rem;font-weight:700;margin-bottom:1rem}
+.app-box ul{list-style:none;display:flex;flex-direction:column;gap:0.75rem;margin-bottom:2rem}
+.app-box li{font-size:0.95rem;color:var(--text2);display:flex;align-items:center;gap:8px}
+.app-box li::before{content:'✓';color:var(--cyan);font-weight:bold}
+.btn-market{display:inline-flex;align-items:center;gap:10px;background:#000;color:#fff;border:1px solid var(--border2);padding:0.6rem 1.25rem;border-radius:8px;text-decoration:none;font-size:0.85rem;font-weight:600}
+.btn-disabled{opacity:0.4;cursor:not-allowed}
+
+/* RESTRUCTURED PRICING TIERS */
+.pricing-section{padding:8rem 0}
+.pricing-layout-group {margin-top:4rem}
+.pricing-group-title {font-family:var(--font-display);font-size:1.5rem;font-weight:700;margin-bottom:1.5rem;color:var(--text);display:flex;align-items:center;gap:10px}
+.pricing-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.25rem}
+.pricing-grid.operators-grid {grid-template-columns:repeat(3,1fr)}
+.price-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2rem 1.5rem;position:relative;transition:all 0.3s;display:flex;flex-direction:column;justify-content:between}
+.price-card:hover{transform:translateY(-4px);border-color:var(--border2)}
+.price-card.featured{border:2px solid var(--cyan);box-shadow:0 0 40px rgba(6,182,212,0.15)}
+.badge-popular{position:absolute;top:15px;right:15px;background:var(--cyan);color:#000;font-size:0.65rem;font-weight:800;padding:4px 10px;border-radius:100px;text-transform:uppercase}
+.price-card h3{font-family:var(--font-display);font-size:1.3rem;font-weight:700;margin-bottom:0.25rem}
+.price-sub{font-size:0.8rem;color:var(--text3);margin-bottom:1.25rem}
+.price-amt {font-family:var(--font-display);font-size:1.8rem;font-weight:800;color:var(--text)}
+.price-amt span {font-size:0.85rem;color:var(--text3);font-family:var(--font-body);font-weight:400}
+.price-features{display:flex;flex-direction:column;gap:0.65rem;margin:1.5rem 0;list-style:none;flex-grow:1}
+.price-features li{font-size:0.85rem;color:var(--text2);display:flex;align-items:center;gap:8px}
+.price-features li::before{content:'✓';color:var(--cyan);font-weight:bold}
+.btn-price{display:block;text-align:center;padding:0.7rem;border-radius:8px;font-weight:700;text-decoration:none;font-size:0.85rem;transition:all 0.15s}
+.btn-price-outline{border:1px solid var(--border2);color:var(--text)}
+.btn-price-outline:hover{background:rgba(255,255,255,0.05)}
+.btn-price-filled{background:var(--cyan);color:#000}
+.btn-price-filled:hover{background:#22d3ee}
+
+/* NEW REVIEWS SECTION */
+.reviews-section{padding:8rem 0;background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.reviews-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:3.5rem}
+.review-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2rem;display:flex;flex-direction:column;gap:1.25rem;transition:all 0.2s}
+.review-card:hover{border-color:var(--border2);transform:translateY(-2px)}
+.review-stars{color:var(--amber);font-size:1rem;letter-spacing:2px}
+.review-text{font-size:0.95rem;color:var(--text2);line-height:1.6;font-style:italic}
+.review-user{display:flex;align-items:center;gap:12px;margin-top:auto}
+.review-avatar{width:40px;height:40px;background:var(--bg3);border:1px solid var(--border2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;color:var(--cyan)}
+.review-user-info h4{font-size:0.9rem;font-weight:700;color:var(--text)}
+.review-user-info p{font-size:0.75rem;color:var(--text3)}
+
+/* CONTACT SECTION */
+.contact-section{padding:8rem 0;background:var(--bg3)}
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:start}
+.contact-info-cards{display:flex;flex-direction:column;gap:1.5rem}
+.contact-meta-card{background:var(--surface);border:1px solid var(--border);padding:1.5rem;border-radius:12px;display:flex;align-items:center;gap:1.5rem}
+.contact-meta-icon{width:48px;height:48px;background:rgba(6,182,212,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--cyan);font-size:1.3rem}
+.contact-meta-details h4{font-size:0.85rem;text-transform:uppercase;color:var(--text3);letter-spacing:0.05em;margin-bottom:0.25rem}
+.contact-meta-details a{color:var(--text);font-family:var(--font-display);font-size:1.15rem;font-weight:700;text-decoration:none;transition:color 0.15s}
+.contact-meta-details a:hover{color:var(--cyan)}
+.contact-form{background:var(--surface);border:1px solid var(--border);padding:2.5rem;border-radius:20px;display:flex;flex-direction:column;gap:1.25rem}
+.form-group{display:flex;flex-direction:column;gap:0.5rem}
+.form-group label{font-size:0.8rem;font-weight:600;color:var(--text2)}
+.form-group input, .form-group textarea{background:var(--bg);border:1px solid var(--border2);padding:0.75rem 1rem;border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:0.9rem;transition:border-color 0.15s}
+.form-group input:focus, .form-group textarea:focus{outline:none;border-color:var(--cyan)}
+
+/* FOOTER */
+footer{background:var(--bg);border-top:1px solid var(--border);padding:5rem 0 3rem}
+.footer-grid{display:grid;grid-template-columns:2fr repeat(3,1fr);gap:4rem;margin-bottom:4rem}
+.footer-brand p{font-size:0.9rem;color:var(--text3);margin-top:1rem;line-height:1.5;max-width:280px}
+.footer-col h4{font-size:0.85rem;color:var(--text);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:1.25rem}
+.footer-col ul{list-style:none;display:flex;flex-direction:column;gap:0.75rem}
+.footer-col a{color:var(--text2);text-decoration:none;font-size:0.88rem;transition:color 0.15s}
+.footer-col a:hover{color:var(--cyan)}
+.footer-bottom{display:flex;justify-content:space-between;align-items:center;padding-top:2rem;border-top:1px solid var(--border);color:var(--text3);font-size:0.82rem}
+
+@media(max-width:1024px){
+  .pricing-grid{grid-template-columns:repeat(2,1fr)}
+  .pricing-grid.operators-grid{grid-template-columns:repeat(2,1fr)}
+  .reviews-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:900px){
+  nav{padding:0 1.25rem}
+  .nav-links,.nav-right .btn-ghost{display:none}
+  .container{padding:0 1.25rem}
+  .hero-mockups{display:none}
+  .choose-grid,.timeline-grid,.qr-container,.app-grid,.pricing-grid,.pricing-grid.operators-grid,.reviews-grid,.contact-grid{grid-template-columns:1fr}
+  .timeline-arrow{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    <div class="nav-logo-mark"></div>
+    SplashPass
+  </a>
+  <ul class="nav-links">
+    <li><a href="#why-choose">Why SplashPass</a></li>
+    <li><a href="#how-it-works">Workflow</a></li>
+    <li><a href="#pricing">Plans</a></li>
+    <li><a href="#reviews">Reviews</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <div class="nav-right">
+    <a href="#" class="btn-ghost">Sign in</a>
+    <a href="#pricing" class="btn-cyan">Become a Partner</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-badge">
+    <div class="eyebrow-dot"></div>
+    Over 1,000+ Active Users Across Kenya
+  </div>
+  <h1>Book Car Washes.<br><span class="highlight">Grow Car Wash Businesses.</span></h1>
+  <p class="hero-sub">SplashPass connects car owners with trusted wash operators while providing powerful software for bookings, payments, loyalty programs, customer retention, and business growth.</p>
+  
+  <div class="hero-actions">
+    <a href="#" class="btn-hero-primary">Book a Wash</a>
+    <a href="#pricing" class="btn-hero-secondary">Become a Wash Partner</a>
+  </div>
+
+  <!-- DASHBOARD PREVIEW -->
+  <div class="hero-mockups">
+    <div class="mockup-dash">
+      <div class="dash-topbar">
+        <div class="dash-logo">SplashPass Hub</div>
+        <div style="font-size:0.65rem;color:var(--text3)">Nairobi Core HQ</div>
+      </div>
+      <div class="dash-body">
+        <div class="dash-sidebar">
+          <div class="sb-item active">📈 Analytics Dashboard</div>
+          <div class="sb-item">🫧 Active Wash Queue</div>
+          <div class="sb-item">🎯 Loyalty Engines</div>
+          <div class="sb-item">💳 Revenue Flows</div>
+        </div>
+        <div class="dash-main">
+          <div class="kpi-grid">
+            <div class="kpi"><div class="kpi-label">Revenue</div><div class="kpi-val">KSh 148.5k</div></div>
+            <div class="kpi"><div class="kpi-label">Bookings</div><div class="kpi-val">342</div></div>
+            <div class="kpi"><div class="kpi-label">Loyalty Metric</div><div class="kpi-val">92%</div></div>
+            <div class="kpi"><div class="kpi-label">Customer Retention</div><div class="kpi-val">88.4%</div></div>
+          </div>
+          <div class="chart-row">
+            <div class="chart-box">
+              <div class="bar-chart">
+                <div class="bar" style="height:40%"></div>
+                <div class="bar" style="height:65%"></div>
+                <div class="bar" style="height:50%"></div>
+                <div class="bar" style="height:85%"></div>
+                <div class="bar" style="height:70%"></div>
+                <div class="bar" style="height:100%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mockup-mobile">
+      <div class="mob-notch"></div>
+      <div class="mob-screen">
+        <div class="mob-logo">SplashPass Mobile</div>
+        <div class="mob-card">
+          <div style="font-size:0.5rem;opacity:0.8">CUSTOMER REWARDS</div>
+          <div class="mob-card-pts">5,240 Pts</div>
+        </div>
+        <div style="font-size:0.55rem;background:rgba(255,255,255,0.05);padding:6px;border-radius:4px;margin-top:10px">
+          ✓ Slots Verified via System QR
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHY OPERATORS CHOOSE SPLASHPASS -->
+<section id="why-choose" class="operator-choose">
+  <div class="container">
+    <div class="section-eyebrow"><div class="eyebrow-dot"></div> Business Value Matrix</div>
+    <h2 class="section-h2">Why Operators Choose SplashPass</h2>
+    <div class="choose-grid">
+      <div class="choose-card">
+        <span class="choose-icon">📈</span>
+        <h3>More Bookings</h3>
+        <p>Receive online bookings 24/7</p>
+      </div>
+      <div class="choose-card">
+        <span class="choose-icon">⚡</span>
+        <h3>Faster Operations</h3>
+        <p>QR verification and digital workflows</p>
+      </div>
+      <div class="choose-card">
+        <span class="choose-icon">🎯</span>
+        <h3>Better Customer Retention</h3>
+        <p>Built-in loyalty and rewards</p>
+      </div>
+      <div class="choose-card">
+        <span class="choose-icon">📊</span>
+        <h3>Business Intelligence</h3>
+        <p>Revenue and customer analytics</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW SPLASHPASS WORKS -->
+<section id="how-it-works" class="how-it-works">
+  <div class="container">
+    <div class="section-eyebrow"><div class="eyebrow-dot"></div> Product Framework</div>
+    <h2 class="section-h2">How SplashPass Works</h2>
+    
+    <!-- Customers -->
+    <div class="timeline-block">
+      <div class="timeline-title-sub">For Customers</div>
+      <div class="timeline-grid">
+        <div class="timeline-card">
+          <div class="step-num">1</div>
+          <h4>Find Nearby Car Washes</h4>
+          <p>Discover premier local wash locations using dynamic positioning tools.</p>
+          <div class="timeline-arrow"></div>
+        </div>
+        <div class="timeline-card">
+          <div class="step-num">2</div>
+          <h4>Book Instantly</h4>
+          <p>Secure a guaranteed slot that fits seamlessly into your daily timeline.</p>
+          <div class="timeline-arrow"></div>
+        </div>
+        <div class="timeline-card">
+          <div class="step-num">3</div>
+          <h4>Scan QR on Arrival</h4>
+          <p>Present your automated booking token for high-speed terminal validation.</p>
+          <div class="timeline-arrow"></div>
+        </div>
+        <div class="timeline-card">
+          <div class="step-num">4</div>
+          <h4>Earn Loyalty Rewards</h4>
+          <p>Accumulate value points systematically on every automated transaction sequence.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+<!-- PRICING TIERS -->
+<section id="pricing" class="pricing-section">
+  <div class="container">
+    <div style="text-align:center">
+      <div class="section-eyebrow" style="justify-content:center"><div class="eyebrow-dot"></div> Tier Matrices</div>
+      <h2 class="section-h2">Flexible Pricing Plans Built For You</h2>
+    </div>
+    
+    <!-- CUSTOMER PLANS -->
+    <div class="pricing-layout-group">
+      <div class="pricing-group-title">🚗 Driver & Customer Subscriptions</div>
+      <div class="pricing-grid">
+        <div class="price-card">
+          <h3>Mini Plan</h3>
+          <p class="price-sub">Perfect for quick weekly top-ups</p>
+          <div class="price-amt">KSh 199<span>/week</span></div>
+          <ul class="price-features">
+            <li>1 Verified Eco-Wash slot</li>
+            <li>Priority local matching</li>
+            <li>Basic loyalty points</li>
+          </ul>
+          <a href="#" class="btn-price btn-price-outline">Select Mini</a>
+        </div>
+        
+        <div class="price-card featured">
+          <div class="badge-popular">Best Value</div>
+          <h3>Individual</h3>
+          <p class="price-sub">For regular vehicle maintenance</p>
+          <div class="price-amt">KSh 500<span>/month</span></div>
+          <ul class="price-features">
+            <li>4 Full-Service wash bookings</li>
+            <li>Dashboard analytics access</li>
+            <li>2x Loyalty rewards acceleration</li>
+            <li>Instant QR processing</li>
+          </ul>
+          <a href="#" class="btn-price btn-price-filled">Select Individual</a>
+        </div>
+        
+        <div class="price-card">
+          <h3>Duo Plan</h3>
+          <p class="price-sub">Ideal for couples & two-car homes</p>
+          <div class="price-amt">KSh 1,000<span>/month</span></div>
+          <ul class="price-features">
+            <li>8 Full-Service wash bookings</li>
+            <li>Dual-vehicle registration</li>
+            <li>Rollover unused slots</li>
+            <li>Priority terminal scanning</li>
+          </ul>
+          <a href="#" class="btn-price btn-price-outline">Select Duo</a>
+        </div>
+
+        <div class="price-card">
+          <h3>Family Plan</h3>
+          <p class="price-sub">Complete coverage for multi-cars</p>
+          <div class="price-amt">KSh 1,999<span>/month</span></div>
+          <ul class="price-features">
+            <li>Unlimited standard bookings</li>
+            <li>Up to 5 family vehicles</li>
+            <li>Premium interior vacuum features</li>
+            <li>24/7 Priority support hotline</li>
+          </ul>
+          <a href="#" class="btn-price btn-price-outline">Select Family</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- OPERATOR PLANS -->
+    <div class="pricing-layout-group" style="margin-top: 6rem;">
+      <div class="pricing-group-title">🏢 Car Wash Operator Matrix</div>
+      <div class="pricing-grid operators-grid">
+        <div class="price-card">
+          <h3>Starter Operator</h3>
+          <p class="price-sub">For newly established wash bays</p>
+          <div class="price-amt">Free Base</div>
+          <ul class="price-features">
+            <li>Standard queue manager</li>
+            <li>Basic QR scanner validation</li>
+            <li>Pay-per-booking commission fee</li>
+          </ul>
+          <a href="#" class="btn-price btn-price-outline">Get Started</a>
+        </div>
+        
+        <div class="price-card featured">
+          <div class="badge-popular">Pro Choice</div>
+          <h3>Premium Operator</h3>
+          <p class="price-sub">For established operational centers</p>
+          <div class="price-amt">KSh 2,999<span>/month</span></div>
+          <ul class="price-features">
+            <li>0% Platform booking commissions</li>
+            <li>Full CRM & loyalty engine access</li>
+            <li>Staff efficiency tracking trackers</li>
+            <li>Advanced business analytics</li>
+            <li>Priority map discoverability</li>
+          </ul>
+          <a href="#" class="btn-price btn-price-filled">Upgrade Facility</a>
+        </div>
+
+        <div class="price-card">
+          <h3>Enterprise Hub</h3>
+          <p class="price-sub">For multi-location wash operations</p>
+          <div class="price-amt">Custom Quotation</div>
+          <ul class="price-features">
+            <li>Multi-branch sync capabilities</li>
+            <li>Custom white-labeled analytics</li>
+            <li>Dedicated financial account manager</li>
+          </ul>
+          <a href="#" class="btn-price btn-price-outline">Contact Matrix</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- REVIEWS PLACE -->
+<section id="reviews" class="reviews-section">
+  <div class="container">
+    <div style="text-align:center">
+      <div class="section-eyebrow" style="justify-content:center"><div class="eyebrow-dot"></div> User Testimonials</div>
+      <h2 class="section-h2">See How Amazing SplashPass Is</h2>
+      <p class="section-sub" style="margin:0 auto">Read verified updates from drivers and station owners running workflows natively on our technology ecosystem.</p>
+    </div>
+
+    <div class="reviews-grid">
+      <div class="review-card">
+        <div class="review-stars">⭐⭐⭐⭐⭐</div>
+        <p class="review-text">"SplashPass is absolutely amazing! Booking my car wash using the Individual Plan saves me hours of waiting in line every single weekend. I just slide in, they scan my QR code, and the crew gets right to work."</p>
+        <div class="review-user">
+          <div class="review-avatar">KM</div>
+          <div class="review-user-info">
+            <h4>Kevin Mwangi</h4>
+            <p>Subaru Forester Owner — Nairobi</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="review-card">
+        <div class="review-stars">⭐⭐⭐⭐⭐</div>
+        <p class="review-text">"Upgrading our business to the KSh 2,999/month operator tier was a complete turning point. Our booking tracking is entirely digital now, and customers absolutely love earning loyalty reward points."</p>
+        <div class="review-user">
+          <div class="review-avatar">AO</div>
+          <div class="review-user-info">
+            <h4>Amara Okech</h4>
+            <p>Founder, Sparkle Wash Hub</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="review-card">
+        <div class="review-stars">⭐⭐⭐⭐⭐</div>
+        <p class="review-text">"The Family Plan is incredibly convenient. I managed to bundle my car, my wife's, and our daughter's car under one billing cycle. The interface is clean, rapid, and incredibly intuitive."</p>
+        <div class="review-user">
+          <div class="review-avatar">JN</div>
+          <div class="review-user-info">
+            <h4>Joseph Njuguna</h4>
+            <p>Family Plan Subscriber</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT US SECTION -->
+<section id="contact" class="contact-section">
+  <div class="container">
+    <div style="text-align:center; margin-bottom: 4rem;">
+      <div class="section-eyebrow" style="justify-content:center"><div class="eyebrow-dot"></div> Connect with Us</div>
+      <h2 class="section-h2">Get in Touch with SplashPass</h2>
+      <p class="section-sub" style="margin: 0 auto;">Have questions about integrating your car wash business or managing your bookings? Reach out directly via phone, email, or our contact interface.</p>
+    </div>
+
+    <div class="contact-grid">
+      <div class="contact-info-cards">
+        <div class="contact-meta-card">
+          <div class="contact-meta-icon">✉️</div>
+          <div class="contact-meta-details">
+            <h4>Email Support</h4>
+            <a href="mailto:splashpass.site@gmail.com">splashpass.site@gmail.com</a>
+          </div>
+        </div>
+
+        <div class="contact-meta-card">
+          <div class="contact-meta-icon">📞</div>
+          <div class="contact-meta-details">
+            <h4>Telephone Hotline</h4>
+            <a href="tel:+254768154892">+254 768 154892</a>
+          </div>
+        </div>
+      </div>
+
+      <form class="contact-form" onsubmit="event.preventDefault(); alert('Message sent successfully!');">
+        <div class="form-group">
+          <label for="name">Your Name / Business Title</label>
+          <input type="text" id="name" placeholder="e.g. John Doe / Spin Wash Lounge" required />
+        </div>
+        <div class="form-group">
+          <label for="form-email">Email Address</label>
+          <input type="email" id="form-email" placeholder="you@example.com" required />
+        </div>
+        <div class="form-group">
+          <label for="message">Your Message</label>
+          <textarea id="message" rows="4" placeholder="How can our development and operations matrix help you?" required></textarea>
+        </div>
+        <button type="submit" class="btn-cyan" style="padding: 0.85rem; font-size: 1rem;">Transmit Message</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="#" class="nav-logo">
+          <div class="nav-logo-mark"></div>
+          SplashPass
+        </a>
+        <p>"Built in Kenya for the next generation of car wash businesses."</p>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <ul>
+          <li><a href="#">About SplashPass</a></li>
+          <li><a href="#">Careers</a></li>
+          <li><a href="#contact">Contact Us</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Direct Contact</h4>
+        <ul>
+          <li><a href="mailto:splashpass.site@gmail.com" style="font-size:0.8rem; word-break: break-all;">splashpass.site@gmail.com</a></li>
+          <li><a href="tel:+254768154892">+254 768 154892</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Partners</h4>
+        <ul>
+          <li><a href="#">Become a Wash Partner</a></li>
+          <li><a href="#">Operator Pricing</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div>&copy; 2026 SplashPass Technologies Ltd. All rights reserved.</div>
+      <div style="color:var(--text3)">Designed for Operational Supremacy</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+document.querySelectorAll('.sb-item').forEach(el=>{
+  el.addEventListener('click',function(){
+    this.parentElement.querySelectorAll('.sb-item').forEach(e=>e.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+</script>
+</body>
+</html>
