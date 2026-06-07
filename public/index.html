@@ -1164,7 +1164,7 @@ select option { background:#1A2755; color:#fff; }
 
     <!-- Account menu -->
     <div class="profile-card">
-      <div class="profile-card-title">Account</div>
+      <div class="profile-card-title">Settings</div>
       <div class="profile-menu-row" onclick="showScreen('plans')">
         <div class="profile-menu-left">
           <div class="profile-menu-icon">💳</div>
@@ -1172,10 +1172,24 @@ select option { background:#1A2755; color:#fff; }
         </div>
         <div class="profile-menu-arrow">›</div>
       </div>
-      <div class="profile-menu-row" style="border-bottom:none" onclick="logout()">
+      <div class="profile-menu-row" onclick="openChangePassword()">
         <div class="profile-menu-left">
-          <div class="profile-menu-icon" style="background:rgba(239,68,68,.12)">🚪</div>
+          <div class="profile-menu-icon">🔒</div>
+          <div class="profile-menu-label">Change Password</div>
+        </div>
+        <div class="profile-menu-arrow">›</div>
+      </div>
+      <div class="profile-menu-row" onclick="logout()">
+        <div class="profile-menu-left">
+          <div class="profile-menu-icon" style="background:rgba(239,68,68,.08)">🚪</div>
           <div class="profile-menu-label" style="color:var(--danger)">Log Out</div>
+        </div>
+        <div class="profile-menu-arrow" style="color:var(--danger)">›</div>
+      </div>
+      <div class="profile-menu-row" style="border-bottom:none" onclick="showScreen('delete-account')">
+        <div class="profile-menu-left">
+          <div class="profile-menu-icon" style="background:rgba(239,68,68,.08)">🗑️</div>
+          <div class="profile-menu-label" style="color:var(--danger)">Delete Account</div>
         </div>
         <div class="profile-menu-arrow" style="color:var(--danger)">›</div>
       </div>
@@ -1209,6 +1223,124 @@ select option { background:#1A2755; color:#fff; }
     </div>
     <div id="addcar-error" class="form-error"></div>
     <button class="btn btn-primary" id="addcar-save-btn" onclick="addCar()">Save Car</button>
+  </div>
+</div>
+
+<!-- CHANGE PASSWORD -->
+<div id="screen-change-password" class="screen" style="background:var(--bg)">
+  <div class="screen-header">
+    <button class="back-btn" onclick="showScreen('profile')">←</button>
+    <h2>Change Password</h2>
+  </div>
+  <div style="padding:24px;padding-bottom:100px">
+
+    <!-- Info card -->
+    <div style="background:linear-gradient(135deg,#1A2755,#0B1437);border-radius:20px;padding:20px;margin-bottom:24px;display:flex;gap:14px;align-items:center;">
+      <div style="font-size:30px;flex-shrink:0;">🔒</div>
+      <div>
+        <div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:3px;">Secure your account</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.55);line-height:1.5;">Use a strong password with at least 8 characters. You will remain signed in after changing.</div>
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-bottom:16px">
+      <label style="color:var(--muted)">Current Password</label>
+      <input type="password" id="cp-current" placeholder="Enter current password" style="background:#fff;border:1.5px solid #E2E8F0;color:var(--navy)">
+    </div>
+    <div class="form-group" style="margin-bottom:16px">
+      <label style="color:var(--muted)">New Password</label>
+      <input type="password" id="cp-new" placeholder="At least 8 characters" style="background:#fff;border:1.5px solid #E2E8F0;color:var(--navy)">
+    </div>
+    <div class="form-group" style="margin-bottom:16px">
+      <label style="color:var(--muted)">Confirm New Password</label>
+      <input type="password" id="cp-confirm" placeholder="Repeat new password" style="background:#fff;border:1.5px solid #E2E8F0;color:var(--navy)">
+    </div>
+
+    <!-- Strength indicator -->
+    <div id="cp-strength-wrap" style="margin-bottom:16px;display:none">
+      <div style="display:flex;gap:4px;margin-bottom:6px">
+        <div id="cp-s1" style="flex:1;height:4px;border-radius:2px;background:#E2E8F0;transition:background .3s"></div>
+        <div id="cp-s2" style="flex:1;height:4px;border-radius:2px;background:#E2E8F0;transition:background .3s"></div>
+        <div id="cp-s3" style="flex:1;height:4px;border-radius:2px;background:#E2E8F0;transition:background .3s"></div>
+        <div id="cp-s4" style="flex:1;height:4px;border-radius:2px;background:#E2E8F0;transition:background .3s"></div>
+      </div>
+      <div id="cp-strength-label" style="font-size:12px;color:var(--muted)"></div>
+    </div>
+
+    <div id="cp-error" class="form-error" style="margin-bottom:12px"></div>
+    <div id="cp-success" style="display:none;background:rgba(18,183,106,.1);color:var(--success);border:1px solid rgba(18,183,106,.2);border-radius:14px;padding:14px;font-size:14px;text-align:center;margin-bottom:16px">
+      ✓ Password changed successfully!
+    </div>
+    <button class="btn btn-primary" id="cp-btn" onclick="changePassword()">Update Password</button>
+  </div>
+</div>
+
+<!-- DELETE ACCOUNT -->
+<div id="screen-delete-account" class="screen" style="background:var(--bg)">
+  <div class="screen-header">
+    <button class="back-btn" onclick="showScreen('profile')">←</button>
+    <h2>Delete Account</h2>
+  </div>
+  <div style="padding:24px;padding-bottom:100px">
+
+    <!-- Warning card -->
+    <div style="background:linear-gradient(135deg,#7f1d1d,#450a0a);border-radius:20px;padding:20px;margin-bottom:24px;">
+      <div style="font-size:32px;margin-bottom:12px;">⚠️</div>
+      <div style="font-size:16px;font-weight:800;color:#fff;margin-bottom:8px;font-family:'Syne',sans-serif;">This action is permanent</div>
+      <div style="font-size:13px;color:rgba(255,255,255,.7);line-height:1.6;">Deleting your account will permanently remove your profile, cars, loyalty points, and subscription. This cannot be undone.</div>
+    </div>
+
+    <!-- What gets deleted -->
+    <div style="background:#fff;border:1.5px solid #E2E8F0;border-radius:18px;padding:18px;margin-bottom:20px;box-shadow:var(--shadow)">
+      <div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.7px;margin-bottom:14px">What will be deleted</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;align-items:center;gap:12px;font-size:14px;color:var(--navy)">
+          <div style="width:28px;height:28px;background:rgba(240,68,56,.1);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">👤</div>
+          Your profile and personal information
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;font-size:14px;color:var(--navy)">
+          <div style="width:28px;height:28px;background:rgba(240,68,56,.1);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">🚗</div>
+          All registered vehicles
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;font-size:14px;color:var(--navy)">
+          <div style="width:28px;height:28px;background:rgba(240,68,56,.1);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">⭐</div>
+          Loyalty points and tier status
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;font-size:14px;color:var(--navy)">
+          <div style="width:28px;height:28px;background:rgba(240,68,56,.1);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">💳</div>
+          Active subscription
+        </div>
+      </div>
+    </div>
+
+    <!-- What's retained -->
+    <div style="background:#FFF7ED;border:1.5px solid #FED7AA;border-radius:18px;padding:16px;margin-bottom:24px">
+      <div style="font-size:12px;font-weight:700;color:#C2410C;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Retained for legal compliance</div>
+      <div style="font-size:13px;color:#92400E;line-height:1.5">Booking and payment records are anonymised and retained for 7 years as required by Kenyan financial regulations.</div>
+    </div>
+
+    <!-- Confirmation step -->
+    <div id="da-step1">
+      <div class="form-group" style="margin-bottom:16px">
+        <label style="color:var(--muted)">Enter your password to confirm</label>
+        <input type="password" id="da-password" placeholder="Your current password" style="background:#fff;border:1.5px solid #E2E8F0;color:var(--navy)">
+      </div>
+      <div class="form-group" style="margin-bottom:20px">
+        <label style="color:var(--muted)">Type DELETE to confirm</label>
+        <input type="text" id="da-confirm-text" placeholder='Type "DELETE"' style="background:#fff;border:1.5px solid #E2E8F0;color:var(--navy)" oninput="checkDeleteReady()">
+      </div>
+      <div id="da-error" class="form-error" style="margin-bottom:12px"></div>
+      <button class="btn btn-danger" id="da-btn" onclick="deleteAccount()" disabled style="opacity:.4">Delete My Account Permanently</button>
+      <button class="btn btn-outline" onclick="showScreen('profile')" style="margin-top:12px">Cancel — Keep My Account</button>
+    </div>
+
+    <!-- Processing state -->
+    <div id="da-processing" style="display:none;text-align:center;padding:40px 0">
+      <div style="width:48px;height:48px;border:3px solid rgba(240,68,56,.2);border-top-color:var(--danger);border-radius:50%;animation:spin .75s linear infinite;margin:0 auto 20px"></div>
+      <div style="font-size:15px;font-weight:700;color:var(--navy)">Deleting your account...</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:6px">This may take a moment</div>
+    </div>
+
   </div>
 </div>
 
@@ -1464,7 +1596,7 @@ function showScreen(name) {
   var el = document.getElementById('screen-' + name);
   if (el) el.classList.add('active');
   var nav = document.getElementById('bottom-nav');
-  var noNav = ['splash','auth','book','qr','mpesa','add-car','confirmed','onboarding','sub-wall'];
+  var noNav = ['splash','auth','book','qr','mpesa','add-car','confirmed','onboarding','sub-wall','change-password','delete-account'];
   nav.style.display = noNav.indexOf(name) > -1 ? 'none' : 'flex';
   ['home','plans','profile'].forEach(function(n) {
     var navEl = document.getElementById('nav-' + n);
@@ -2401,6 +2533,157 @@ function formatBookingDate(dateStr) {
   if (d.getTime() === today.getTime())    return 'Today';
   if (d.getTime() === tomorrow.getTime()) return 'Tomorrow';
   return d.toLocaleDateString('en-KE', { weekday:'short', month:'short', day:'numeric' });
+}
+
+// ── CHANGE PASSWORD ───────────────────────────────
+function openChangePassword() {
+  // Clear fields
+  ['cp-current','cp-new','cp-confirm'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('cp-error').textContent = '';
+  document.getElementById('cp-success').style.display = 'none';
+  document.getElementById('cp-strength-wrap').style.display = 'none';
+  setBtn('cp-btn', false, 'Update Password');
+  showScreen('change-password');
+}
+
+// Password strength meter
+document.addEventListener('DOMContentLoaded', function() {
+  var newPassInput = document.getElementById('cp-new');
+  if (newPassInput) {
+    newPassInput.addEventListener('input', function() {
+      var val = this.value;
+      var wrap = document.getElementById('cp-strength-wrap');
+      if (!val) { wrap.style.display = 'none'; return; }
+      wrap.style.display = 'block';
+      var score = 0;
+      if (val.length >= 8)  score++;
+      if (val.length >= 12) score++;
+      if (/[A-Z]/.test(val) && /[a-z]/.test(val)) score++;
+      if (/[0-9]/.test(val)) score++;
+      if (/[^A-Za-z0-9]/.test(val)) score++;
+      score = Math.min(score, 4);
+      var colors = ['#F04438','#F5A623','#F5A623','#12B76A','#12B76A'];
+      var labels = ['','Weak','Fair','Good','Strong'];
+      for (var i = 1; i <= 4; i++) {
+        var bar = document.getElementById('cp-s' + i);
+        bar.style.background = i <= score ? colors[score] : '#E2E8F0';
+      }
+      document.getElementById('cp-strength-label').textContent = labels[score] || '';
+      document.getElementById('cp-strength-label').style.color = colors[score] || 'var(--muted)';
+    });
+  }
+});
+
+async function changePassword() {
+  var current = document.getElementById('cp-current').value;
+  var newPass  = document.getElementById('cp-new').value;
+  var confirm  = document.getElementById('cp-confirm').value;
+  var errEl    = document.getElementById('cp-error');
+  var successEl= document.getElementById('cp-success');
+
+  errEl.textContent = '';
+  successEl.style.display = 'none';
+
+  if (!current) { errEl.textContent = 'Please enter your current password.'; return; }
+  if (!newPass)  { errEl.textContent = 'Please enter a new password.'; return; }
+  if (newPass.length < 8) { errEl.textContent = 'New password must be at least 8 characters.'; return; }
+  if (newPass !== confirm)  { errEl.textContent = 'Passwords do not match.'; return; }
+  if (current === newPass)  { errEl.textContent = 'New password must be different from current password.'; return; }
+
+  // Verify current password
+  if (currentUser.password !== current) {
+    errEl.textContent = 'Current password is incorrect.';
+    return;
+  }
+
+  setBtn('cp-btn', true, 'Update Password');
+  try {
+    var updated = await updateUser(currentUser.email, { password: newPass });
+    currentUser.password = newPass;
+    localStorage.setItem('splashpass_user', JSON.stringify(currentUser));
+    successEl.style.display = 'block';
+    document.getElementById('cp-current').value = '';
+    document.getElementById('cp-new').value = '';
+    document.getElementById('cp-confirm').value = '';
+    document.getElementById('cp-strength-wrap').style.display = 'none';
+    toast('Password updated successfully!');
+  } catch(e) {
+    errEl.textContent = 'Error updating password: ' + e.message;
+  } finally {
+    setBtn('cp-btn', false, 'Update Password');
+  }
+}
+
+// ── DELETE ACCOUNT ────────────────────────────────
+function checkDeleteReady() {
+  var text = (document.getElementById('da-confirm-text').value || '').trim().toUpperCase();
+  var btn  = document.getElementById('da-btn');
+  var ready = text === 'DELETE';
+  btn.disabled = !ready;
+  btn.style.opacity = ready ? '1' : '0.4';
+}
+
+async function deleteAccount() {
+  var password = document.getElementById('da-password').value;
+  var errEl    = document.getElementById('da-error');
+  errEl.textContent = '';
+
+  if (!password) { errEl.textContent = 'Please enter your password to confirm.'; return; }
+  if (currentUser.password !== password) { errEl.textContent = 'Incorrect password. Account not deleted.'; return; }
+
+  // Show processing state
+  document.getElementById('da-step1').style.display = 'none';
+  document.getElementById('da-processing').style.display = 'block';
+
+  try {
+    var email = currentUser.email;
+
+    // 1. Delete all cars
+    var cars = await getCarsByEmail(email);
+    for (var i = 0; i < cars.length; i++) {
+      await deleteCarRow(cars[i].id);
+    }
+
+    // 2. Anonymise bookings (retain for legal compliance but strip personal data)
+    await sbFetch(
+      'bookings?user_email=eq.' + encodeURIComponent(email),
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ user_email: 'deleted@splashpass.site', user_name: 'Deleted User' }),
+        prefer: 'return=minimal'
+      }
+    );
+
+    // 3. Delete the profile
+    await sbFetch(
+      'profiles?email=eq.' + encodeURIComponent(email),
+      { method: 'DELETE', prefer: 'return=minimal' }
+    );
+
+    // 4. Clear local state
+    currentUser = null;
+    userCars    = [];
+    selectedCar = selectedPoint = selectedSlot = selectedSubPlan = null;
+    localStorage.removeItem('splashpass_user');
+
+    // 5. Show goodbye screen
+    document.getElementById('da-processing').style.display = 'none';
+    document.getElementById('screen-delete-account').innerHTML =
+      '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:40px;text-align:center;">' +
+        '<div style="font-size:56px;margin-bottom:24px;">👋</div>' +
+        '<div style="font-size:24px;font-weight:800;color:var(--navy);font-family:\'Syne\',sans-serif;margin-bottom:12px;">Account Deleted</div>' +
+        '<div style="font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:40px;">Your account and personal data have been permanently removed. Thank you for using SplashPass.</div>' +
+        '<button class="btn btn-primary" onclick="showScreen(\'auth\');showAuth(\'login\')">Back to Sign In</button>' +
+      '</div>';
+
+  } catch(e) {
+    document.getElementById('da-step1').style.display = 'block';
+    document.getElementById('da-processing').style.display = 'none';
+    document.getElementById('da-error').textContent = 'Deletion failed: ' + e.message + '. Please try again or contact support.';
+  }
 }
 
 // ── SERVICE WORKER ────────────────────────────────
