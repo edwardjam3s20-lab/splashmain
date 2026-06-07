@@ -1661,9 +1661,20 @@ async function login() {
   var err   = document.getElementById('login-error');
   setBtn('login-btn', true, 'Sign In');
   try {
-    var user = await getUserByEmail(email);
-    if (!user || user.password !== pass) { err.textContent = 'Invalid email or password.'; return; }
+    // Call RPC — password verified server-side, never sent back to client
+    var result = await sbFetch('rpc/verify_password', {
+      method: 'POST',
+      body: JSON.stringify({ p_email: email, p_password: pass }),
+      prefer: 'return=representation'
+    });
+    if (!result || result.length === 0) {
+      err.textContent = 'Invalid email or password.';
+      return;
+    }
+    var user = result[0];
     if (user.role === 'operator') { err.textContent = 'Use the operator app.'; return; }
+    // Never cache password hash in localStorage
+    delete user.password;
     currentUser = user;
     localStorage.setItem('splashpass_user', JSON.stringify(user));
     err.textContent = '';
@@ -1686,14 +1697,26 @@ async function register() {
   try {
     var existing = await getUserByEmail(email);
     if (existing) { err.textContent = 'Account already exists.'; return; }
+    // Hash password server-side using pgcrypto before storing
+    var hashResult = await sbFetch('rpc/hash_password', {
+      method: 'POST',
+      body: JSON.stringify({ p_password: pass }),
+      prefer: 'return=representation'
+    });
+    var hashedPassword = hashResult && hashResult[0] ? hashResult[0].hash_password : null;
+    if (!hashedPassword) throw new Error('Password hashing failed.');
     var result = await createUser({
-      name: name, email: email, phone: phone, password: pass,
+      name: name, email: email, phone: phone,
+      password: hashedPassword,  // store hash, never plain text
       role: 'customer', sub_status: 'trial',
       sub_plan: null, sub_start: null,
       loyalty_points: 0, loyalty_tier: 'Bronze'
     });
-    currentUser = result[0];
-    localStorage.setItem('splashpass_user', JSON.stringify(result[0]));
+    var newUser = result[0];
+    // Strip password from local storage — never cache it
+    delete newUser.password;
+    currentUser = newUser;
+    localStorage.setItem('splashpass_user', JSON.stringify(newUser));
     err.textContent = '';
     startOnboarding();
   } catch(e) { err.textContent = 'Error: ' + e.message; }
@@ -2578,7 +2601,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 async function changePassword() {
-  var current = document.getElementById('cp-current').value;
+  var current  = document.getElementById('cp-current').value;
   var newPass  = document.getElementById('cp-new').value;
   var confirm  = document.getElementById('cp-confirm').value;
   var errEl    = document.getElementById('cp-error');
@@ -2590,20 +2613,25 @@ async function changePassword() {
   if (!current) { errEl.textContent = 'Please enter your current password.'; return; }
   if (!newPass)  { errEl.textContent = 'Please enter a new password.'; return; }
   if (newPass.length < 8) { errEl.textContent = 'New password must be at least 8 characters.'; return; }
-  if (newPass !== confirm)  { errEl.textContent = 'Passwords do not match.'; return; }
-  if (current === newPass)  { errEl.textContent = 'New password must be different from current password.'; return; }
-
-  // Verify current password
-  if (currentUser.password !== current) {
-    errEl.textContent = 'Current password is incorrect.';
-    return;
-  }
+  if (newPass !== confirm) { errEl.textContent = 'Passwords do not match.'; return; }
+  if (current === newPass) { errEl.textContent = 'New password must be different from current password.'; return; }
 
   setBtn('cp-btn', true, 'Update Password');
   try {
-    var updated = await updateUser(currentUser.email, { password: newPass });
-    currentUser.password = newPass;
-    localStorage.setItem('splashpass_user', JSON.stringify(currentUser));
+    // Verify old password and set new one — all server-side via RPC
+    var result = await sbFetch('rpc/change_password', {
+      method: 'POST',
+      body: JSON.stringify({
+        p_email: currentUser.email,
+        p_old: current,
+        p_new: newPass
+      }),
+      prefer: 'return=representation'
+    });
+    if (result === false || result === null) {
+      errEl.textContent = 'Current password is incorrect.';
+      return;
+    }
     successEl.style.display = 'block';
     document.getElementById('cp-current').value = '';
     document.getElementById('cp-new').value = '';
@@ -2632,22 +2660,28 @@ async function deleteAccount() {
   errEl.textContent = '';
 
   if (!password) { errEl.textContent = 'Please enter your password to confirm.'; return; }
-  if (currentUser.password !== password) { errEl.textContent = 'Incorrect password. Account not deleted.'; return; }
 
-  // Show processing state
+  // Show processing
   document.getElementById('da-step1').style.display = 'none';
   document.getElementById('da-processing').style.display = 'block';
 
   try {
-    var email = currentUser.email;
-
-    // 1. Delete all cars
-    var cars = await getCarsByEmail(email);
-    for (var i = 0; i < cars.length; i++) {
-      await deleteCarRow(cars[i].id);
+    // Verify password server-side first
+    var verified = await sbFetch('rpc/verify_password_only', {
+      method: 'POST',
+      body: JSON.stringify({ p_email: currentUser.email, p_password: password }),
+      prefer: 'return=representation'
+    });
+    if (!verified) {
+      document.getElementById('da-step1').style.display = 'block';
+      document.getElementById('da-processing').style.display = 'none';
+      errEl.textContent = 'Incorrect password. Account not deleted.';
+      return;
     }
 
-    // 2. Anonymise bookings (retain for legal compliance but strip personal data)
+    var email = currentUser.email;
+
+    // Anonymise bookings (retain for legal compliance)
     await sbFetch(
       'bookings?user_email=eq.' + encodeURIComponent(email),
       {
@@ -2657,19 +2691,19 @@ async function deleteAccount() {
       }
     );
 
-    // 3. Delete the profile
+    // Delete the profile
     await sbFetch(
       'profiles?email=eq.' + encodeURIComponent(email),
       { method: 'DELETE', prefer: 'return=minimal' }
     );
 
-    // 4. Clear local state
+    // Clear local state
     currentUser = null;
     userCars    = [];
     selectedCar = selectedPoint = selectedSlot = selectedSubPlan = null;
     localStorage.removeItem('splashpass_user');
 
-    // 5. Show goodbye screen
+    // Goodbye screen
     document.getElementById('da-processing').style.display = 'none';
     document.getElementById('screen-delete-account').innerHTML =
       '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:40px;text-align:center;">' +
@@ -2682,7 +2716,7 @@ async function deleteAccount() {
   } catch(e) {
     document.getElementById('da-step1').style.display = 'block';
     document.getElementById('da-processing').style.display = 'none';
-    document.getElementById('da-error').textContent = 'Deletion failed: ' + e.message + '. Please try again or contact support.';
+    errEl.textContent = 'Deletion failed: ' + e.message + '. Please try again or contact support.';
   }
 }
 
