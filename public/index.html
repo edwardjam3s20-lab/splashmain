@@ -220,14 +220,16 @@ h1,h2,h3,h4 { font-family:'Syne', sans-serif; color:var(--navy); }
   justify-content:center;
   align-items:center;
   background:linear-gradient(160deg, #1A2755 0%, #0B1437 60%, #2D1B6B 100%);
-  position:relative; overflow-y:auto; overflow-x:hidden;
+  position:fixed; inset:0;
+  overflow-y:auto;
+  min-height:100vh;
 }
 
 /* Inner content wrapper — caps width and centres on PC */
 .auth-inner {
   width:100%;
   max-width:440px;
-  padding:40px 0;
+  padding:60px 0;
 }
 /* Subtle ambient glow behind auth form */
 #screen-auth::before {
