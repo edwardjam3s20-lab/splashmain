@@ -2909,7 +2909,7 @@ async function deleteAccount() {
 
 async function fetchLoyaltyStatus() {
   try {
-    var res = await fetch('/api/loyalty/status');
+    var res = await fetch('/api/loyalty/status', { credentials: 'same-origin' });
     if (!res.ok) return;
     loyaltyStatus = await res.json();
     // Update home chip if already visible
@@ -2937,10 +2937,33 @@ var REDEEM_CATALOGUE = [
 var TIER_RANK = { Bronze: 0, Silver: 1, Gold: 2, Platinum: 3 };
 
 function renderLoyalty() {
-  if (!loyaltyStatus) {
-    fetchLoyaltyStatus().then(renderLoyalty);
-    return;
+  // If API hasn't returned yet, build loyaltyStatus from local currentUser data
+  // so the screen always renders immediately
+  if (!loyaltyStatus && currentUser) {
+    var pts  = currentUser.loyalty_points || 0;
+    var tier = currentUser.loyalty_tier   || 'Bronze';
+    var tierObj  = getTier(pts);
+    var nextTierObj = LOYALTY_TIERS[LOYALTY_TIERS.indexOf(tierObj) + 1] || null;
+    loyaltyStatus = {
+      points:           pts,
+      tier:             tier,
+      discount_addon:   tierObj.discount_addon  || 0,
+      discount_premium: tierObj.discount_premium || 0,
+      next_tier:        nextTierObj ? nextTierObj.name : null,
+      next_tier_at:     nextTierObj ? nextTierObj.min  : null,
+      points_to_next:   nextTierObj ? Math.max(0, nextTierObj.min - pts) : 0,
+      active_redemptions: [],
+    };
+    // Silently try to refresh from API in background — no retry loop
+    fetch('/api/loyalty/status', { credentials: 'same-origin' })
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(data) {
+        if (data) { loyaltyStatus = data; renderLoyalty(); }
+      })
+      .catch(function(){});
   }
+
+  if (!loyaltyStatus) return;
 
   var points     = loyaltyStatus.points || 0;
   var tier       = loyaltyStatus.tier   || 'Bronze';
@@ -3006,7 +3029,7 @@ async function loadLedger() {
   if (!el) return;
   el.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:20px 0;text-align:center">Loading...</div>';
   try {
-    var res  = await fetch('/api/loyalty/transactions?limit=20');
+    var res  = await fetch('/api/loyalty/transactions?limit=20', { credentials: 'same-origin' });
     var data = await res.json();
     var txns = data.transactions || [];
     if (!txns.length) {
