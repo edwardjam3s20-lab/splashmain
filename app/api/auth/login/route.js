@@ -1,39 +1,50 @@
+// app/api/auth/login/route.js
+// POST — verify customer password, set session cookie, return user
+
 import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase'
-import { checkRateLimit } from '@/lib/rateLimit'
+import { createSession, setSessionCookie } from '@/lib/session'
 
 export async function POST(request) {
-  // Rate limiting
-  const ip = request.headers.get('x-forwarded-for') || 'unknown'
-  const limit = checkRateLimit(ip)
-  if (!limit.allowed) {
-    return NextResponse.json(
-      { error: `Too many attempts. Try again in ${limit.retryAfter}s.` },
-      { status: 429 }
-    )
-  }
-
   const { email, password } = await request.json()
+
   if (!email || !password) {
-    return NextResponse.json({ error: 'Email and password required.' }, { status: 400 })
+    return NextResponse.json({ error: 'Email and password required' }, { status: 400 })
   }
 
   const supabase = getSupabaseAdmin()
 
-  // Authenticate with Supabase Auth
-  const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-    email, password
+  // Verify password via existing RPC — password checked server-side with pgcrypto
+  const { data, error } = await supabase.rpc('verify_password', {
+    p_email:    email.toLowerCase().trim(),
+    p_password: password,
   })
 
-  if (authError || !authData?.session) {
-    return NextResponse.json({ error: 'Incorrect email or password.' }, { status: 401 })
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  const pendingToken = authData.session.access_token
+  if (!data || data.length === 0) {
+    return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
+  }
 
-  // Always send an email 2FA code — no TOTP setup needed
-  return NextResponse.json({
-    pendingToken,
-    email
+  const user = data[0]
+
+  if (user.role === 'operator') {
+    return NextResponse.json({ error: 'Use the operator app' }, { status: 403 })
+  }
+
+  // Create JWT session — same mechanism as operator auth
+  const token = await createSession({
+    email:    user.email,
+    name:     user.name,
+    role:     user.role,
   })
+
+  // Strip password before sending to client
+  delete user.password
+
+  const res = NextResponse.json({ ok: true, user })
+  setSessionCookie(res, token)
+  return res
 }
