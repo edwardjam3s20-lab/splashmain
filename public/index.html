@@ -740,6 +740,71 @@ select option { background:#1A2755; color:#fff; }
 .pill-confirmed { background:rgba(18,183,106,.1); color:#0D9E5C; }
 .pill-pending   { background:rgba(245,166,35,.1); color:#C47E0A; }
 .pill-cancelled { background:rgba(240,68,56,.08); color:var(--danger); }
+
+/* ── LOYALTY ── */
+#screen-loyalty { padding:0; background:var(--bg); }
+.loyalty-content { padding:18px; padding-bottom:100px; }
+.loyalty-hero {
+  background:linear-gradient(135deg, #1A2755 0%, #0B1437 60%, #2D1B6B 100%);
+  border-radius:24px; padding:24px; margin-bottom:16px;
+  position:relative; overflow:hidden;
+  box-shadow:var(--shadow-lg);
+}
+.loyalty-hero::after {
+  content:''; position:absolute; top:-40px; right:-40px;
+  width:180px; height:180px; border-radius:50%;
+  background:radial-gradient(circle, rgba(245,166,35,.15) 0%, transparent 70%);
+  pointer-events:none;
+}
+.loyalty-tier-badge {
+  display:inline-flex; align-items:center; gap:8px;
+  background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.15);
+  border-radius:100px; padding:6px 14px; margin-bottom:16px;
+  font-size:12px; font-weight:700; color:#fff; text-transform:uppercase; letter-spacing:.5px;
+}
+.loyalty-points-big {
+  font-size:52px; font-weight:800; color:var(--gold2);
+  font-family:'Syne',sans-serif; line-height:1; margin-bottom:4px;
+}
+.loyalty-points-label { font-size:13px; color:rgba(255,255,255,.55); margin-bottom:16px; }
+.loyalty-progress-track {
+  height:6px; background:rgba(255,255,255,.1); border-radius:3px; overflow:hidden; margin-bottom:6px;
+}
+.loyalty-progress-fill {
+  height:100%; border-radius:3px;
+  background:linear-gradient(90deg, var(--gold2), var(--gold));
+  transition:width .6s cubic-bezier(.4,0,.2,1);
+}
+.loyalty-progress-label { display:flex; justify-content:space-between; font-size:11px; color:rgba(255,255,255,.45); }
+.loyalty-discount-pill {
+  display:inline-flex; align-items:center; gap:6px; margin-top:14px;
+  background:rgba(245,166,35,.15); border:1px solid rgba(245,166,35,.3);
+  border-radius:100px; padding:6px 14px;
+  font-size:12px; font-weight:700; color:var(--gold2);
+}
+.loyalty-section-title {
+  font-size:11px; color:var(--muted); text-transform:uppercase;
+  letter-spacing:.7px; font-weight:700; margin-bottom:10px; margin-top:20px;
+}
+.redeem-card {
+  background:#fff; border:1.5px solid #E2E8F0;
+  border-radius:20px; padding:16px 18px; margin-bottom:10px;
+  box-shadow:var(--shadow);
+}
+.redeem-card-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
+.redeem-card-name { font-size:14px; font-weight:700; color:var(--navy); }
+.redeem-card-cost { font-size:13px; font-weight:800; color:var(--gold); font-family:'Syne',sans-serif; }
+.redeem-card-desc { font-size:12px; color:var(--muted); line-height:1.5; margin-bottom:10px; }
+.redeem-card-lock { font-size:11px; color:var(--muted2); display:flex; align-items:center; gap:4px; }
+.ledger-row {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:12px 0; border-bottom:1px solid #F0F4FF;
+}
+.ledger-row:last-child { border-bottom:none; }
+.ledger-delta-pos { font-size:14px; font-weight:800; color:var(--success); font-family:'Syne',sans-serif; }
+.ledger-delta-neg { font-size:14px; font-weight:800; color:var(--danger); font-family:'Syne',sans-serif; }
+.ledger-reason { font-size:13px; color:var(--navy); font-weight:500; }
+.ledger-date { font-size:11px; color:var(--muted); margin-top:2px; }
 </style>
 </head>
 <body>
@@ -940,13 +1005,14 @@ select option { background:#1A2755; color:#fff; }
         </div>
       </div>
       <!-- Loyalty chip -->
-      <div style="flex-shrink:0;background:rgba(255,255,255,.95);backdrop-filter:blur(20px);
-        border:1px solid rgba(226,232,240,.8);border-radius:14px;padding:9px 13px;
-        box-shadow:0 2px 12px rgba(11,20,55,.08);display:flex;align-items:center;gap:8px;">
+      <div onclick="navTo('loyalty')" style="flex-shrink:0;background:rgba(255,255,255,.95);backdrop-filter:blur(20px);
+        border:1px solid rgba(245,166,35,.35);border-radius:14px;padding:9px 13px;
+        box-shadow:0 2px 12px rgba(245,166,35,.12);display:flex;align-items:center;gap:8px;cursor:pointer;">
         <div style="font-size:16px;" id="home-loyalty-icon">🥉</div>
         <div>
           <div style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;">Loyalty</div>
           <div id="home-loyalty-tier" style="font-size:13px;font-weight:700;color:var(--success);font-family:'Syne',sans-serif;">Bronze</div>
+          <div id="home-loyalty-points" style="font-size:10px;color:var(--muted);font-weight:600;">0 pts</div>
         </div>
       </div>
     </div>
@@ -1344,6 +1410,50 @@ select option { background:#1A2755; color:#fff; }
   </div>
 </div>
 
+<!-- LOYALTY HUB -->
+<div id="screen-loyalty" class="screen">
+  <div class="screen-header">
+    <div style="width:38px"></div>
+    <h2>Rewards</h2>
+  </div>
+  <div class="loyalty-content">
+
+    <!-- Hero card -->
+    <div class="loyalty-hero">
+      <div class="loyalty-tier-badge">
+        <span id="loyalty-hero-icon">🥉</span>
+        <span id="loyalty-hero-tier">Bronze</span>
+      </div>
+      <div class="loyalty-points-big" id="loyalty-hero-points">0</div>
+      <div class="loyalty-points-label">SplashPass Points</div>
+      <div class="loyalty-progress-track">
+        <div class="loyalty-progress-fill" id="loyalty-progress-fill" style="width:0%"></div>
+      </div>
+      <div class="loyalty-progress-label">
+        <span id="loyalty-progress-current">0 pts</span>
+        <span id="loyalty-progress-next">500 pts for Silver</span>
+      </div>
+      <div class="loyalty-discount-pill" id="loyalty-discount-pill" style="display:none">
+        <span>🏷</span>
+        <span id="loyalty-discount-label">5% off add-ons — active</span>
+      </div>
+    </div>
+
+    <!-- Redemption catalogue -->
+    <div class="loyalty-section-title">Redeem Points — Access & Privileges</div>
+    <div id="loyalty-catalogue">
+      <!-- rendered by JS -->
+    </div>
+
+    <!-- Transaction history -->
+    <div class="loyalty-section-title">Point History</div>
+    <div id="loyalty-ledger" style="background:#fff;border:1.5px solid #E2E8F0;border-radius:20px;padding:4px 18px;box-shadow:var(--shadow);">
+      <div style="color:var(--muted);font-size:13px;padding:20px 0;text-align:center">Loading...</div>
+    </div>
+
+  </div>
+</div>
+
 <!-- BOTTOM NAV -->
 <div class="bottom-nav" id="bottom-nav" style="display:none">
   <div class="nav-item active" id="nav-home" onclick="navTo('home')">
@@ -1364,6 +1474,14 @@ select option { background:#1A2755; color:#fff; }
       </svg>
     </div>
     <div>Plans</div>
+  </div>
+  <div class="nav-item" id="nav-loyalty" onclick="navTo('loyalty')">
+    <div class="nav-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+      </svg>
+    </div>
+    <div>Rewards</div>
   </div>
   <div class="nav-item" id="nav-profile" onclick="navTo('profile')">
     <div class="nav-icon">
@@ -1442,10 +1560,10 @@ var SUB_PLANS = [
 ];
 
 var LOYALTY_TIERS = [
-  { name: 'Bronze',   min: 0,   max: 99,    icon: '🥉', benefit: 'Access & booking' },
-  { name: 'Silver',   min: 100, max: 299,   icon: '🥈', benefit: 'Priority booking' },
-  { name: 'Gold',     min: 300, max: 599,   icon: '🥇', benefit: 'Exclusive offers' },
-  { name: 'Platinum', min: 600, max: 999999, icon: '💎', benefit: 'Premium perks' }
+  { name: 'Bronze',   min: 0,    max: 499,  icon: '🥉', discount_addon: 0,  discount_premium: 0  },
+  { name: 'Silver',   min: 500,  max: 1499, icon: '🥈', discount_addon: 5,  discount_premium: 0  },
+  { name: 'Gold',     min: 1500, max: 3999, icon: '🥇', discount_addon: 10, discount_premium: 10 },
+  { name: 'Platinum', min: 4000, max: 999999, icon: '💎', discount_addon: 15, discount_premium: 15 }
 ];
 
 function getTier(points) {
@@ -1497,6 +1615,7 @@ var userLat        = -4.0435;
 var userLng        = 39.7173;
 var gpsConfirmed   = false;
 var userMarker     = null;
+var loyaltyStatus  = null;  // cached from /api/loyalty/status
 
 // ── TRIAL HELPERS ─────────────────────────────────
 function getTrialDaysLeft(user) {
@@ -1598,13 +1717,14 @@ function showScreen(name) {
   var nav = document.getElementById('bottom-nav');
   var noNav = ['splash','auth','book','qr','mpesa','add-car','confirmed','onboarding','sub-wall','change-password','delete-account'];
   nav.style.display = noNav.indexOf(name) > -1 ? 'none' : 'flex';
-  ['home','plans','profile'].forEach(function(n) {
+  ['home','plans','profile','loyalty'].forEach(function(n) {
     var navEl = document.getElementById('nav-' + n);
     if (navEl) navEl.classList.toggle('active', n === name);
   });
   if (name === 'home')    renderHome();
   if (name === 'profile') renderProfile();
   if (name === 'plans')   renderPlans();
+  if (name === 'loyalty') renderLoyalty();
 }
 function navTo(name) { showScreen(name); }
 function goToPlans() { showScreen('plans'); }
@@ -1738,8 +1858,12 @@ async function initApp() {
     showScreen('sub-wall');
     return;
   }
-  // Load cars
-  userCars = await getCarsByEmail(currentUser.email);
+  // Load cars and loyalty status in parallel
+  var results = await Promise.allSettled([
+    getCarsByEmail(currentUser.email),
+    fetchLoyaltyStatus()
+  ]);
+  userCars = results[0].status === 'fulfilled' ? results[0].value : [];
   showScreen('home');
   getLocation();
 }
@@ -2073,19 +2197,55 @@ function selectService(serviceId) {
 function updateBookingCost() {
   var washPrice = selectedService ? Number(selectedService.price) : 0;
   var onTrial   = isOnTrial(currentUser);
-  var total     = onTrial ? washPrice + APP_BOOKING_FEE : washPrice;
 
+  // Track 1 — tier discount on add-ons (service_type === 'addon')
+  var discountPct  = 0;
+  var discountAmt  = 0;
+  var serviceType  = selectedService ? (selectedService.service_type || 'addon') : null;
+  if (loyaltyStatus && washPrice > 0 && serviceType === 'addon') {
+    discountPct = loyaltyStatus.discount_addon || 0;
+    discountAmt = Math.round(washPrice * discountPct / 100);
+  } else if (loyaltyStatus && washPrice > 0 && serviceType === 'premium_service') {
+    discountPct = loyaltyStatus.discount_premium || 0;
+    discountAmt = Math.round(washPrice * discountPct / 100);
+  }
+
+  var discountedWash = washPrice - discountAmt;
+  var total = onTrial ? discountedWash + APP_BOOKING_FEE : discountedWash;
+
+  // Show/hide app fee row
   var feeRow  = document.getElementById('book-app-fee-row');
   var divider = document.getElementById('book-divider');
   if (feeRow)  feeRow.style.display  = onTrial && washPrice > 0 ? 'flex' : 'none';
-  if (divider) divider.style.display = onTrial && washPrice > 0 ? 'block' : 'none';
+  if (divider) divider.style.display = washPrice > 0 ? 'block' : 'none';
+
+  // Inject or update tier discount row
+  var discountRowId = 'book-tier-discount-row';
+  var existingRow = document.getElementById(discountRowId);
+  if (discountAmt > 0) {
+    var discountHtml =
+      '<div id="' + discountRowId + '" style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">' +
+        '<div style="font-size:13px;color:var(--success);display:flex;align-items:center;gap:5px;">' +
+          '🏷 ' + getTier(loyaltyStatus ? loyaltyStatus.points : 0).name + ' discount (' + discountPct + '%)' +
+        '</div>' +
+        '<div style="font-size:14px;font-weight:700;color:var(--success);">−KSh ' + discountAmt.toLocaleString() + '</div>' +
+      '</div>';
+    if (existingRow) {
+      existingRow.outerHTML = discountHtml;
+    } else {
+      var feeRowEl = document.getElementById('book-app-fee-row');
+      if (feeRowEl) feeRowEl.insertAdjacentHTML('beforebegin', discountHtml);
+    }
+  } else if (existingRow) {
+    existingRow.remove();
+  }
 
   var wp = document.getElementById('book-wash-price');
   var bt = document.getElementById('booking-total');
   var pp = document.getElementById('book-point-price');
   if (wp) wp.textContent = washPrice ? 'KSh ' + washPrice.toLocaleString() : '—';
   if (bt) bt.textContent = total     ? 'KSh ' + total.toLocaleString()     : '—';
-  if (pp) pp.textContent = selectedService ? selectedService.name + ' · KSh ' + washPrice.toLocaleString() : '—';
+  if (pp) pp.textContent = selectedService ? selectedService.name + ' · KSh ' + discountedWash.toLocaleString() : '—';
 }
 
 async function loadSlots() {
@@ -2199,6 +2359,29 @@ function showQR(booking, code, date) {
 
   showScreen('confirmed');
   sendBookingSMS(date, pointName, slotTime);
+
+  // Refresh loyalty status and show points earned moment
+  setTimeout(async function() {
+    await fetchLoyaltyStatus();
+    if (loyaltyStatus) {
+      var earned = 10; // base earn rate — actual awarded server-side by trigger
+      var smsNote = document.getElementById('conf-sms-note');
+      if (smsNote && smsNote.textContent.indexOf('SMS') === -1) return; // already updated
+      // Small points earned banner below SMS note
+      var confScreen = document.getElementById('screen-confirmed');
+      var ptsBanner  = document.getElementById('conf-pts-banner');
+      if (!ptsBanner && confScreen) {
+        var banner = document.createElement('div');
+        banner.id  = 'conf-pts-banner';
+        banner.style.cssText = 'background:rgba(18,183,106,.08);border:1px solid rgba(18,183,106,.2);border-radius:14px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:var(--success);text-align:center;font-weight:600;';
+        banner.textContent   = '⭐ Points awarded after your wash is completed';
+        var insertBefore = document.getElementById('conf-sms-note');
+        if (insertBefore && insertBefore.parentNode) {
+          insertBefore.parentNode.insertBefore(banner, insertBefore.nextSibling);
+        }
+      }
+    }
+  }, 1000);
 }
 
 function showQRFromConfirm() { showScreen('qr'); }
@@ -2274,13 +2457,15 @@ function renderHome() {
   var carLimit  = currentUser.sub_car_limit || 1;
   if (carsEl) carsEl.textContent = userCars.length + ' / ' + carLimit;
 
-  // Loyalty chip
-  var points  = currentUser.loyalty_points || 0;
-  var tier    = getTier(points);
+  // Loyalty chip — use live status if available, fall back to local
+  var points  = loyaltyStatus ? loyaltyStatus.points : (currentUser.loyalty_points || 0);
+  var tier    = loyaltyStatus ? { name: loyaltyStatus.tier, icon: getTier(points).icon } : getTier(points);
   var loyIcon = document.getElementById('home-loyalty-icon');
   var loyTier = document.getElementById('home-loyalty-tier');
+  var loyPts  = document.getElementById('home-loyalty-points');
   if (loyIcon) loyIcon.textContent = tier.icon;
   if (loyTier) loyTier.textContent = tier.name;
+  if (loyPts)  loyPts.textContent  = points.toLocaleString() + ' pts';
 }
 
 // ── PROFILE RENDER ────────────────────────────────
@@ -2718,6 +2903,167 @@ async function deleteAccount() {
     document.getElementById('da-processing').style.display = 'none';
     errEl.textContent = 'Deletion failed: ' + e.message + '. Please try again or contact support.';
   }
+}
+
+// ── LOYALTY ──────────────────────────────────────
+
+async function fetchLoyaltyStatus() {
+  try {
+    var res = await fetch('/api/loyalty/status');
+    if (!res.ok) return;
+    loyaltyStatus = await res.json();
+    // Update home chip if already visible
+    var loyIcon = document.getElementById('home-loyalty-icon');
+    var loyTier = document.getElementById('home-loyalty-tier');
+    var loyPts  = document.getElementById('home-loyalty-points');
+    if (loyaltyStatus && loyIcon) {
+      var t = getTier(loyaltyStatus.points);
+      loyIcon.textContent = t.icon;
+      loyTier.textContent = loyaltyStatus.tier;
+      loyPts.textContent  = loyaltyStatus.points.toLocaleString() + ' pts';
+    }
+  } catch(e) {}
+}
+
+var REDEEM_CATALOGUE = [
+  { type: 'priority_slot',      label: 'Priority slot — single booking', cost: 150,  tier: null,      desc: 'Jump the queue on one booking. Valid 14 days from issue.' },
+  { type: 'priority_month',     label: 'Priority queue — 30 days',       cost: 400,  tier: 'Silver',  desc: 'Your bookings get priority placement at all wash points for a full month.' },
+  { type: 'cancellation_window',label: 'Extended cancellation window',   cost: 300,  tier: null,      desc: 'Unlock a 48-hour cancellation window on your next 3 bookings.' },
+  { type: 'early_access',       label: 'Early access — 7 days',          cost: 500,  tier: 'Silver',  desc: 'Book new slots 7 days before general public. Valid 30 days.' },
+  { type: 'partner_voucher',    label: 'Partner voucher',                 cost: 800,  tier: 'Gold',    desc: 'A voucher from a SplashPass partner — tyre, detailing, or fuel.' },
+  { type: 'platinum_concierge', label: 'Platinum early access + concierge', cost: 1200, tier: 'Platinum', desc: '14-day early booking + one dedicated concierge-scheduled wash.' },
+];
+
+var TIER_RANK = { Bronze: 0, Silver: 1, Gold: 2, Platinum: 3 };
+
+function renderLoyalty() {
+  if (!loyaltyStatus) {
+    fetchLoyaltyStatus().then(renderLoyalty);
+    return;
+  }
+
+  var points     = loyaltyStatus.points || 0;
+  var tier       = loyaltyStatus.tier   || 'Bronze';
+  var tierObj    = getTier(points);
+  var nextTier   = loyaltyStatus.next_tier;
+  var nextAt     = loyaltyStatus.next_tier_at;
+  var toNext     = loyaltyStatus.points_to_next;
+  var discAddon  = loyaltyStatus.discount_addon  || 0;
+  var discPrem   = loyaltyStatus.discount_premium || 0;
+
+  // Hero
+  document.getElementById('loyalty-hero-icon').textContent  = tierObj.icon;
+  document.getElementById('loyalty-hero-tier').textContent  = tier;
+  document.getElementById('loyalty-hero-points').textContent = points.toLocaleString();
+
+  // Progress bar
+  var pct = nextAt ? Math.min(100, Math.round((points / nextAt) * 100)) : 100;
+  document.getElementById('loyalty-progress-fill').style.width = pct + '%';
+  document.getElementById('loyalty-progress-current').textContent = points.toLocaleString() + ' pts';
+  document.getElementById('loyalty-progress-next').textContent   = nextTier ? toNext.toLocaleString() + ' pts to ' + nextTier : 'Max tier reached 🎉';
+
+  // Discount pill
+  var pill = document.getElementById('loyalty-discount-pill');
+  if (discAddon > 0 || discPrem > 0) {
+    pill.style.display = 'inline-flex';
+    var label = discAddon > 0 ? discAddon + '% off add-ons' : '';
+    if (discPrem > 0) label += (label ? ' · ' : '') + discPrem + '% off premium services';
+    document.getElementById('loyalty-discount-label').textContent = label + ' — active';
+  } else {
+    pill.style.display = 'none';
+  }
+
+  // Catalogue
+  var userRank = TIER_RANK[tier] || 0;
+  var catEl = document.getElementById('loyalty-catalogue');
+  catEl.innerHTML = REDEEM_CATALOGUE.map(function(item) {
+    var reqRank   = item.tier ? (TIER_RANK[item.tier] || 0) : 0;
+    var locked    = userRank < reqRank;
+    var canAfford = points >= item.cost;
+    return '<div class="redeem-card" style="opacity:' + (locked ? '.5' : '1') + '">' +
+      '<div class="redeem-card-top">' +
+        '<div class="redeem-card-name">' + item.label + '</div>' +
+        '<div class="redeem-card-cost">' + item.cost + ' pts</div>' +
+      '</div>' +
+      '<div class="redeem-card-desc">' + item.desc + '</div>' +
+      (locked
+        ? '<div class="redeem-card-lock">🔒 Requires ' + item.tier + ' tier</div>'
+        : '<button class="btn btn-' + (canAfford ? 'gold' : 'outline') + ' btn-sm" ' +
+            (canAfford ? 'onclick="redeemItem(\'' + item.type + '\')"' : 'disabled') +
+            ' style="width:auto">' +
+            (canAfford ? 'Redeem' : 'Not enough points') +
+          '</button>'
+      ) +
+    '</div>';
+  }).join('');
+
+  // Load transaction history
+  loadLedger();
+}
+
+async function loadLedger() {
+  var el = document.getElementById('loyalty-ledger');
+  if (!el) return;
+  el.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:20px 0;text-align:center">Loading...</div>';
+  try {
+    var res  = await fetch('/api/loyalty/transactions?limit=20');
+    var data = await res.json();
+    var txns = data.transactions || [];
+    if (!txns.length) {
+      el.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:20px 0;text-align:center">No transactions yet</div>';
+      return;
+    }
+    var REASON_LABELS = {
+      booking_complete:     'Booking completed',
+      review_bonus:         'Review bonus',
+      referral_bonus:       'Referral bonus',
+      streak_bonus:         'Streak bonus',
+      monthly_bonus:        'Monthly bonus',
+      cap_forfeited:        'Points cap adjustment',
+      escrowed:             'Points held',
+      redemption_priority_slot:       'Redeemed: Priority slot',
+      redemption_priority_month:      'Redeemed: Priority queue',
+      redemption_cancellation_window: 'Redeemed: Cancellation window',
+      redemption_early_access:        'Redeemed: Early access',
+      redemption_partner_voucher:     'Redeemed: Partner voucher',
+      redemption_platinum_concierge:  'Redeemed: Concierge slot',
+    };
+    el.innerHTML = txns.map(function(t) {
+      var isPos  = t.delta > 0;
+      var label  = REASON_LABELS[t.reason] || t.reason;
+      var date   = new Date(t.created_at).toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'numeric' });
+      return '<div class="ledger-row">' +
+        '<div>' +
+          '<div class="ledger-reason">' + label + '</div>' +
+          '<div class="ledger-date">' + date + '</div>' +
+        '</div>' +
+        '<div class="' + (isPos ? 'ledger-delta-pos' : 'ledger-delta-neg') + '">' +
+          (isPos ? '+' : '') + t.delta + ' pts' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  } catch(e) {
+    el.innerHTML = '<div style="color:var(--danger);font-size:13px;padding:14px 0;text-align:center">Could not load history.</div>';
+  }
+}
+
+async function redeemItem(type) {
+  if (!loyaltyStatus) return;
+  var item = REDEEM_CATALOGUE.find(function(i) { return i.type === type; });
+  if (!item) return;
+  if (!confirm('Spend ' + item.cost + ' points for: ' + item.label + '?')) return;
+  try {
+    var res  = await fetch('/api/loyalty/redeem', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ redemption_type: type })
+    });
+    var data = await res.json();
+    if (!res.ok) { toast(data.error || 'Redemption failed', true); return; }
+    toast('✓ ' + data.label + ' activated!');
+    loyaltyStatus.points = data.points_remaining;
+    renderLoyalty();
+  } catch(e) { toast('Error: ' + e.message, true); }
 }
 
 // ── SERVICE WORKER ────────────────────────────────
