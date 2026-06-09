@@ -3,6 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<!-- Sentry error monitoring -->
+<script src="https://browser.sentry-cdn.com/8.x.x/bundle.min.js" crossorigin="anonymous"></script>
+<script>
+  Sentry.init({
+    dsn: "https://527f2769f1ba77520a674ae61bdfc672@o4511528163475456.ingest.de.sentry.io/4511534443462736",
+    environment: window.location.hostname === 'localhost' ? 'development' : 'production',
+    tracesSampleRate: 0.5,
+    release: "splashpass-customer@1.0.0",
+  });
+</script>
 <meta name="theme-color" content="#0B1437">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
