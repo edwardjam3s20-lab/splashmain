@@ -4,6 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SplashPass Admin</title>
+<!-- Sentry error monitoring -->
+<script src="https://browser.sentry-cdn.com/8.x.x/bundle.min.js" crossorigin="anonymous"></script>
+<script>
+  Sentry.init({
+    dsn: "https://e6984257addad8c5ba047c57d069286a@o4511528163475456.ingest.de.sentry.io/4511534570733648",
+    environment: window.location.hostname === 'localhost' ? 'development' : 'production',
+    tracesSampleRate: 0.5,
+    release: "splashpass-admin@1.0.0",
+  });
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
