@@ -4,12 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <!-- Sentry error monitoring -->
-<script src="https://browser.sentry-cdn.com/8.x.x/bundle.min.js" crossorigin="anonymous"></script>
+<script src="https://browser.sentry-cdn.com/10.56.0/bundle.tracing.min.js" crossorigin="anonymous"></script>
 <script>
   Sentry.init({
     dsn: "https://89ce16ebaa8e98bee204f7335f0ac102@o4511528163475456.ingest.de.sentry.io/4511534449754192",
+    integrations: [Sentry.browserTracingIntegration()],
+    tracesSampleRate: 1.0,
+    tracePropagationTargets: ["localhost", /^https:\/\/operator\.splashpass\.site/],
     environment: window.location.hostname === 'localhost' ? 'development' : 'production',
-    tracesSampleRate: 0.5,
     release: "splashpass-operator@1.0.0",
   });
 </script>

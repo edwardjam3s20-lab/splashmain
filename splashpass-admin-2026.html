@@ -5,12 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SplashPass Admin</title>
 <!-- Sentry error monitoring -->
-<script src="https://browser.sentry-cdn.com/8.x.x/bundle.min.js" crossorigin="anonymous"></script>
+<script src="https://browser.sentry-cdn.com/10.56.0/bundle.tracing.min.js" crossorigin="anonymous"></script>
 <script>
   Sentry.init({
     dsn: "https://e6984257addad8c5ba047c57d069286a@o4511528163475456.ingest.de.sentry.io/4511534570733648",
+    integrations: [Sentry.browserTracingIntegration()],
+    tracesSampleRate: 1.0,
+    tracePropagationTargets: ["localhost", /^https:\/\/admin\.splashpass\.site/],
     environment: window.location.hostname === 'localhost' ? 'development' : 'production',
-    tracesSampleRate: 0.5,
     release: "splashpass-admin@1.0.0",
   });
 </script>
