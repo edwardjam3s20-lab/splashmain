@@ -44,7 +44,7 @@ export async function POST(request) {
   // Strip password before sending to client
   delete user.password
 
-  const res = NextResponse.json({ ok: true, user })
+  const res = NextResponse.json({ ok: true, user, pendingToken: token })
   setSessionCookie(res, token)
   return res
 }
