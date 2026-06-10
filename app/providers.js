@@ -12,9 +12,9 @@ export function PHProvider({ children }) {
     }
 
     posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY, {
-      api_host: '/ingest',
+      api_host: 'https://admin.splashpass.site/ingest',
       ui_host: 'https://eu.i.posthog.com',
-      capture_pageview: false,       // handled manually in PostHogPageView
+      capture_pageview: false,
       capture_pageleave: true,
       persistence: 'localStorage',
       autocapture: false,

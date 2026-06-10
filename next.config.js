@@ -10,13 +10,8 @@ const nextConfig = {
         source: '/ingest/:path*',
         destination: 'https://eu.i.posthog.com/:path*',
       },
-      {
-        source: '/ingest/decide',
-        destination: 'https://eu.i.posthog.com/decide',
-      },
     ]
   },
-  // Required to support PostHog trailing slash rewrites
   skipTrailingSlashRedirect: true,
 }
 
