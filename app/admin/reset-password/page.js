@@ -1,7 +1,9 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { createClient } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
+
+export const dynamic = 'force-dynamic'
 
 export default function AdminResetPassword() {
   const [password, setPassword] = useState('')
@@ -10,11 +12,17 @@ export default function AdminResetPassword() {
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
   const [ready, setReady] = useState(false)
-  const supabase = createClientComponentClient()
+  const [supabase, setSupabase] = useState(null)
   const router = useRouter()
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const client = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    )
+    setSupabase(client)
+
+    const { data: { subscription } } = client.auth.onAuthStateChange((event, session) => {
       if (event === 'PASSWORD_RECOVERY') {
         setReady(true)
       }
@@ -48,7 +56,6 @@ export default function AdminResetPassword() {
         background: '#152236', borderRadius: '16px', padding: '40px',
         width: '100%', maxWidth: '400px', border: '1px solid #1e3050'
       }}>
-        {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
           <div style={{
             width: '40px', height: '40px', background: '#f5a623', borderRadius: '10px',
@@ -70,7 +77,7 @@ export default function AdminResetPassword() {
 
         {done ? (
           <p style={{ color: '#2ecc71', textAlign: 'center', fontWeight: 500 }}>
-            ✓ Password updated. Redirecting to admin...
+            ✓ Password updated. Redirecting...
           </p>
         ) : !ready ? (
           <p style={{ color: '#8a9bb0', textAlign: 'center', fontSize: '13px' }}>
@@ -78,49 +85,34 @@ export default function AdminResetPassword() {
           </p>
         ) : (
           <>
-            {/* New Password */}
             <div style={{ marginBottom: '16px' }}>
-              <label style={{
-                display: 'block', fontSize: '12px', color: '#8a9bb0',
-                marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '.5px', fontWeight: 500
-              }}>New Password</label>
+              <label style={{ display: 'block', fontSize: '12px', color: '#8a9bb0', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '.5px', fontWeight: 500 }}>
+                New Password
+              </label>
               <input
                 type="password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="Min 8 characters"
                 onKeyDown={e => e.key === 'Enter' && handleReset()}
-                style={{
-                  width: '100%', padding: '12px 16px', background: '#0d1b2a',
-                  border: '1.5px solid #1e3050', borderRadius: '10px',
-                  color: '#f0f4f8', fontSize: '15px', outline: 'none', boxSizing: 'border-box'
-                }}
+                style={{ width: '100%', padding: '12px 16px', background: '#0d1b2a', border: '1.5px solid #1e3050', borderRadius: '10px', color: '#f0f4f8', fontSize: '15px', outline: 'none', boxSizing: 'border-box' }}
               />
             </div>
-
-            {/* Confirm Password */}
             <div style={{ marginBottom: '16px' }}>
-              <label style={{
-                display: 'block', fontSize: '12px', color: '#8a9bb0',
-                marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '.5px', fontWeight: 500
-              }}>Confirm Password</label>
+              <label style={{ display: 'block', fontSize: '12px', color: '#8a9bb0', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '.5px', fontWeight: 500 }}>
+                Confirm Password
+              </label>
               <input
                 type="password"
                 value={confirm}
                 onChange={e => setConfirm(e.target.value)}
                 placeholder="Repeat password"
                 onKeyDown={e => e.key === 'Enter' && handleReset()}
-                style={{
-                  width: '100%', padding: '12px 16px', background: '#0d1b2a',
-                  border: '1.5px solid #1e3050', borderRadius: '10px',
-                  color: '#f0f4f8', fontSize: '15px', outline: 'none', boxSizing: 'border-box'
-                }}
+                style={{ width: '100%', padding: '12px 16px', background: '#0d1b2a', border: '1.5px solid #1e3050', borderRadius: '10px', color: '#f0f4f8', fontSize: '15px', outline: 'none', boxSizing: 'border-box' }}
               />
             </div>
 
-            {error && (
-              <p style={{ color: '#e74c3c', fontSize: '13px', marginBottom: '12px' }}>{error}</p>
-            )}
+            {error && <p style={{ color: '#e74c3c', fontSize: '13px', marginBottom: '12px' }}>{error}</p>}
 
             <button
               onClick={handleReset}
@@ -129,7 +121,7 @@ export default function AdminResetPassword() {
                 width: '100%', padding: '12px', background: loading ? '#c4851a' : '#f5a623',
                 color: '#0d1b2a', border: 'none', borderRadius: '10px',
                 fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '14px',
-                cursor: loading ? 'not-allowed' : 'pointer', transition: 'background .2s'
+                cursor: loading ? 'not-allowed' : 'pointer'
               }}
             >
               {loading ? 'Updating...' : 'Set New Password'}
