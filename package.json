@@ -13,6 +13,7 @@
     "bcryptjs": "^3.0.3",
     "jose": "^5",
     "next": "14.2.29",
+    "posthog-js": "^1.384.0",
     "react": "^18",
     "react-dom": "^18",
     "resend": "^3"
