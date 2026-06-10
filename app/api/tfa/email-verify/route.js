@@ -2,6 +2,11 @@ import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase'
 import { createSession, setSessionCookie } from '@/lib/session'
 import { resetRateLimit } from '@/lib/rateLimit'
+import { jwtVerify } from 'jose'
+
+const SECRET = new TextEncoder().encode(
+  process.env.SESSION_SECRET || 'fallback_secret_32_chars_minimum!!'
+)
 
 export async function POST(request) {
   const { email, pendingToken, code } = await request.json()
@@ -10,13 +15,17 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 })
   }
 
-  const supabase = getSupabaseAdmin()
-
-  // Verify the pending token
-  const { data: userData, error } = await supabase.auth.getUser(pendingToken)
-  if (error || !userData?.user || userData.user.email !== email) {
+  // Verify the pending token using our JWT session secret
+  try {
+    const { payload } = await jwtVerify(pendingToken, SECRET)
+    if (payload.email !== email) {
+      return NextResponse.json({ error: 'Invalid session. Please log in again.' }, { status: 401 })
+    }
+  } catch {
     return NextResponse.json({ error: 'Invalid session. Please log in again.' }, { status: 401 })
   }
+
+  const supabase = getSupabaseAdmin()
 
   // Fetch the stored code
   const { data: tfaRow } = await supabase
@@ -45,11 +54,11 @@ export async function POST(request) {
     .update({ code: null, code_expires_at: null })
     .eq('email', email)
 
-  // Clear rate limit and create session
+  // Clear rate limit and create final session
   const ip = request.headers.get('x-forwarded-for') || 'unknown'
   resetRateLimit(ip)
 
-  const sessionToken = await createSession({ email, accessToken: pendingToken })
+  const sessionToken = await createSession({ email, role: 'admin' })
   const res = NextResponse.json({ success: true })
   setSessionCookie(res, sessionToken)
   return res
