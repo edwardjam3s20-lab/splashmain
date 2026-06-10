@@ -2,8 +2,12 @@ import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase'
 import { Resend } from 'resend'
 import { checkRateLimit } from '@/lib/rateLimit'
+import { jwtVerify } from 'jose'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
+const SECRET = new TextEncoder().encode(
+  process.env.SESSION_SECRET || 'fallback_secret_32_chars_minimum!!'
+)
 
 function generateCode() {
   return Math.floor(100000 + Math.random() * 900000).toString()
@@ -24,14 +28,18 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Invalid request.' }, { status: 400 })
   }
 
-  // Verify the pending token
-  const supabase = getSupabaseAdmin()
-  const { data: userData, error } = await supabase.auth.getUser(pendingToken)
-  if (error || !userData?.user || userData.user.email !== email) {
+  // Verify the pending token using our JWT session secret
+  try {
+    const { payload } = await jwtVerify(pendingToken, SECRET)
+    if (payload.email !== email) {
+      return NextResponse.json({ error: 'Invalid session. Please log in again.' }, { status: 401 })
+    }
+  } catch {
     return NextResponse.json({ error: 'Invalid session. Please log in again.' }, { status: 401 })
   }
 
   // Generate a 6-digit code, store in Supabase with 10 min expiry
+  const supabase = getSupabaseAdmin()
   const code = generateCode()
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString()
 
