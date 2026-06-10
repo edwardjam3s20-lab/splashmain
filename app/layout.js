@@ -1,4 +1,7 @@
 import './globals.css'
+import { Suspense } from 'react'
+import { PHProvider } from './providers'
+import PostHogPageView from './PostHogPageView'
 
 export const metadata = {
   title: 'SplashPass',
@@ -12,7 +15,12 @@ export default function RootLayout({ children }) {
         <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
       </head>
       <body>
-        {children}
+        <PHProvider>
+          <Suspense fallback={null}>
+            <PostHogPageView />
+          </Suspense>
+          {children}
+        </PHProvider>
       </body>
     </html>
   )

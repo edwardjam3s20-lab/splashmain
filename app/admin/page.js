@@ -62,10 +62,10 @@ export default function AdminPage() {
       })
       const json = await res.json()
       if (!res.ok) { setLoginError(json.error || 'Login failed.'); return }
-      setPending({ email: json.email, token: json.pendingToken })
+      setPending({ email: json.user.email, token: json.pendingToken })
       const sendRes = await fetch('/api/tfa/email-send', {
         method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ email: json.email, pendingToken: json.pendingToken })
+        body: JSON.stringify({ email: json.user.email, pendingToken: json.pendingToken })
       })
       const sendJson = await sendRes.json()
       if (!sendRes.ok) { setLoginError(sendJson.error || 'Failed to send code.'); return }
