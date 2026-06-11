@@ -1,10 +1,103 @@
 import { NextResponse } from 'next/server'
-import {
-  SITE,
-  getSiteFromHost,
-  absoluteUrlForSite,
-} from '@/lib/sites'
-import { verifyAdminSession, verifyOperatorSession } from '@/lib/auth-middleware'
+import { jwtVerify } from 'jose'
+
+// ── Inlined from @/lib/sites ──────────────────────────────────────
+const SITE = {
+  CUSTOMER: 'customer',
+  OPERATOR: 'operator',
+  ADMIN: 'admin',
+}
+
+const CANONICAL_ROOT = 'splashpass.site'
+
+function normalizeRootDomain(value) {
+  const v = (value || '').toLowerCase().trim()
+  if (!v || v === 'slashpass.site' || v.endsWith('.slashpass.site')) {
+    return CANONICAL_ROOT
+  }
+  return v
+}
+
+function getRootDomain(hostname) {
+  const host = (hostname || '').toLowerCase()
+  if (host === CANONICAL_ROOT || host.endsWith(`.${CANONICAL_ROOT}`)) {
+    return CANONICAL_ROOT
+  }
+  return normalizeRootDomain(process.env.NEXT_PUBLIC_ROOT_DOMAIN)
+}
+
+function getSiteFromHost(hostname, opts = {}) {
+  const host = (hostname || '').toLowerCase()
+  const root = getRootDomain(host)
+
+  if (process.env.NODE_ENV === 'development') {
+    const headerSite = opts.devSiteHeader?.toLowerCase()
+    if (headerSite === SITE.ADMIN || headerSite === SITE.OPERATOR || headerSite === SITE.CUSTOMER) {
+      return headerSite
+    }
+    const devOverride = process.env.DEV_SITE?.toLowerCase()
+    if (devOverride === SITE.ADMIN || devOverride === SITE.OPERATOR || devOverride === SITE.CUSTOMER) {
+      return devOverride
+    }
+  }
+
+  if (host.startsWith('operator.')) return SITE.OPERATOR
+  if (host.startsWith('admin.')) return SITE.ADMIN
+  if (host === root || host === `www.${root}`) return SITE.CUSTOMER
+  if (host === CANONICAL_ROOT || host === `www.${CANONICAL_ROOT}`) return SITE.CUSTOMER
+  return SITE.CUSTOMER
+}
+
+function getHostForSite(site) {
+  const root = getRootDomain()
+  if (site === SITE.ADMIN) return `admin.${root}`
+  if (site === SITE.OPERATOR) return `operator.${root}`
+  return root
+}
+
+function absoluteUrlForSite(site, pathname, request) {
+  const host = getHostForSite(site)
+  const path = pathname.startsWith('/') ? pathname : `/${pathname}`
+  if (request) {
+    const proto = request.headers.get('x-forwarded-proto') || request.nextUrl.protocol.replace(':', '')
+    return `${proto}://${host}${path}`
+  }
+  const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http'
+  return `${protocol}://${host}${path}`
+}
+
+// ── Inlined from @/lib/auth-middleware ───────────────────────────
+const ADMIN_COOKIE = 'splashpass_session'
+const OPERATOR_COOKIE = 'splashpass_operator_session'
+
+function getSecretKey() {
+  return new TextEncoder().encode(
+    process.env.SESSION_SECRET || 'fallback_secret_32_chars_minimum!!'
+  )
+}
+
+async function verifyAdminSession(request) {
+  const token = request.cookies.get(ADMIN_COOKIE)?.value
+  if (!token) return null
+  try {
+    const { payload } = await jwtVerify(token, getSecretKey())
+    return payload
+  } catch {
+    return null
+  }
+}
+
+async function verifyOperatorSession(request) {
+  const token = request.cookies.get(OPERATOR_COOKIE)?.value
+  if (!token) return null
+  try {
+    const { payload } = await jwtVerify(token, getSecretKey())
+    if (payload.role !== 'operator') return null
+    return payload
+  } catch {
+    return null
+  }
+}
 
 const STATIC_EXT = /\.(?:html|css|js|mjs|json|svg|ico|png|jpe?g|webp|gif|woff2?|webmanifest|txt|map)$/i
 
@@ -174,6 +267,6 @@ export async function middleware(request) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon.ico|ingest).*)',
   ],
 }
