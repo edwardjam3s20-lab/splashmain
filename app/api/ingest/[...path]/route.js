@@ -1,31 +1,45 @@
 export async function GET(request, { params }) {
-  const path = (await params).path.join('/')
+  const { path } = await params
+  const pathStr = Array.isArray(path) ? path.join('/') : path
   const search = request.nextUrl.search
-  const url = `https://eu.i.posthog.com/${path}${search}`
+  const url = `https://eu.i.posthog.com/${pathStr}${search}`
+
   const res = await fetch(url, {
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+    },
   })
-  return new Response(res.body, {
+
+  const body = await res.arrayBuffer()
+  return new Response(body, {
     status: res.status,
-    headers: res.headers,
+    headers: {
+      'Content-Type': res.headers.get('Content-Type') || 'application/json',
+    },
   })
 }
 
 export async function POST(request, { params }) {
-  const path = (await params).path.join('/')
+  const { path } = await params
+  const pathStr = Array.isArray(path) ? path.join('/') : path
   const search = request.nextUrl.search
-  const url = `https://eu.i.posthog.com/${path}${search}`
+  const url = `https://eu.i.posthog.com/${pathStr}${search}`
+
   const body = await request.text()
+
   const res = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Content-Length': Buffer.byteLength(body).toString(),
     },
     body,
   })
-  return new Response(res.body, {
+
+  const resBody = await res.arrayBuffer()
+  return new Response(resBody, {
     status: res.status,
-    headers: res.headers,
+    headers: {
+      'Content-Type': res.headers.get('Content-Type') || 'application/json',
+    },
   })
 }
