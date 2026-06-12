@@ -3,725 +3,3011 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>SplashPass — Book Your Car Wash in Seconds</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<title>SplashPass — Kenya's Car Wash Platform</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='80' fill='%230d1b2a'/%3E%3Cpath d='M256 100 C256 100 160 220 160 300 C160 355 203 400 256 400 C309 400 352 355 352 300 C352 220 256 100 256 100Z' fill='%23f5a623'/%3E%3Ctext x='256' y='340' font-family='Arial Black, sans-serif' font-size='140' font-weight='900' text-anchor='middle' fill='%230d1b2a'%3ES%3C/text%3E%3C/svg%3E"/>
+<link rel="preconnect" href="https://api.fontshare.com"/>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@700,500,400,300&display=swap" rel="stylesheet"/>
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --blue:#2563EB;--blue-dark:#1D4ED8;--blue-light:#DBEAFE;--blue-mid:#3B82F6;
-  --cyan:#06B6D4;--cyan-light:#CFFAFE;
-  --purple:#7C3AED;--purple-light:#EDE9FE;
-  --text:#0F172A;--text2:#475569;--text3:#94A3B8;
-  --border:#E2E8F0;--border2:#CBD5E1;
-  --bg:#FFFFFF;--bg2:#F8FAFC;--bg3:#F1F5F9;
-  --radius:16px;--radius-sm:10px;--radius-lg:24px;
+/* ─────────────────────────────────────────────
+   TOKENS
+───────────────────────────────────────────── */
+:root {
+  --off-white:    #FAF9F7;
+  --ink:          #0D0D0D;
+  --ink-2:        #6B6B6B;
+  --ink-3:        #AEABA6;
+  --dark:         #111111;
+  --dark-2:       #1C1C1C;
+  --dark-text:    #F0EDE8;
+  --dark-muted:   #8A8480;
+  --accent:       #2353E4;
+  --accent-h:     #1A3FC7;
+  --warm-gray:    #EEECEA;
+  --border:       #E2DFD9;
+  --white:        #FFFFFF;
+
+  --r-sm: 8px;
+  --r:    14px;
+  --r-lg: 20px;
+  --r-xl: 28px;
+
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.05);
+  --shadow:    0 4px 16px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.05);
+  --shadow-lg: 0 24px 64px rgba(0,0,0,0.13), 0 8px 24px rgba(0,0,0,0.08);
+  --shadow-xl: 0 48px 120px rgba(0,0,0,0.18), 0 16px 48px rgba(0,0,0,0.1);
 }
-html{scroll-behavior:smooth}
-body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;-webkit-font-smoothing:antialiased;line-height:1.6}
 
-/* BLOBS */
-.blob-wrap{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0}
-.blob{position:absolute;border-radius:50%;filter:blur(80px);opacity:0.35;animation:float 8s ease-in-out infinite}
-.blob-1{width:600px;height:600px;background:radial-gradient(circle,#2563EB,transparent 70%);top:-200px;left:-100px;animation-delay:0s}
-.blob-2{width:500px;height:500px;background:radial-gradient(circle,#7C3AED,transparent 70%);top:-100px;right:-100px;animation-delay:2s}
-.blob-3{width:400px;height:400px;background:radial-gradient(circle,#06B6D4,transparent 70%);bottom:0;left:40%;animation-delay:4s}
-@keyframes float{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-30px) scale(1.05)}}
+/* ─────────────────────────────────────────────
+   RESET & BASE
+───────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+body {
+  font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--off-white);
+  color: var(--ink);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
+}
+a { text-decoration: none; color: inherit; }
+img { display: block; max-width: 100%; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
 
-/* NAV */
-nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 4rem;height:68px;background:rgba(255,255,255,0.8);backdrop-filter:blur(20px);border-bottom:1px solid rgba(226,232,240,0.8)}
-.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;font-weight:800;font-size:1.2rem;color:var(--text);letter-spacing:-0.03em}
-.nav-logo-mark{width:32px;height:32px;flex-shrink:0}
-.nav-links{display:flex;gap:0;list-style:none}
-.nav-links a{color:var(--text2);text-decoration:none;font-size:0.875rem;padding:0.5rem 1rem;border-radius:8px;transition:all 0.15s;font-weight:500}
-.nav-links a:hover{color:var(--text);background:var(--bg3)}
-.nav-right{display:flex;align-items:center;gap:0.75rem}
-.btn-ghost{background:transparent;border:1.5px solid var(--border2);color:var(--text);padding:0.5rem 1.25rem;border-radius:10px;font-size:0.875rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;text-decoration:none;transition:all 0.15s}
-.btn-ghost:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-light)}
-.btn-blue{background:var(--blue);color:#fff;padding:0.5rem 1.25rem;border-radius:10px;font-size:0.875rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;text-decoration:none;transition:all 0.15s;border:none;box-shadow:0 2px 8px rgba(37,99,235,0.3)}
-.btn-blue:hover{background:var(--blue-dark);transform:translateY(-1px);box-shadow:0 4px 16px rgba(37,99,235,0.4)}
+/* ─────────────────────────────────────────────
+   LAYOUT
+───────────────────────────────────────────── */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 48px;
+}
+.container--narrow {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 0 48px;
+}
 
-/* LAYOUT */
-section{position:relative;z-index:1}
-.container{max-width:1160px;margin:0 auto;padding:0 2.5rem}
+/* ─────────────────────────────────────────────
+   NAV
+───────────────────────────────────────────── */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 300;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  background: rgba(250,249,247,0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(226,223,217,0.7);
+}
+.nav-inner {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.nav-logo-mark {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.nav-logo-mark svg { width: 36px; height: 36px; }
+.nav-logo-name {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  list-style: none;
+}
+.nav-links a {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-2);
+  padding: 6px 14px;
+  border-radius: 8px;
+  transition: color 0.15s, background 0.15s;
+}
+.nav-links a:hover { color: var(--ink); background: var(--warm-gray); }
+.nav-right { display: flex; align-items: center; gap: 10px; }
+.btn-nav-ghost {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  padding: 8px 18px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  transition: border-color 0.15s, background 0.15s;
+  display: inline-flex; align-items: center;
+}
+.btn-nav-ghost:hover { border-color: var(--ink-2); background: var(--warm-gray); }
+.btn-nav-primary {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  padding: 8px 18px;
+  border-radius: 10px;
+  background: var(--ink);
+  transition: background 0.15s, transform 0.1s;
+  display: inline-flex; align-items: center;
+}
+.btn-nav-primary:hover { background: #2a2a2a; }
 
-/* HERO */
-.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:120px 2.5rem 80px;text-align:center;background:linear-gradient(160deg,#EFF6FF 0%,#F5F3FF 40%,#ECFEFF 100%);position:relative;overflow:hidden}
-.hero-badge{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1.5px solid var(--border2);padding:6px 16px;border-radius:100px;font-size:0.78rem;font-weight:600;color:var(--blue);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:2rem;box-shadow:0 2px 8px rgba(0,0,0,0.06);animation:fadeUp 0.5s ease both}
-.badge-dot{width:6px;height:6px;border-radius:50%;background:var(--cyan);animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}
-.hero h1{font-size:clamp(2.8rem,6vw,5rem);font-weight:900;letter-spacing:-0.04em;line-height:1.05;max-width:900px;color:var(--text);animation:fadeUp 0.6s 0.05s ease both}
-.hero h1 .grad{background:linear-gradient(135deg,var(--blue),var(--cyan),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.hero-sub{max-width:600px;margin:1.5rem auto 0;font-size:1.125rem;line-height:1.75;color:var(--text2);font-weight:400;animation:fadeUp 0.6s 0.1s ease both}
-.hero-actions{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;margin-top:2.5rem;animation:fadeUp 0.6s 0.15s ease both}
-.btn-hero-primary{background:var(--blue);color:#fff;padding:0.875rem 2rem;border-radius:12px;font-size:1rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:10px;transition:all 0.2s;font-family:'Inter',sans-serif;box-shadow:0 4px 20px rgba(37,99,235,0.35)}
-.btn-hero-primary:hover{background:var(--blue-dark);transform:translateY(-2px);box-shadow:0 8px 30px rgba(37,99,235,0.45)}
-.btn-hero-secondary{background:#fff;color:var(--text);padding:0.875rem 2rem;border-radius:12px;font-size:1rem;font-weight:600;text-decoration:none;border:1.5px solid var(--border2);display:inline-flex;align-items:center;gap:10px;transition:all 0.2s;font-family:'Inter',sans-serif;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
-.btn-hero-secondary:hover{border-color:var(--blue);color:var(--blue);transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,0.1)}
-.btn-arrow{font-size:1.1rem;transition:transform 0.2s}
-.btn-hero-primary:hover .btn-arrow,.btn-hero-secondary:hover .btn-arrow{transform:translateX(3px)}
+/* ─────────────────────────────────────────────
+   HERO
+───────────────────────────────────────────── */
+.hero {
+  padding-top: 64px; /* nav offset */
+  background: var(--off-white);
+}
+.hero-top {
+  padding: 96px 48px 72px;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 40px;
+}
+.hero-label {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 28px;
+}
+.hero-h1 {
+  font-size: clamp(48px, 6.5vw, 80px);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1.0;
+  color: var(--ink);
+  max-width: 640px;
+}
+.hero-h1 em {
+  font-style: normal;
+  color: var(--ink-2);
+}
+.hero-sub {
+  margin-top: 28px;
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--ink-2);
+  line-height: 1.7;
+  max-width: 480px;
+}
+.hero-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 40px;
+  flex-wrap: wrap;
+}
+.btn-primary {
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--accent);
+  padding: 14px 28px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
+  box-shadow: 0 2px 12px rgba(35,83,228,0.3);
+}
+.btn-primary:hover {
+  background: var(--accent-h);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(35,83,228,0.4);
+}
+.btn-secondary {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink);
+  background: var(--white);
+  padding: 14px 28px;
+  border-radius: 12px;
+  border: 1.5px solid var(--border);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s;
+  box-shadow: var(--shadow-sm);
+}
+.btn-secondary:hover {
+  border-color: var(--ink-2);
+  background: var(--warm-gray);
+  transform: translateY(-1px);
+}
+.hero-aside {
+  text-align: right;
+  font-size: 13px;
+  color: var(--ink-3);
+  font-weight: 400;
+  max-width: 180px;
+  line-height: 1.6;
+}
 
-/* FLOATING CARDS */
-.hero-cards{position:relative;margin-top:4rem;width:100%;max-width:960px;animation:fadeUp 0.8s 0.25s ease both}
-.cards-row{display:flex;justify-content:center;gap:1.25rem;flex-wrap:wrap}
-.float-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem 1.5rem;box-shadow:0 8px 30px rgba(0,0,0,0.08);min-width:200px;flex:1;max-width:260px;transition:transform 0.3s;animation:floatCard 6s ease-in-out infinite}
-.float-card:nth-child(2){animation-delay:1s}
-.float-card:nth-child(3){animation-delay:2s}
-.float-card:hover{transform:translateY(-6px)}
-@keyframes floatCard{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-.fc-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:0.75rem;font-size:1.2rem}
-.fc-icon-blue{background:var(--blue-light)}
-.fc-icon-cyan{background:var(--cyan-light)}
-.fc-icon-purple{background:var(--purple-light)}
-.fc-label{font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-bottom:4px}
-.fc-value{font-size:1.4rem;font-weight:800;color:var(--text);letter-spacing:-0.02em}
-.fc-sub{font-size:0.78rem;color:var(--text3);margin-top:2px}
-.fc-bar{height:4px;border-radius:2px;background:var(--bg3);margin-top:0.75rem;overflow:hidden}
-.fc-bar-fill{height:100%;border-radius:2px;transition:width 1s ease}
-.fc-badge{display:inline-flex;align-items:center;gap:4px;background:var(--blue-light);color:var(--blue);padding:3px 10px;border-radius:100px;font-size:0.72rem;font-weight:600;margin-top:0.5rem}
-.fc-badge-green{background:#DCFCE7;color:#16A34A}
+/* Hero device — full bleed */
+.hero-device-wrap {
+  width: 100%;
+  background: var(--warm-gray);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  padding: 72px 48px 0;
+  min-height: 520px;
+  border-top: 1px solid var(--border);
+}
+.hero-device-inner {
+  max-width: 1200px;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 28px;
+  position: relative;
+}
 
-/* SOCIAL PROOF */
-.social-proof{padding:3rem 0;background:#fff;border-bottom:1px solid var(--border)}
-.sp-inner{display:flex;align-items:center;justify-content:center;gap:3rem;flex-wrap:wrap}
-.sp-stat{text-align:center}
-.sp-num{font-size:1.75rem;font-weight:800;color:var(--text);letter-spacing:-0.03em}
-.sp-label{font-size:0.8rem;color:var(--text3);font-weight:500;margin-top:2px}
-.sp-divider{width:1px;height:40px;background:var(--border)}
+/* Phone mockup — CSS only */
+.phone {
+  width: 280px;
+  flex-shrink: 0;
+  position: relative;
+  filter: drop-shadow(0 32px 64px rgba(0,0,0,0.18)) drop-shadow(0 8px 20px rgba(0,0,0,0.1));
+  transform-origin: bottom center;
+}
+.phone--main { transform: scale(1.12) translateY(12px); z-index: 2; }
+.phone--side { transform: scale(0.92); opacity: 0.85; z-index: 1; }
+.phone--side:first-child { transform: scale(0.92) rotate(-3deg) translateX(20px); }
+.phone--side:last-child  { transform: scale(0.92) rotate(3deg) translateX(-20px); }
 
-/* FEATURES */
-.features{padding:7rem 0;background:#fff}
-.section-eyebrow{display:inline-flex;align-items:center;gap:6px;font-size:0.72rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--blue);margin-bottom:1rem;background:var(--blue-light);padding:5px 12px;border-radius:100px}
-.section-h2{font-size:clamp(1.8rem,3.5vw,2.6rem);font-weight:800;letter-spacing:-0.03em;line-height:1.15;margin-bottom:1rem;color:var(--text)}
-.section-sub{color:var(--text2);font-size:1rem;line-height:1.75;max-width:560px}
-.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:3.5rem}
-.feat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;transition:all 0.25s;position:relative;overflow:hidden}
-.feat-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(37,99,235,0.03),rgba(124,58,237,0.03));opacity:0;transition:opacity 0.25s}
-.feat-card:hover{transform:translateY(-6px);box-shadow:0 20px 40px rgba(0,0,0,0.08);border-color:var(--border2)}
-.feat-card:hover::before{opacity:1}
-.feat-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:1.25rem;font-size:1.5rem}
-.fi-blue{background:linear-gradient(135deg,#DBEAFE,#EFF6FF)}
-.fi-cyan{background:linear-gradient(135deg,#CFFAFE,#ECFEFF)}
-.fi-purple{background:linear-gradient(135deg,#EDE9FE,#F5F3FF)}
-.feat-card h3{font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:0.5rem;letter-spacing:-0.01em}
-.feat-card p{font-size:0.9rem;color:var(--text2);line-height:1.7}
-.feat-link{display:inline-flex;align-items:center;gap:4px;color:var(--blue);font-size:0.85rem;font-weight:600;text-decoration:none;margin-top:1rem;transition:gap 0.2s}
-.feat-link:hover{gap:8px}
+.phone-shell {
+  width: 100%;
+  border-radius: 44px;
+  background: #1A1A1A;
+  padding: 14px;
+  position: relative;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.08),
+    0 0 0 1px rgba(0,0,0,0.5);
+}
+.phone-screen {
+  border-radius: 34px;
+  overflow: hidden;
+  background: var(--off-white);
+  position: relative;
+  aspect-ratio: 9/19;
+}
+.phone-notch {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 88px;
+  height: 24px;
+  background: #1A1A1A;
+  border-radius: 12px;
+  z-index: 10;
+}
 
-/* HOW IT WORKS */
-.how{padding:7rem 0;background:linear-gradient(180deg,var(--bg2) 0%,#fff 100%)}
-.steps-row{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;margin-top:4rem;position:relative}
-.steps-row::before{content:'';position:absolute;top:36px;left:calc(16.66% + 1rem);right:calc(16.66% + 1rem);height:2px;background:linear-gradient(90deg,var(--blue),var(--cyan),var(--purple));border-radius:1px;z-index:0}
-.step{text-align:center;position:relative;z-index:1}
-.step-num{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:900;margin:0 auto 1.5rem;box-shadow:0 8px 24px rgba(0,0,0,0.12);position:relative}
-.sn-1{background:linear-gradient(135deg,var(--blue),var(--blue-mid));color:#fff}
-.sn-2{background:linear-gradient(135deg,var(--cyan),#0891B2);color:#fff}
-.sn-3{background:linear-gradient(135deg,var(--purple),#6D28D9);color:#fff}
-.step h3{font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:0.5rem}
-.step p{font-size:0.875rem;color:var(--text2);line-height:1.7}
-.step-icon{font-size:1.75rem;margin-bottom:0.5rem}
+/* Phone screen contents */
+.ps-booking { background: #FAF9F7; height: 100%; display: flex; flex-direction: column; }
+.ps-header {
+  padding: 48px 18px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.ps-h-label { font-size: 11px; font-weight: 700; color: var(--ink-3); letter-spacing: 0.06em; text-transform: uppercase; }
+.ps-h-name { font-size: 17px; font-weight: 700; letter-spacing: -0.03em; color: var(--ink); }
+.ps-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: linear-gradient(135deg, #2353E4, #6FA3FF);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: white;
+}
 
-/* OPERATOR */
-.operator{padding:7rem 0;background:#fff}
-.op-grid{display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center;margin-top:1rem}
-.op-features{display:flex;flex-direction:column;gap:1rem;margin-top:2rem}
-.op-feat{display:flex;align-items:flex-start;gap:1rem;padding:1.25rem;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);transition:all 0.2s}
-.op-feat:hover{border-color:var(--blue);background:#fff;box-shadow:0 4px 16px rgba(37,99,235,0.08)}
-.op-feat-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.1rem}
-.op-feat-icon-1{background:linear-gradient(135deg,#DBEAFE,#EFF6FF)}
-.op-feat-icon-2{background:linear-gradient(135deg,#DCFCE7,#F0FDF4)}
-.op-feat-icon-3{background:linear-gradient(135deg,#FEF3C7,#FFFBEB)}
-.op-feat-icon-4{background:linear-gradient(135deg,#EDE9FE,#F5F3FF)}
-.op-feat h4{font-size:0.9rem;font-weight:700;color:var(--text);margin-bottom:2px}
-.op-feat p{font-size:0.82rem;color:var(--text2);line-height:1.6}
+.ps-location {
+  margin: 0 18px 16px;
+  background: var(--white);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+.ps-loc-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--accent); flex-shrink: 0;
+}
+.ps-loc-text { font-size: 11px; font-weight: 500; color: var(--ink-2); }
 
-/* DASHBOARD MOCK */
-.dash-mock{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.1)}
-.dm-topbar{background:#fff;border-bottom:1px solid var(--border);padding:0 1.25rem;height:44px;display:flex;align-items:center;justify-content:space-between}
-.dm-logo{font-weight:800;font-size:0.85rem;color:var(--blue);letter-spacing:-0.02em}
-.dm-dots{display:flex;gap:5px}
-.dm-dot{width:10px;height:10px;border-radius:50%}
-.dm-body{display:grid;grid-template-columns:130px 1fr;height:260px}
-.dm-sidebar{background:#fff;border-right:1px solid var(--border);padding:0.75rem 0.5rem;display:flex;flex-direction:column;gap:2px}
-.dm-item{display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:6px;font-size:0.65rem;font-weight:500;color:var(--text3);cursor:pointer;transition:all 0.15s}
-.dm-item:hover,.dm-item.active{background:var(--blue-light);color:var(--blue)}
-.dm-main{padding:1rem;overflow:hidden}
-.dm-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;margin-bottom:0.75rem}
-.dm-kpi{background:#fff;border:1px solid var(--border);border-radius:8px;padding:0.6rem 0.75rem}
-.dm-kpi-label{font-size:0.55rem;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:0.05em}
-.dm-kpi-val{font-size:1.05rem;font-weight:800;color:var(--text);margin-top:2px;letter-spacing:-0.02em}
-.dm-kpi-badge{font-size:0.55rem;font-weight:700;color:#16A34A;margin-top:1px}
-.dm-chart-wrap{background:#fff;border:1px solid var(--border);border-radius:8px;padding:0.75rem}
-.dm-chart-title{font-size:0.6rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.5rem}
-.dm-bars{display:flex;align-items:flex-end;gap:4px;height:90px}
-.dm-bar{border-radius:3px 3px 0 0;flex:1;min-height:10px;background:linear-gradient(180deg,var(--blue),var(--cyan))}
+.ps-section-label {
+  padding: 0 18px 10px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+}
+.ps-cards {
+  padding: 0 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+.ps-card {
+  background: var(--white);
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+.ps-card-img {
+  height: 56px;
+  background: linear-gradient(135deg, #E8F0FF, #C8D8FF);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ps-card-wave {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 0;
+}
+.ps-card-detail {
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.ps-card-name { font-size: 11px; font-weight: 700; color: var(--ink); }
+.ps-card-dist { font-size: 10px; color: var(--ink-3); }
+.ps-card-price {
+  font-size: 12px; font-weight: 700; color: var(--accent);
+  background: #EEF3FF; padding: 3px 8px; border-radius: 6px;
+}
 
-/* PRICING */
-.pricing{padding:7rem 0;background:linear-gradient(180deg,#fff 0%,var(--bg2) 100%)}
-.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:3.5rem;align-items:start}
-.price-card{background:#fff;border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:2rem;transition:all 0.25s;position:relative}
-.price-card:hover{box-shadow:0 16px 40px rgba(0,0,0,0.08);transform:translateY(-4px)}
-.price-card.featured{border-color:var(--blue);box-shadow:0 8px 32px rgba(37,99,235,0.15)}
-.featured-badge{position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--blue),var(--cyan));color:#fff;padding:5px 18px;border-radius:100px;font-size:0.72rem;font-weight:700;letter-spacing:0.04em;white-space:nowrap}
-.price-plan{font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-bottom:0.5rem}
-.price-amt{font-size:2.2rem;font-weight:900;color:var(--text);letter-spacing:-0.04em;line-height:1;margin:0.75rem 0 0.25rem}
-.price-amt span{font-size:1rem;font-weight:500;color:var(--text2)}
-.price-commission{display:inline-flex;align-items:center;gap:4px;background:var(--blue-light);color:var(--blue);padding:4px 10px;border-radius:6px;font-size:0.75rem;font-weight:700;margin-bottom:1rem}
-.price-sub{font-size:0.85rem;color:var(--text2);margin-bottom:1.5rem;line-height:1.6}
-.price-divider{height:1px;background:var(--border);margin-bottom:1.5rem}
-.price-features{list-style:none;display:flex;flex-direction:column;gap:0.6rem;margin-bottom:2rem}
-.price-features li{display:flex;align-items:center;gap:8px;font-size:0.875rem;color:var(--text2)}
-.pf-check{width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--cyan));display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.6rem;color:#fff}
-.price-features li.dim{color:var(--text3)}
-.price-features li.dim .pf-check{background:var(--bg3);color:var(--text3)}
-.btn-price{display:block;text-align:center;padding:0.75rem;border-radius:10px;font-size:0.9rem;font-weight:700;cursor:pointer;text-decoration:none;font-family:'Inter',sans-serif;transition:all 0.2s}
-.btn-price-outline{border:1.5px solid var(--border2);color:var(--text);background:#fff}
-.btn-price-outline:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-light)}
-.btn-price-filled{border:none;background:linear-gradient(135deg,var(--blue),var(--blue-mid));color:#fff;box-shadow:0 4px 16px rgba(37,99,235,0.3)}
-.btn-price-filled:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(37,99,235,0.4)}
+.ps-bottom-bar {
+  margin: 16px 18px;
+  background: var(--ink);
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.ps-bb-text { font-size: 12px; font-weight: 700; color: white; }
 
-/* REVIEWS */
-.reviews{padding:7rem 0;background:#fff}
-.reviews-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:3.5rem}
-.review-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:1.75rem;transition:all 0.2s}
-.review-card:hover{box-shadow:0 12px 32px rgba(0,0,0,0.07);transform:translateY(-3px)}
-.review-stars{color:#F59E0B;font-size:0.9rem;margin-bottom:1rem;letter-spacing:2px}
-.review-text{font-size:0.875rem;color:var(--text2);line-height:1.75;margin-bottom:1.5rem}
-.review-user{display:flex;align-items:center;gap:10px}
-.review-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--cyan));color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;flex-shrink:0}
-.review-user h4{font-size:0.875rem;font-weight:700;color:var(--text)}
-.review-user p{font-size:0.75rem;color:var(--text3)}
+/* QR screen */
+.ps-qr { background: var(--ink); height: 100%; display: flex; flex-direction: column; color: white; }
+.ps-qr-header {
+  padding: 48px 18px 20px;
+  text-align: center;
+}
+.ps-qr-label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 6px; }
+.ps-qr-title { font-size: 16px; font-weight: 700; color: white; letter-spacing: -0.02em; }
 
-/* CONTACT */
-.contact{padding:7rem 0;background:linear-gradient(160deg,#EFF6FF 0%,#F5F3FF 100%);position:relative;overflow:hidden}
-.contact-grid{display:grid;grid-template-columns:1fr 1.4fr;gap:4rem;align-items:start;margin-top:3rem}
-.contact-info-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;display:flex;align-items:center;gap:1rem;transition:all 0.2s;margin-bottom:1rem}
-.contact-info-card:hover{box-shadow:0 8px 24px rgba(0,0,0,0.07);transform:translateX(4px)}
-.ci-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.25rem;flex-shrink:0}
-.ci-icon-email{background:linear-gradient(135deg,#DBEAFE,#EFF6FF)}
-.ci-icon-phone{background:linear-gradient(135deg,#DCFCE7,#F0FDF4)}
-.ci-label{font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-bottom:2px}
-.ci-val{font-size:0.9rem;font-weight:600;color:var(--text);text-decoration:none}
-.ci-val:hover{color:var(--blue)}
-.contact-form-wrap{background:#fff;border:1px solid var(--border);border-radius:var(--radius-lg);padding:2rem;box-shadow:0 8px 32px rgba(0,0,0,0.06)}
-.form-group{margin-bottom:1.25rem}
-.form-group label{display:block;font-size:0.8rem;font-weight:600;color:var(--text);margin-bottom:6px}
-.form-group input,.form-group textarea{width:100%;background:var(--bg2);border:1.5px solid var(--border);border-radius:10px;padding:0.75rem 1rem;font-size:0.9rem;font-family:'Inter',sans-serif;color:var(--text);outline:none;transition:border-color 0.15s;resize:none}
-.form-group input:focus,.form-group textarea:focus{border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px rgba(37,99,235,0.1)}
+.ps-qr-box {
+  margin: 0 28px;
+  background: white;
+  border-radius: 20px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.ps-qr-code { width: 100%; aspect-ratio: 1; }
+.ps-qr-id {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--ink-2);
+  letter-spacing: 0.12em;
+  font-variant-numeric: tabular-nums;
+}
 
-/* FOOTER */
-footer{background:var(--text);color:rgba(255,255,255,0.7);padding:4rem 0 2rem}
-.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:3rem;margin-bottom:3rem}
-.footer-brand p{font-size:0.85rem;margin-top:1rem;line-height:1.7;max-width:260px}
-.footer-col h4{font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#fff;margin-bottom:1rem}
-.footer-col ul{list-style:none;display:flex;flex-direction:column;gap:0.5rem}
-.footer-col ul li a{color:rgba(255,255,255,0.6);text-decoration:none;font-size:0.875rem;transition:color 0.15s}
-.footer-col ul li a:hover{color:#fff}
-.footer-bottom{border-top:1px solid rgba(255,255,255,0.1);padding-top:2rem;display:flex;justify-content:space-between;align-items:center;font-size:0.8rem}
-.footer-logo{display:flex;align-items:center;gap:8px;text-decoration:none;font-weight:800;font-size:1.1rem;color:#fff;letter-spacing:-0.02em}
-.footer-logo svg{width:28px;height:28px;flex-shrink:0}
+.ps-qr-info {
+  margin: 20px 18px 0;
+  background: rgba(255,255,255,0.07);
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  gap: 16px;
+}
+.ps-qr-stat { flex: 1; text-align: center; }
+.ps-qr-stat-val { font-size: 14px; font-weight: 700; color: white; }
+.ps-qr-stat-key { font-size: 9px; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.07em; margin-top: 2px; }
 
-/* ANIMATIONS */
-@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+.ps-qr-timer {
+  margin: 16px 18px auto;
+  text-align: center;
+}
+.ps-qr-timer-val {
+  font-size: 36px;
+  font-weight: 700;
+  color: white;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.ps-qr-timer-label { font-size: 10px; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.08em; }
 
-/* MOBILE */
-@media(max-width:900px){
-  nav{padding:0 1.5rem}
-  .nav-links,.nav-right .btn-ghost{display:none}
-  .hero{padding:100px 1.5rem 60px}
-  .container{padding:0 1.5rem}
-  .features-grid,.pricing-grid,.reviews-grid,.steps-row{grid-template-columns:1fr}
-  .steps-row::before{display:none}
-  .op-grid,.contact-grid{grid-template-columns:1fr}
-  .footer-grid{grid-template-columns:1fr 1fr}
-  .cards-row{gap:0.75rem}
-  .float-card{min-width:140px}
+/* Loyalty screen */
+.ps-loyalty { background: var(--white); height: 100%; display: flex; flex-direction: column; }
+.ps-loyalty-header {
+  padding: 48px 18px 20px;
+  background: linear-gradient(160deg, #1A2B7A 0%, #2353E4 100%);
+  color: white;
+}
+.ps-loy-greeting { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.6; margin-bottom: 4px; }
+.ps-loy-name { font-size: 15px; font-weight: 700; letter-spacing: -0.02em; }
+.ps-loy-points {
+  margin-top: 18px;
+  display: flex; align-items: baseline; gap: 4px;
+}
+.ps-loy-pts-num { font-size: 36px; font-weight: 700; letter-spacing: -0.04em; }
+.ps-loy-pts-label { font-size: 11px; opacity: 0.6; }
+.ps-loy-tier {
+  margin-top: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255,255,255,0.15);
+  padding: 4px 10px;
+  border-radius: 100px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.ps-loy-progress {
+  margin: 16px 18px;
+}
+.ps-loy-prog-label {
+  display: flex; justify-content: space-between;
+  font-size: 10px; color: var(--ink-3);
+  margin-bottom: 6px;
+}
+.ps-loy-prog-bar {
+  height: 5px; background: var(--warm-gray); border-radius: 3px; overflow: hidden;
+}
+.ps-loy-prog-fill {
+  width: 62%; height: 100%; background: var(--accent); border-radius: 3px;
+}
+.ps-loy-rewards {
+  padding: 0 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ps-loy-reward {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  background: var(--off-white);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+.ps-loy-r-icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: var(--warm-gray);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; flex-shrink: 0;
+}
+.ps-loy-r-name { font-size: 11px; font-weight: 600; color: var(--ink); }
+.ps-loy-r-pts { font-size: 10px; color: var(--ink-3); }
+.ps-loy-r-badge {
+  margin-left: auto;
+  font-size: 9px; font-weight: 700;
+  color: var(--accent);
+  background: #EEF3FF;
+  padding: 3px 7px; border-radius: 5px;
+}
+
+/* ─────────────────────────────────────────────
+   TRUST STRIP
+───────────────────────────────────────────── */
+.trust-strip {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--white);
+  padding: 20px 0;
+}
+.trust-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 48px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+.trust-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-3);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  padding-right: 36px;
+  border-right: 1px solid var(--border);
+  margin-right: 36px;
+}
+.trust-items {
+  display: flex;
+  align-items: center;
+  gap: 36px;
+  flex-wrap: wrap;
+}
+.trust-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+.trust-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+/* ─────────────────────────────────────────────
+   BENEFITS — EDITORIAL GRID
+───────────────────────────────────────────── */
+.benefits {
+  padding: 128px 0;
+  background: var(--off-white);
+}
+.benefits-head {
+  max-width: 1200px;
+  margin: 0 auto 80px;
+  padding: 0 48px;
+}
+.section-eyebrow {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 20px;
+}
+.section-h2 {
+  font-size: clamp(32px, 4vw, 48px);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+  color: var(--ink);
+  max-width: 560px;
+}
+.section-sub {
+  margin-top: 16px;
+  font-size: 17px;
+  color: var(--ink-2);
+  line-height: 1.7;
+  max-width: 440px;
+}
+
+.benefits-grid {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 48px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+}
+.benefit-item {
+  background: var(--off-white);
+  padding: 52px 48px;
+  position: relative;
+  transition: background 0.2s;
+}
+.benefit-item:hover { background: var(--white); }
+.benefit-num {
+  font-size: 64px;
+  font-weight: 700;
+  letter-spacing: -0.05em;
+  color: var(--warm-gray);
+  line-height: 1;
+  margin-bottom: 20px;
+  font-variant-numeric: tabular-nums;
+  transition: color 0.2s;
+}
+.benefit-item:hover .benefit-num { color: var(--border); }
+.benefit-title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+  margin-bottom: 10px;
+}
+.benefit-desc {
+  font-size: 15px;
+  color: var(--ink-2);
+  line-height: 1.65;
+  max-width: 380px;
+}
+.benefit-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+}
+.benefit-tag::after { content: '→'; }
+
+/* ─────────────────────────────────────────────
+   HOW IT WORKS — FULL WIDTH HORIZONTAL
+───────────────────────────────────────────── */
+.hiw {
+  padding: 128px 0;
+  background: var(--white);
+  border-top: 1px solid var(--border);
+}
+.hiw-head {
+  max-width: 1200px;
+  margin: 0 auto 72px;
+  padding: 0 48px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 40px;
+}
+.hiw-steps {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 48px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 48px;
+  position: relative;
+}
+.hiw-steps::before {
+  content: '';
+  position: absolute;
+  top: 28px;
+  left: calc(48px + 28px);
+  right: calc(48px + 28px);
+  height: 1px;
+  background: var(--border);
+}
+.hiw-step {}
+.hiw-step-marker {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--off-white);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 28px;
+  position: relative;
+  z-index: 1;
+  letter-spacing: -0.02em;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+.hiw-step:hover .hiw-step-marker {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: white;
+}
+.hiw-step-title {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+  margin-bottom: 10px;
+}
+.hiw-step-desc {
+  font-size: 15px;
+  color: var(--ink-2);
+  line-height: 1.65;
+}
+.hiw-step-visual {
+  margin-top: 28px;
+  height: 160px;
+  background: var(--warm-gray);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  position: relative;
+  border: 1px solid var(--border);
+}
+
+/* Step visual illustrations — SVG inlined */
+.step-visual-1, .step-visual-2, .step-visual-3 {
+  width: 100%;
+  height: 100%;
+}
+
+/* ─────────────────────────────────────────────
+   OPERATOR — DARK SECTION
+───────────────────────────────────────────── */
+.operator {
+  background: var(--dark);
+  color: var(--dark-text);
+  padding: 128px 0;
+  border-top: 1px solid #222;
+}
+.operator-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 48px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+}
+.operator-label {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dark-muted);
+  margin-bottom: 20px;
+}
+.operator-h2 {
+  font-size: clamp(30px, 3.5vw, 44px);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+  color: var(--dark-text);
+  margin-bottom: 20px;
+}
+.operator-sub {
+  font-size: 16px;
+  color: var(--dark-muted);
+  line-height: 1.7;
+  margin-bottom: 40px;
+}
+.operator-features {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 44px;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+.op-feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.op-feature-check {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(35,83,228,0.2);
+  border: 1px solid rgba(35,83,228,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.op-feature-check svg { width: 10px; height: 10px; }
+.op-feature-text { font-size: 15px; color: rgba(240,237,232,0.8); font-weight: 400; line-height: 1.5; }
+.op-feature-text strong { color: var(--dark-text); font-weight: 600; }
+
+.btn-operator {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--dark-text);
+  padding: 14px 28px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.15s, transform 0.1s;
+}
+.btn-operator:hover { background: white; transform: translateY(-1px); }
+
+/* Operator dashboard mockup */
+.operator-visual {
+  position: relative;
+}
+.op-dash {
+  background: #1A1A1A;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.04),
+    0 32px 80px rgba(0,0,0,0.5),
+    0 8px 24px rgba(0,0,0,0.3);
+}
+.op-dash-topbar {
+  background: #141414;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.op-dash-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+}
+.op-dash-dot-r { background: #FF5F56; }
+.op-dash-dot-y { background: #FFBD2E; }
+.op-dash-dot-g { background: #27C93F; }
+.op-dash-title { margin-left: 8px; font-size: 11px; font-weight: 500; color: rgba(255,255,255,0.3); }
+
+.op-dash-body { padding: 20px; }
+.op-dash-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.op-stat {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px;
+  padding: 14px;
+}
+.op-stat-label { font-size: 10px; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+.op-stat-value { font-size: 20px; font-weight: 700; color: white; letter-spacing: -0.03em; }
+.op-stat-delta { font-size: 10px; color: #4ADE80; margin-top: 2px; }
+
+.op-dash-chart {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 14px;
+  height: 100px;
+  position: relative;
+  overflow: hidden;
+}
+.op-chart-label { font-size: 10px; color: rgba(255,255,255,0.3); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 10px; }
+
+.op-dash-bookings { display: flex; flex-direction: column; gap: 8px; }
+.op-booking {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.op-booking-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.op-booking-info { flex: 1; }
+.op-booking-name { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.8); }
+.op-booking-time { font-size: 10px; color: rgba(255,255,255,0.3); margin-top: 1px; }
+.op-booking-amount { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.7); }
+
+/* ─────────────────────────────────────────────
+   PRICING
+───────────────────────────────────────────── */
+.pricing {
+  padding: 128px 0;
+  background: var(--off-white);
+  border-top: 1px solid var(--border);
+}
+.pricing-head {
+  max-width: 1200px;
+  margin: 0 auto 72px;
+  padding: 0 48px;
+  text-align: center;
+}
+.pricing-head .section-h2 { max-width: 100%; margin: 0 auto; }
+.pricing-head .section-sub { max-width: 500px; margin: 16px auto 0; }
+
+.pricing-cards {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 48px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.pricing-card {
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-xl);
+  padding: 36px 32px;
+  position: relative;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.pricing-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-3px); }
+.pricing-card--featured {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--dark-text);
+  padding-top: 44px;
+}
+.pricing-card--featured:hover { box-shadow: 0 32px 64px rgba(0,0,0,0.2); }
+
+.pricing-badge {
+  position: absolute;
+  top: -1px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--accent);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 5px 14px;
+  border-radius: 0 0 10px 10px;
+}
+.pricing-tier {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 16px;
+}
+.pricing-card--featured .pricing-tier { color: rgba(240,237,232,0.45); }
+.pricing-price {
+  font-size: 44px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.pricing-card--featured .pricing-price { color: var(--dark-text); }
+.pricing-price-sub {
+  font-size: 13px;
+  color: var(--ink-3);
+  margin-bottom: 28px;
+}
+.pricing-card--featured .pricing-price-sub { color: var(--dark-muted); }
+.pricing-divider {
+  height: 1px;
+  background: var(--border);
+  margin-bottom: 24px;
+}
+.pricing-card--featured .pricing-divider { background: rgba(255,255,255,0.1); }
+.pricing-features { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 32px; }
+.pricing-feature {
+  font-size: 14px;
+  color: var(--ink-2);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  line-height: 1.4;
+}
+.pricing-card--featured .pricing-feature { color: rgba(240,237,232,0.7); }
+.pricing-feature-check { flex-shrink: 0; margin-top: 2px; color: var(--accent); }
+.pricing-card--featured .pricing-feature-check { color: #6FA3FF; }
+
+.btn-pricing {
+  display: block;
+  width: 100%;
+  padding: 13px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  border: 1.5px solid var(--border);
+  color: var(--ink);
+  background: transparent;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn-pricing:hover { background: var(--warm-gray); }
+.btn-pricing--featured {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+.btn-pricing--featured:hover { background: var(--accent-h); border-color: var(--accent-h); }
+
+/* ─────────────────────────────────────────────
+   CTA BANNER
+───────────────────────────────────────────── */
+.cta-section {
+  background: var(--ink);
+  padding: 120px 48px;
+  text-align: center;
+}
+.cta-eyebrow {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(240,237,232,0.35);
+  margin-bottom: 24px;
+}
+.cta-h2 {
+  font-size: clamp(36px, 5vw, 64px);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  color: var(--dark-text);
+  max-width: 640px;
+  margin: 0 auto 24px;
+}
+.cta-sub {
+  font-size: 17px;
+  color: var(--dark-muted);
+  line-height: 1.6;
+  max-width: 440px;
+  margin: 0 auto 48px;
+}
+.cta-actions {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.btn-cta-primary {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--dark-text);
+  padding: 14px 28px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.15s, transform 0.1s;
+}
+.btn-cta-primary:hover { background: white; transform: translateY(-1px); }
+.btn-cta-secondary {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--dark-text);
+  background: rgba(255,255,255,0.08);
+  padding: 14px 28px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(255,255,255,0.12);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn-cta-secondary:hover { background: rgba(255,255,255,0.12); }
+
+/* ─────────────────────────────────────────────
+   FOOTER
+───────────────────────────────────────────── */
+footer {
+  background: var(--off-white);
+  border-top: 1px solid var(--border);
+  padding: 72px 0 40px;
+}
+.footer-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 48px;
+}
+.footer-top {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr;
+  gap: 48px;
+  padding-bottom: 56px;
+  border-bottom: 1px solid var(--border);
+}
+.footer-brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 14px;
+}
+.footer-brand-desc {
+  font-size: 14px;
+  color: var(--ink-2);
+  line-height: 1.65;
+  max-width: 220px;
+  margin-bottom: 20px;
+}
+.footer-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ink-3);
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.footer-col-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin-bottom: 18px;
+}
+.footer-links { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.footer-links a {
+  font-size: 14px;
+  color: var(--ink-2);
+  transition: color 0.15s;
+}
+.footer-links a:hover { color: var(--ink); }
+.footer-bottom {
+  padding-top: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.footer-copy {
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.footer-legal {
+  display: flex;
+  gap: 24px;
+}
+.footer-legal a { font-size: 13px; color: var(--ink-3); transition: color 0.15s; }
+.footer-legal a:hover { color: var(--ink); }
+
+/* ─────────────────────────────────────────────
+   MOBILE
+───────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .container, .container--narrow { padding: 0 24px; }
+
+  nav { padding: 0; }
+  .nav-inner { padding: 0 24px; }
+  .nav-links { display: none; }
+
+  .hero-top {
+    padding: 72px 24px 48px;
+    grid-template-columns: 1fr;
+  }
+  .hero-aside { display: none; }
+  .hero-h1 { font-size: clamp(40px, 9vw, 56px); }
+
+  .hero-device-wrap { padding: 48px 24px 0; min-height: 380px; }
+  .hero-device-inner { gap: 16px; }
+  .phone { width: 200px; }
+  .phone--side { display: none; }
+  .phone--main { transform: scale(1.08) translateY(8px); }
+
+  .trust-inner { padding: 0 24px; }
+  .trust-label { display: none; }
+  .trust-items { gap: 20px; }
+
+  .benefits { padding: 80px 0; }
+  .benefits-head { padding: 0 24px; margin-bottom: 48px; }
+  .benefits-grid { padding: 0 24px; grid-template-columns: 1fr; }
+  .benefit-item { padding: 36px 28px; }
+
+  .hiw { padding: 80px 0; }
+  .hiw-head { padding: 0 24px; flex-direction: column; align-items: flex-start; gap: 16px; }
+  .hiw-steps { padding: 0 24px; grid-template-columns: 1fr; gap: 36px; }
+  .hiw-steps::before { display: none; }
+
+  .operator { padding: 80px 0; }
+  .operator-inner { padding: 0 24px; grid-template-columns: 1fr; gap: 48px; }
+
+  .pricing { padding: 80px 0; }
+  .pricing-head { padding: 0 24px; }
+  .pricing-cards { padding: 0 24px; grid-template-columns: 1fr; }
+
+  .cta-section { padding: 80px 24px; }
+
+  footer { padding: 56px 0 32px; }
+  .footer-inner { padding: 0 24px; }
+  .footer-top { grid-template-columns: 1fr 1fr; gap: 36px; }
+  .footer-top > :first-child { grid-column: 1 / -1; }
+  .footer-bottom { flex-direction: column; align-items: flex-start; }
+}
+
+@media (max-width: 560px) {
+  .hero-actions { flex-direction: column; }
+  .btn-primary, .btn-secondary { justify-content: center; }
+  .footer-top { grid-template-columns: 1fr; }
+  .footer-top > :first-child { grid-column: 1; }
+  .cta-actions { flex-direction: column; align-items: center; }
+}
+
+/* ─────────────────────────────────────────────
+   CONTACT SECTION
+───────────────────────────────────────────── */
+.contact {
+  padding: 128px 0;
+  background: var(--warm-gray);
+  border-top: 1px solid var(--border);
+}
+.contact-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 48px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+}
+.contact-left .section-eyebrow { margin-bottom: 16px; }
+.contact-left .section-h2 { margin-bottom: 16px; }
+.contact-left .section-sub { margin-bottom: 0; }
+.contact-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.contact-card {
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 24px 28px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s;
+  text-decoration: none;
+  color: inherit;
+}
+.contact-card:hover {
+  border-color: var(--ink-2);
+  box-shadow: var(--shadow);
+  transform: translateY(-2px);
+}
+.contact-card-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--warm-gray);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.contact-card-icon svg { width: 20px; height: 20px; }
+.contact-card-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 3px;
+}
+.contact-card-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+.contact-card-arrow {
+  margin-left: auto;
+  color: var(--ink-3);
+  transition: transform 0.15s, color 0.15s;
+}
+.contact-card:hover .contact-card-arrow {
+  transform: translateX(3px);
+  color: var(--ink);
+}
+
+@media (max-width: 900px) {
+  .contact { padding: 80px 0; }
+  .contact-inner { padding: 0 24px; grid-template-columns: 1fr; gap: 48px; }
+}
+
+/* ─────────────────────────────────────────────
+   BOOKING MODAL
+───────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: rgba(13,13,13,0.6);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+.modal-overlay.is-open {
+  opacity: 1;
+  pointer-events: all;
+}
+.modal {
+  background: var(--white);
+  border-radius: 24px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.25), 0 8px 24px rgba(0,0,0,0.12);
+  transform: translateY(16px) scale(0.98);
+  transition: transform 0.25s ease;
+  position: relative;
+}
+.modal-overlay.is-open .modal {
+  transform: translateY(0) scale(1);
+}
+
+/* Modal header */
+.modal-header {
+  padding: 28px 32px 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.modal-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--warm-gray);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s;
+  margin-top: 2px;
+}
+.modal-close:hover { background: var(--border); }
+.modal-close svg { width: 14px; height: 14px; }
+
+/* Step indicator */
+.modal-steps {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.modal-step-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: background 0.2s, width 0.2s;
+}
+.modal-step-dot.active {
+  background: var(--accent);
+  width: 20px;
+  border-radius: 3px;
+}
+.modal-step-dot.done { background: var(--accent); opacity: 0.35; }
+.modal-step-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-3);
+  letter-spacing: 0.04em;
+}
+.modal-title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+.modal-subtitle {
+  font-size: 14px;
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+
+/* Modal body */
+.modal-body { padding: 24px 32px 32px; }
+
+/* Step panels */
+.modal-step-panel { display: none; }
+.modal-step-panel.active { display: block; }
+
+/* Step 1 — Location */
+.location-permission-box {
+  border: 1.5px dashed var(--border);
+  border-radius: var(--r-lg);
+  padding: 32px 24px;
+  text-align: center;
+  margin-bottom: 20px;
+  background: var(--off-white);
+}
+.location-permission-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #EEF3FF;
+  border: 1.5px solid rgba(35,83,228,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 14px;
+}
+.location-permission-icon svg { width: 24px; height: 24px; }
+.location-permission-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 6px;
+  letter-spacing: -0.01em;
+}
+.location-permission-desc {
+  font-size: 13px;
+  color: var(--ink-2);
+  line-height: 1.6;
+  max-width: 280px;
+  margin: 0 auto 20px;
+}
+.btn-enable-location {
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+  background: var(--accent);
+  padding: 11px 24px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  transition: background 0.15s;
+  font-family: inherit;
+}
+.btn-enable-location:hover { background: var(--accent-h); }
+
+.wash-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 0;
+}
+.wash-list-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--r);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  background: var(--white);
+}
+.wash-list-item:hover { border-color: var(--accent); background: #F8FAFF; }
+.wash-list-item.selected { border-color: var(--accent); background: #EEF3FF; box-shadow: 0 0 0 3px rgba(35,83,228,0.08); }
+.wash-item-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--warm-gray);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 18px;
+}
+.wash-item-name { font-size: 14px; font-weight: 700; color: var(--ink); letter-spacing: -0.01em; }
+.wash-item-meta { font-size: 12px; color: var(--ink-3); margin-top: 2px; }
+.wash-item-price {
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+  background: #EEF3FF;
+  padding: 4px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.wash-list-item.selected .wash-item-price { background: rgba(35,83,228,0.15); }
+
+/* Step 2 — Service + Time */
+.service-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+.service-card {
+  padding: 16px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--r);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  background: var(--white);
+}
+.service-card:hover { border-color: var(--accent); background: #F8FAFF; }
+.service-card.selected { border-color: var(--accent); background: #EEF3FF; }
+.service-card-name { font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
+.service-card-price { font-size: 13px; font-weight: 700; color: var(--accent); }
+.service-card-desc { font-size: 12px; color: var(--ink-3); margin-top: 3px; }
+
+.time-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 10px;
+}
+.time-slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.time-slot {
+  padding: 8px 16px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-2);
+  cursor: pointer;
+  background: var(--white);
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  font-family: inherit;
+}
+.time-slot:hover { border-color: var(--accent); color: var(--accent); background: #F8FAFF; }
+.time-slot.selected { border-color: var(--accent); color: var(--accent); background: #EEF3FF; }
+.time-slot.unavailable { opacity: 0.35; cursor: not-allowed; text-decoration: line-through; }
+
+/* Step 3 — Car details */
+.form-group {
+  margin-bottom: 16px;
+}
+.form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  margin-bottom: 7px;
+}
+.form-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-sm);
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--ink);
+  background: var(--white);
+  transition: border-color 0.15s, box-shadow 0.15s;
+  outline: none;
+  -webkit-appearance: none;
+}
+.form-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(35,83,228,0.1);
+}
+.form-input::placeholder { color: var(--ink-3); }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.booking-summary {
+  background: var(--off-white);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px;
+  margin-top: 20px;
+}
+.booking-summary-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 12px;
+}
+.booking-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+.booking-summary-row:last-child { margin-bottom: 0; }
+.booking-summary-key { color: var(--ink-2); }
+.booking-summary-val { font-weight: 600; color: var(--ink); }
+.booking-summary-divider { height: 1px; background: var(--border); margin: 10px 0; }
+.booking-summary-total { font-size: 15px; font-weight: 700; }
+.booking-summary-total .booking-summary-val { color: var(--accent); }
+
+/* Step 4 — M-Pesa */
+.mpesa-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+.mpesa-logo {
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  background: #00A651;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 14px;
+}
+.mpesa-logo svg { width: 40px; height: 40px; }
+.mpesa-title { font-size: 17px; font-weight: 700; color: var(--ink); letter-spacing: -0.02em; margin-bottom: 5px; }
+.mpesa-desc { font-size: 13px; color: var(--ink-2); line-height: 1.6; max-width: 320px; margin: 0 auto; }
+.mpesa-phone-box {
+  background: var(--off-white);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.mpesa-phone-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 8px;
+}
+.mpesa-phone-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 0 14px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.mpesa-phone-input-wrap:focus-within {
+  border-color: #00A651;
+  box-shadow: 0 0 0 3px rgba(0,166,81,0.1);
+}
+.mpesa-prefix {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-2);
+  white-space: nowrap;
+  padding: 12px 0;
+  border-right: 1px solid var(--border);
+  padding-right: 10px;
+}
+.mpesa-phone-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--ink);
+  background: transparent;
+  padding: 12px 0;
+  font-variant-numeric: tabular-nums;
+}
+.mpesa-phone-input::placeholder { color: var(--ink-3); }
+.mpesa-amount-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.mpesa-amount-key { font-size: 13px; color: var(--ink-2); }
+.mpesa-amount-val { font-size: 18px; font-weight: 700; color: var(--ink); letter-spacing: -0.02em; }
+.mpesa-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--ink-3);
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+.mpesa-note svg { width: 14px; height: 14px; flex-shrink: 0; margin-top: 1px; }
+
+/* Sending state */
+.mpesa-sending {
+  text-align: center;
+  padding: 20px 0;
+  display: none;
+}
+.mpesa-sending.visible { display: block; }
+.mpesa-spinner {
+  width: 40px; height: 40px;
+  border: 3px solid var(--border);
+  border-top-color: #00A651;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 12px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.mpesa-sending-text { font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 4px; }
+.mpesa-sending-sub { font-size: 12px; color: var(--ink-2); }
+
+/* Modal footer */
+.modal-footer {
+  padding: 0 32px 28px;
+  display: flex;
+  gap: 10px;
+}
+.btn-modal-back {
+  padding: 13px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-2);
+  background: var(--warm-gray);
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s;
+  display: none;
+}
+.btn-modal-back:hover { background: var(--border); color: var(--ink); }
+.btn-modal-back.visible { display: flex; align-items: center; gap: 6px; }
+.btn-modal-next {
+  flex: 1;
+  padding: 13px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: white;
+  background: var(--accent);
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background 0.15s, transform 0.1s;
+}
+.btn-modal-next:hover { background: var(--accent-h); }
+.btn-modal-next:active { transform: scale(0.98); }
+.btn-modal-next.mpesa-green { background: #00A651; }
+.btn-modal-next.mpesa-green:hover { background: #008C44; }
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+
+/* Focus styles */
+a:focus-visible, button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 </style>
 </head>
 <body>
 
-<!-- NAV -->
-<nav>
-  <a href="#" class="nav-logo">
-    <svg class="nav-logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-      <rect width="512" height="512" rx="80" fill="#0d1b2a"/>
-      <path d="M256 100 C256 100 160 220 160 300 C160 355 203 400 256 400 C309 400 352 355 352 300 C352 220 256 100 256 100Z" fill="#f5a623"/>
-      <text x="256" y="340" font-family="Arial Black, sans-serif" font-size="140" font-weight="900" text-anchor="middle" fill="#0d1b2a">S</text>
-    </svg>
-    SplashPass
-  </a>
-  <ul class="nav-links">
-    <li><a href="#features">Features</a></li>
-    <li><a href="#how">How It Works</a></li>
-    <li><a href="#pricing">Pricing</a></li>
-    <li><a href="#contact">Contact</a></li>
-    <li><a href="/privacy-policy">Privacy</a></li>
-    <li><a href="/terms-of-use">Terms</a></li>
-  </ul>
-  <div class="nav-right">
-    <a href="#" class="btn-ghost">Log In</a>
-    <a href="https://app.splashpass.site" class="btn-blue">Get Started →</a>
+<!-- ═══════════════════════════════════
+     NAV
+════════════════════════════════════ -->
+<nav role="navigation" aria-label="Main navigation">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo" aria-label="SplashPass home">
+      <div class="nav-logo-mark" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+          <rect width="512" height="512" rx="80" fill="#0d1b2a"/>
+          <path d="M256 100 C256 100 160 220 160 300 C160 355 203 400 256 400 C309 400 352 355 352 300 C352 220 256 100 256 100Z" fill="#f5a623"/>
+          <!-- S letterform as path -->
+          <path d="M296 210 C296 210 288 188 256 188 C228 188 210 204 210 224 C210 244 226 254 256 262 C286 270 306 282 306 306 C306 330 286 348 256 348 C224 348 210 328 210 328" stroke="#0d1b2a" stroke-width="28" stroke-linecap="round" fill="none"/>
+        </svg>
+      </div>
+      <span class="nav-logo-name">SplashPass</span>
+    </a>
+    <ul class="nav-links" role="list">
+      <li><a href="#benefits">Features</a></li>
+      <li><a href="#how-it-works">How it works</a></li>
+      <li><a href="#operators">For operators</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+    </ul>
+    <div class="nav-right">
+      <a href="#operators" class="btn-nav-ghost">Partner with us</a>
+      <button onclick="openBookingModal()" class="btn-nav-primary">Book a wash</button>
+    </div>
   </div>
 </nav>
 
-<!-- HERO -->
-<section class="hero">
-  <div class="blob-wrap">
-    <div class="blob blob-1"></div>
-    <div class="blob blob-2"></div>
-    <div class="blob blob-3"></div>
-  </div>
-  <div class="hero-badge"><div class="badge-dot"></div> Now live in Kenya — Book your first wash today</div>
-  <h1>Book Your Car Wash<br><span class="grad">in Seconds</span></h1>
-  <p class="hero-sub">Find trusted car washes, skip the queues, and earn rewards with every wash. Built for drivers and car wash businesses across Kenya.</p>
-  <div class="hero-actions">
-    <a href="/splashpass.apk" download="SplashPass.apk" class="btn-hero-primary">📱 Download App <span class="btn-arrow">↓</span></a>
-    <a href="#contact" class="btn-hero-secondary">Partner With Us <span class="btn-arrow">→</span></a>
-  </div>
-
-  <div class="hero-cards">
-    <div class="cards-row">
-      <div class="float-card">
-        <div class="fc-icon fc-icon-blue">💧</div>
-        <div class="fc-label">Today's Bookings</div>
-        <div class="fc-value">247</div>
-        <div class="fc-sub">Across 18 wash stations</div>
-        <div class="fc-bar"><div class="fc-bar-fill" style="width:78%;background:linear-gradient(90deg,#2563EB,#06B6D4)"></div></div>
-        <div class="fc-badge fc-badge-green">↑ 12% this week</div>
-      </div>
-      <div class="float-card">
-        <div class="fc-icon fc-icon-cyan">✨</div>
-        <div class="fc-label">Your Loyalty Points</div>
-        <div class="fc-value">1,840</div>
-        <div class="fc-sub">2 free washes available</div>
-        <div class="fc-bar"><div class="fc-bar-fill" style="width:62%;background:linear-gradient(90deg,#06B6D4,#7C3AED)"></div></div>
-        <div class="fc-badge">Redeem Now →</div>
-      </div>
-      <div class="float-card">
-        <div class="fc-icon fc-icon-purple">📈</div>
-        <div class="fc-label">Monthly Revenue</div>
-        <div class="fc-value">KSh 84K</div>
-        <div class="fc-sub">Operator dashboard</div>
-        <div class="fc-bar"><div class="fc-bar-fill" style="width:88%;background:linear-gradient(90deg,#7C3AED,#2563EB)"></div></div>
-        <div class="fc-badge fc-badge-green">↑ 31% vs last month</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- SOCIAL PROOF -->
-<section class="social-proof">
-  <div class="container">
-    <div class="sp-inner">
-      <div class="sp-stat"><div class="sp-num">10,000+</div><div class="sp-label">Happy Drivers</div></div>
-      <div class="sp-divider"></div>
-      <div class="sp-stat"><div class="sp-num">50+</div><div class="sp-label">Partner Wash Stations</div></div>
-      <div class="sp-divider"></div>
-      <div class="sp-stat"><div class="sp-num">KSh 2M+</div><div class="sp-label">Processed Monthly</div></div>
-      <div class="sp-divider"></div>
-      <div class="sp-stat"><div class="sp-num">4.8 ★</div><div class="sp-label">Average Rating</div></div>
-    </div>
-  </div>
-</section>
-
-<!-- FEATURES -->
-<section id="features" class="features">
-  <div class="container">
-    <div style="text-align:center">
-      <div class="section-eyebrow">✦ Core Features</div>
-      <h2 class="section-h2" style="margin:0 auto">Everything You Need for a<br>Seamless Wash Experience</h2>
-      <p class="section-sub" style="margin:0.75rem auto 0">Designed for both drivers who want convenience and operators who want growth.</p>
-    </div>
-    <div class="features-grid">
-      <div class="feat-card">
-        <div class="feat-icon fi-blue">⚡</div>
-        <h3>Instant Booking</h3>
-        <p>Find and book nearby car washes in seconds. Real-time availability, zero phone calls, zero waiting in line.</p>
-        <a href="https://app.splashpass.site" class="feat-link">Try it now →</a>
-      </div>
-      <div class="feat-card">
-        <div class="feat-icon fi-cyan">🔒</div>
-        <h3>Cashless Payments</h3>
-        <p>Secure digital payments with instant receipts. Pay via M-Pesa or card — fast, safe, and fully tracked.</p>
-        <a href="https://app.splashpass.site" class="feat-link">Learn more →</a>
-      </div>
-      <div class="feat-card">
-        <div class="feat-icon fi-purple">🎁</div>
-        <h3>Loyalty Rewards</h3>
-        <p>Earn points with every wash and redeem them for free services. The more you wash, the more you save.</p>
-        <a href="https://app.splashpass.site" class="feat-link">See rewards →</a>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- HOW IT WORKS -->
-<section id="how" class="how">
-  <div class="container">
-    <div style="text-align:center">
-      <div class="section-eyebrow">✦ How It Works</div>
-      <h2 class="section-h2" style="margin:0 auto">Three Simple Steps to<br>a Spotless Car</h2>
-    </div>
-    <div class="steps-row">
-      <div class="step">
-        <div class="step-num sn-1">1</div>
-        <div class="step-icon">🔍</div>
-        <h3>Find a Car Wash</h3>
-        <p>Browse trusted wash stations near you. See ratings, services, and real-time availability on the map.</p>
-      </div>
-      <div class="step">
-        <div class="step-num sn-2">2</div>
-        <div class="step-icon">💳</div>
-        <h3>Book & Pay</h3>
-        <p>Pick your time slot, choose your service package, and pay securely in-app. Your booking is confirmed instantly.</p>
-      </div>
-      <div class="step">
-        <div class="step-num sn-3">3</div>
-        <div class="step-icon">✨</div>
-        <h3>Get Washed</h3>
-        <p>Arrive, scan your QR code, and drive away spotless. No queues, no hassle, and loyalty points added automatically.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- OPERATOR -->
-<section id="operator" class="operator">
-  <div class="container">
-    <div class="op-grid">
-      <div>
-        <div class="section-eyebrow">✦ For Operators</div>
-        <h2 class="section-h2">Grow Your Car Wash<br>Business with SplashPass</h2>
-        <p class="section-sub">Join a platform built to help car wash businesses in Kenya thrive — more bookings, better management, and powerful analytics.</p>
-        <div class="op-features">
-          <div class="op-feat">
-            <div class="op-feat-icon op-feat-icon-1">📲</div>
-            <div>
-              <h4>Receive Bookings Instantly</h4>
-              <p>Get real-time booking notifications and manage your schedule from one simple dashboard.</p>
-            </div>
-          </div>
-          <div class="op-feat">
-            <div class="op-feat-icon op-feat-icon-2">👥</div>
-            <div>
-              <h4>Manage Customers</h4>
-              <p>Build a loyal customer base with a built-in CRM, loyalty tools, and automated follow-ups.</p>
-            </div>
-          </div>
-          <div class="op-feat">
-            <div class="op-feat-icon op-feat-icon-3">💰</div>
-            <div>
-              <h4>Track Earnings</h4>
-              <p>Monitor daily, weekly, and monthly revenue in real time. Get paid quickly and reliably.</p>
-            </div>
-          </div>
-          <div class="op-feat">
-            <div class="op-feat-icon op-feat-icon-4">📊</div>
-            <div>
-              <h4>Business Analytics Dashboard</h4>
-              <p>Understand your peak hours, top services, and customer trends with beautiful visual reports.</p>
-            </div>
-          </div>
-        </div>
-        <a href="#contact" class="btn-hero-primary" style="margin-top:2rem;display:inline-flex">Become a Partner →</a>
-      </div>
-      <div>
-        <div class="dash-mock">
-          <div class="dm-topbar">
-            <div class="dm-logo">SplashPass Operator</div>
-            <div class="dm-dots">
-              <div class="dm-dot" style="background:#FF5F57"></div>
-              <div class="dm-dot" style="background:#FEBC2E"></div>
-              <div class="dm-dot" style="background:#28C840"></div>
-            </div>
-          </div>
-          <div class="dm-body">
-            <div class="dm-sidebar">
-              <div class="dm-item active">📊 Dashboard</div>
-              <div class="dm-item">📅 Bookings</div>
-              <div class="dm-item">👥 Customers</div>
-              <div class="dm-item">💰 Earnings</div>
-              <div class="dm-item">⚙️ Settings</div>
-            </div>
-            <div class="dm-main">
-              <div class="dm-kpis">
-                <div class="dm-kpi">
-                  <div class="dm-kpi-label">Today</div>
-                  <div class="dm-kpi-val">KSh 4.2K</div>
-                  <div class="dm-kpi-badge">↑ 8%</div>
-                </div>
-                <div class="dm-kpi">
-                  <div class="dm-kpi-label">Bookings</div>
-                  <div class="dm-kpi-val">34</div>
-                  <div class="dm-kpi-badge">↑ 5</div>
-                </div>
-                <div class="dm-kpi">
-                  <div class="dm-kpi-label">Rating</div>
-                  <div class="dm-kpi-val">4.9 ★</div>
-                  <div class="dm-kpi-badge">Top 10%</div>
-                </div>
-              </div>
-              <div class="dm-chart-wrap">
-                <div class="dm-chart-title">Weekly Revenue — KSh</div>
-                <div class="dm-bars" id="dashBars"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- PRICING -->
-<section id="pricing" class="pricing">
-  <div class="container">
-    <div style="text-align:center">
-      <div class="section-eyebrow">✦ Operator Pricing</div>
-      <h2 class="section-h2" style="margin:0 auto">Simple, Transparent Pricing<br>for Every Business</h2>
-      <p class="section-sub" style="margin:0.75rem auto 0">No hidden fees. Start free and scale as your business grows.</p>
-    </div>
-    <div class="pricing-grid">
-
-      <div class="price-card">
-        <div class="price-plan">Starter</div>
-        <div class="price-commission">20% commission</div>
-        <div class="price-amt">Free <span>to join</span></div>
-        <p class="price-sub">Perfect for new operators getting started on SplashPass.</p>
-        <div class="price-divider"></div>
-        <ul class="price-features">
-          <li><div class="pf-check">✓</div> Basic booking management</li>
-          <li><div class="pf-check">✓</div> Customer QR check-ins</li>
-          <li><div class="pf-check">✓</div> Digital receipts</li>
-          <li class="dim"><div class="pf-check">✗</div> Analytics dashboard</li>
-          <li class="dim"><div class="pf-check">✗</div> Loyalty tools</li>
-        </ul>
-        <a href="#contact" class="btn-price btn-price-outline">Get Started Free</a>
-      </div>
-
-      <div class="price-card featured">
-        <div class="featured-badge">⭐ Most Popular</div>
-        <div class="price-plan">Growth</div>
-        <div class="price-commission">10% commission</div>
-        <div class="price-amt">KSh 2,999 <span>/ month</span></div>
-        <p class="price-sub">For growing operators who want more customers and deeper insights.</p>
-        <div class="price-divider"></div>
-        <ul class="price-features">
-          <li><div class="pf-check">✓</div> Everything in Starter</li>
-          <li><div class="pf-check">✓</div> Full analytics dashboard</li>
-          <li><div class="pf-check">✓</div> Loyalty tools & CRM</li>
-          <li><div class="pf-check">✓</div> Priority map listing</li>
-          <li><div class="pf-check">✓</div> Revenue reports</li>
-        </ul>
-        <a href="#contact" class="btn-price btn-price-filled">Upgrade to Growth</a>
-      </div>
-
-      <div class="price-card">
-        <div class="price-plan">Pro</div>
-        <div class="price-commission">Flat subscription</div>
-        <div class="price-amt">Custom <span>quote</span></div>
-        <p class="price-sub">For multi-location enterprises and high-volume wash operations.</p>
-        <div class="price-divider"></div>
-        <ul class="price-features">
-          <li><div class="pf-check">✓</div> Everything in Growth</li>
-          <li><div class="pf-check">✓</div> Multi-branch sync</li>
-          <li><div class="pf-check">✓</div> Advanced analytics</li>
-          <li><div class="pf-check">✓</div> Priority support</li>
-          <li><div class="pf-check">✓</div> Dedicated account manager</li>
-        </ul>
-        <a href="#contact" class="btn-price btn-price-outline">Contact Us</a>
-      </div>
-
-    </div>
-  </div>
-</section>
-
-<!-- REVIEWS -->
-<section id="reviews" class="reviews">
-  <div class="container">
-    <div style="text-align:center">
-      <div class="section-eyebrow">✦ Testimonials</div>
-      <h2 class="section-h2" style="margin:0 auto">Loved by Drivers and<br>Operators Across Kenya</h2>
-    </div>
-    <div class="reviews-grid">
-      <div class="review-card">
-        <div class="review-stars">★★★★★</div>
-        <p class="review-text">"SplashPass is amazing. I just scan my QR code at the gate and they get right to work. No more waiting in line for 45 minutes on Saturday mornings."</p>
-        <div class="review-user">
-          <div class="review-avatar">KM</div>
-          <div>
-            <h4>Kevin Mwangi</h4>
-            <p>Subaru Forester Owner, Nairobi</p>
-          </div>
-        </div>
-      </div>
-      <div class="review-card">
-        <div class="review-stars">★★★★★</div>
-        <p class="review-text">"Upgrading to the Growth plan was a turning point. Our bookings are fully digital, revenue is up 31%, and customers love earning loyalty points."</p>
-        <div class="review-user">
-          <div class="review-avatar">AO</div>
-          <div>
-            <h4>Amara Okech</h4>
-            <p>Founder, Sparkle Wash Hub</p>
-          </div>
-        </div>
-      </div>
-      <div class="review-card">
-        <div class="review-stars">★★★★★</div>
-        <p class="review-text">"The Family Plan lets me bundle three cars under one account. The interface is clean and the whole family loves earning points together."</p>
-        <div class="review-user">
-          <div class="review-avatar">JN</div>
-          <div>
-            <h4>Joseph Njuguna</h4>
-            <p>Family Plan Subscriber, Mombasa</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- CONTACT -->
-<section id="contact" class="contact">
-  <div class="blob-wrap">
-    <div class="blob blob-1" style="opacity:0.12"></div>
-    <div class="blob blob-2" style="opacity:0.1"></div>
-  </div>
-  <div class="container">
-    <div style="text-align:center">
-      <div class="section-eyebrow">✦ Get in Touch</div>
-      <h2 class="section-h2" style="margin:0 auto">Have Questions?<br>We'd Love to Hear From You</h2>
-      <p class="section-sub" style="margin:0.75rem auto 0">Whether you're a driver or a car wash operator, reach out and we'll get back to you quickly.</p>
-    </div>
-    <div class="contact-grid">
-      <div>
-        <div class="contact-info-card">
-          <div class="ci-icon ci-icon-email">✉️</div>
-          <div>
-            <div class="ci-label">Email Support</div>
-            <a href="mailto:splashpass.site@gmail.com" class="ci-val">splashpass.site@gmail.com</a>
-          </div>
-        </div>
-        <div class="contact-info-card">
-          <div class="ci-icon ci-icon-phone">📞</div>
-          <div>
-            <div class="ci-label">Telephone</div>
-            <a href="tel:+254768154892" class="ci-val">+254 768 154892</a>
-          </div>
-        </div>
-        <div style="margin-top:2rem;padding:1.5rem;background:#fff;border:1px solid var(--border);border-radius:var(--radius)">
-          <p style="font-size:0.85rem;font-weight:700;color:var(--text);margin-bottom:0.5rem">🕐 Response Time</p>
-          <p style="font-size:0.82rem;color:var(--text2);line-height:1.6">We typically respond within 2–4 hours on weekdays. For urgent matters, please call directly.</p>
-        </div>
-      </div>
-      <div class="contact-form-wrap">
-        <form onsubmit="event.preventDefault();this.innerHTML='<div style=\'text-align:center;padding:2rem\'><div style=\'font-size:2rem\'>✅</div><h3 style=\'margin:1rem 0 0.5rem;font-weight:700\'>Message Sent!</h3><p style=\'color:#475569\'>We\'ll get back to you within 2–4 hours.</p></div>'">
-          <div class="form-group">
-            <label>Your Name or Business</label>
-            <input type="text" placeholder="e.g. John Doe / Shine Wash Station" required/>
-          </div>
-          <div class="form-group">
-            <label>Email Address</label>
-            <input type="email" placeholder="you@example.com" required/>
-          </div>
-          <div class="form-group">
-            <label>Message</label>
-            <textarea rows="4" placeholder="How can we help you?" required></textarea>
-          </div>
-          <button type="submit" class="btn-hero-primary" style="width:100%;justify-content:center">Send Message →</button>
-        </form>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- FOOTER -->
-<footer>
-  <div class="container">
-    <div class="footer-grid">
-      <div class="footer-brand">
-        <a href="#" class="footer-logo">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-            <rect width="512" height="512" rx="80" fill="#0d1b2a"/>
-            <path d="M256 100 C256 100 160 220 160 300 C160 355 203 400 256 400 C309 400 352 355 352 300 C352 220 256 100 256 100Z" fill="#f5a623"/>
-            <text x="256" y="340" font-family="Arial Black, sans-serif" font-size="140" font-weight="900" text-anchor="middle" fill="#0d1b2a">S</text>
-          </svg>
-          SplashPass
+<!-- ═══════════════════════════════════
+     HERO
+════════════════════════════════════ -->
+<section class="hero" aria-labelledby="hero-heading">
+  <div class="hero-top">
+    <div class="hero-content">
+      <p class="hero-label">Kenya's car wash platform</p>
+      <h1 class="hero-h1" id="hero-heading">
+        Book.<br>Pay.<br><em>Shine.</em>
+      </h1>
+      <p class="hero-sub">Find and book car washes across Kenya. Skip the queue, pay with M-Pesa, and earn loyalty points — all from your phone.</p>
+      <div class="hero-actions">
+        <button onclick="openBookingModal()" class="btn-primary">
+          Book a wash
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <a href="#" class="btn-secondary">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="4" y="2" width="8" height="12" rx="1.5" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="11" r="0.75" fill="currentColor"/></svg>
+          Download app
         </a>
-        <p>Built in Kenya for the next generation of car wash businesses. Book smarter. Wash better. Grow faster.</p>
       </div>
-      <div class="footer-col">
-        <h4>Product</h4>
-        <ul>
-          <li><a href="#features">Features</a></li>
-          <li><a href="#how">How It Works</a></li>
+    </div>
+    <p class="hero-aside">Available across Mombasa and expanding across Kenya's major cities.</p>
+  </div>
+
+  <!-- Full-bleed device stage -->
+  <div class="hero-device-wrap" aria-hidden="true">
+    <div class="hero-device-inner">
+
+      <!-- Phone 1: Booking -->
+      <div class="phone phone--side">
+        <div class="phone-shell">
+          <div class="phone-screen">
+            <div class="phone-notch"></div>
+            <div class="ps-loyalty">
+              <div class="ps-loyalty-header">
+                <p class="ps-loy-greeting">Loyalty rewards</p>
+                <p class="ps-loy-name">James K.</p>
+                <div class="ps-loy-points">
+                  <span class="ps-loy-pts-num">2,840</span>
+                  <span class="ps-loy-pts-label">pts</span>
+                </div>
+                <div class="ps-loy-tier">⭐ Gold Member</div>
+              </div>
+              <div class="ps-loy-progress">
+                <div class="ps-loy-prog-label"><span>2,840 pts</span><span>Gold → Platinum 4,000</span></div>
+                <div class="ps-loy-prog-bar"><div class="ps-loy-prog-fill"></div></div>
+              </div>
+              <div class="ps-loy-rewards">
+                <div class="ps-loy-reward">
+                  <div class="ps-loy-r-icon">🚿</div>
+                  <div><div class="ps-loy-r-name">Free Exterior Wash</div><div class="ps-loy-r-pts">500 pts</div></div>
+                  <div class="ps-loy-r-badge">Redeem</div>
+                </div>
+                <div class="ps-loy-reward">
+                  <div class="ps-loy-r-icon">✨</div>
+                  <div><div class="ps-loy-r-name">Full Detail 20% off</div><div class="ps-loy-r-pts">1,000 pts</div></div>
+                  <div class="ps-loy-r-badge">Redeem</div>
+                </div>
+                <div class="ps-loy-reward">
+                  <div class="ps-loy-r-icon">🎁</div>
+                  <div><div class="ps-loy-r-name">Partner Voucher</div><div class="ps-loy-r-pts">1,500 pts</div></div>
+                  <div class="ps-loy-r-badge">Redeem</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phone 2: Main — Booking screen -->
+      <div class="phone phone--main">
+        <div class="phone-shell">
+          <div class="phone-screen">
+            <div class="phone-notch"></div>
+            <div class="ps-booking">
+              <div class="ps-header">
+                <div>
+                  <div class="ps-h-label">Good morning</div>
+                  <div class="ps-h-name">Find a wash</div>
+                </div>
+                <div class="ps-avatar">JK</div>
+              </div>
+              <div class="ps-location">
+                <div class="ps-loc-dot"></div>
+                <span class="ps-loc-text">Nyali, Mombasa · 12 washes nearby</span>
+              </div>
+              <div class="ps-section-label">Nearby</div>
+              <div class="ps-cards">
+                <div class="ps-card">
+                  <div class="ps-card-img">
+                    <svg width="100%" height="100%" viewBox="0 0 260 56" xmlns="http://www.w3.org/2000/svg">
+                      <rect width="260" height="56" fill="#D8E8FF"/>
+                      <rect x="20" y="18" width="80" height="20" rx="4" fill="#AACCFF" opacity="0.6"/>
+                      <rect x="110" y="22" width="50" height="12" rx="3" fill="#AACCFF" opacity="0.4"/>
+                      <circle cx="210" cy="28" r="14" fill="#AACCFF" opacity="0.5"/>
+                    </svg>
+                  </div>
+                  <div class="ps-card-detail">
+                    <div>
+                      <div class="ps-card-name">Sparkle Auto Spa</div>
+                      <div class="ps-card-dist">0.4 km · ★ 4.8</div>
+                    </div>
+                    <div class="ps-card-price">KSh 600</div>
+                  </div>
+                </div>
+                <div class="ps-card">
+                  <div class="ps-card-img">
+                    <svg width="100%" height="100%" viewBox="0 0 260 56" xmlns="http://www.w3.org/2000/svg">
+                      <rect width="260" height="56" fill="#E8F0E8"/>
+                      <rect x="30" y="20" width="60" height="16" rx="4" fill="#B0D4B0" opacity="0.7"/>
+                      <rect x="100" y="24" width="80" height="8" rx="3" fill="#B0D4B0" opacity="0.4"/>
+                      <circle cx="220" cy="28" r="10" fill="#B0D4B0" opacity="0.5"/>
+                    </svg>
+                  </div>
+                  <div class="ps-card-detail">
+                    <div>
+                      <div class="ps-card-name">Clean & Shine Nyali</div>
+                      <div class="ps-card-dist">0.9 km · ★ 4.6</div>
+                    </div>
+                    <div class="ps-card-price">KSh 450</div>
+                  </div>
+                </div>
+              </div>
+              <div class="ps-bottom-bar">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1" width="12" height="12" rx="2" stroke="rgba(255,255,255,0.5)" stroke-width="1.2"/><path d="M4 7H10M7 4V10" stroke="white" stroke-width="1.4" stroke-linecap="round"/></svg>
+                <span class="ps-bb-text">Book instantly with M-Pesa</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phone 3: QR scan -->
+      <div class="phone phone--side">
+        <div class="phone-shell">
+          <div class="phone-screen">
+            <div class="phone-notch"></div>
+            <div class="ps-qr">
+              <div class="ps-qr-header">
+                <p class="ps-qr-label">Your pass</p>
+                <p class="ps-qr-title">Sparkle Auto Spa</p>
+              </div>
+              <div class="ps-qr-box">
+                <!-- QR code as SVG pattern -->
+                <svg class="ps-qr-code" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+                  <rect width="120" height="120" fill="white"/>
+                  <!-- Top-left finder -->
+                  <rect x="8" y="8" width="30" height="30" rx="3" fill="#0D0D0D"/>
+                  <rect x="13" y="13" width="20" height="20" rx="1" fill="white"/>
+                  <rect x="17" y="17" width="12" height="12" rx="0.5" fill="#0D0D0D"/>
+                  <!-- Top-right finder -->
+                  <rect x="82" y="8" width="30" height="30" rx="3" fill="#0D0D0D"/>
+                  <rect x="87" y="13" width="20" height="20" rx="1" fill="white"/>
+                  <rect x="91" y="17" width="12" height="12" rx="0.5" fill="#0D0D0D"/>
+                  <!-- Bottom-left finder -->
+                  <rect x="8" y="82" width="30" height="30" rx="3" fill="#0D0D0D"/>
+                  <rect x="13" y="87" width="20" height="20" rx="1" fill="white"/>
+                  <rect x="17" y="91" width="12" height="12" rx="0.5" fill="#0D0D0D"/>
+                  <!-- Data modules -->
+                  <rect x="46" y="8" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="54" y="8" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="62" y="8" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="70" y="8" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="46" y="16" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="62" y="16" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="70" y="24" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="46" y="24" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="54" y="24" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="8" y="46" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="16" y="46" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="24" y="54" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="8" y="62" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="16" y="62" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="24" y="46" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="46" y="46" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="62" y="46" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="78" y="46" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="86" y="46" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="94" y="46" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="102" y="46" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="54" y="54" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="70" y="54" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="86" y="54" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="102" y="54" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="46" y="62" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="62" y="62" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="78" y="62" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="94" y="70" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="46" y="78" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="62" y="78" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="78" y="78" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="86" y="86" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="102" y="86" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="46" y="94" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="54" y="94" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="70" y="94" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="86" y="94" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="94" y="94" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="46" y="102" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="62" y="102" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="78" y="102" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <rect x="102" y="102" width="6" height="6" fill="#0D0D0D" rx="0.5"/>
+                  <!-- Accent dot -->
+                  <circle cx="60" cy="60" r="5" fill="#2353E4"/>
+                </svg>
+                <p class="ps-qr-id">SP-2024-00847</p>
+              </div>
+              <div class="ps-qr-info">
+                <div class="ps-qr-stat"><div class="ps-qr-stat-val">Full Detail</div><div class="ps-qr-stat-key">Service</div></div>
+                <div class="ps-qr-stat"><div class="ps-qr-stat-val">KSh 1,200</div><div class="ps-qr-stat-key">Amount</div></div>
+              </div>
+              <div class="ps-qr-timer">
+                <div class="ps-qr-timer-val">14:32</div>
+                <div class="ps-qr-timer-label">Pass expires</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════
+     TRUST STRIP
+════════════════════════════════════ -->
+<div class="trust-strip" role="complementary" aria-label="Platform features">
+  <div class="trust-inner">
+    <p class="trust-label">Trusted platform</p>
+    <div class="trust-items">
+      <div class="trust-item">
+        <svg class="trust-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M9 2L11 6.5L16 7.3L12.5 10.7L13.4 16L9 13.5L4.6 16L5.5 10.7L2 7.3L7 6.5L9 2Z" stroke="#0D0D0D" stroke-width="1.3" stroke-linejoin="round"/></svg>
+        M-Pesa payments
+      </div>
+      <div class="trust-item">
+        <svg class="trust-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="3" y="5" width="12" height="9" rx="1.5" stroke="#0D0D0D" stroke-width="1.3"/><path d="M6 5V4C6 2.9 6.9 2 8 2H10C11.1 2 12 2.9 12 4V5" stroke="#0D0D0D" stroke-width="1.3"/><path d="M6 10L8 12L12 8" stroke="#0D0D0D" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        QR verification
+      </div>
+      <div class="trust-item">
+        <svg class="trust-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="9" cy="9" r="7" stroke="#0D0D0D" stroke-width="1.3"/><path d="M9 5V9.5L12 11" stroke="#0D0D0D" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Instant booking
+      </div>
+      <div class="trust-item">
+        <svg class="trust-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M9 2C6.2 2 4 4.2 4 7C4 9 5.1 10.8 6.8 11.7L6 16H12L11.2 11.7C12.9 10.8 14 9 14 7C14 4.2 11.8 2 9 2Z" stroke="#0D0D0D" stroke-width="1.3" stroke-linejoin="round"/></svg>
+        Loyalty rewards
+      </div>
+      <div class="trust-item">
+        <svg class="trust-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M9 3L11.2 7.5L16 8.2L12.5 11.6L13.4 16.5L9 14.2L4.6 16.5L5.5 11.6L2 8.2L6.8 7.5L9 3Z" fill="none" stroke="#0D0D0D" stroke-width="1.3" stroke-linejoin="round"/></svg>
+        No hidden fees
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     BENEFITS
+════════════════════════════════════ -->
+<section class="benefits" id="benefits" aria-labelledby="benefits-heading">
+  <div class="benefits-head">
+    <p class="section-eyebrow">Why SplashPass</p>
+    <h2 class="section-h2" id="benefits-heading">A better way to get your car washed.</h2>
+    <p class="section-sub">No more queuing, no more guessing prices, no more cash fumbling. SplashPass brings the entire car wash experience into your phone.</p>
+  </div>
+  <div class="benefits-grid" role="list">
+    <div class="benefit-item" role="listitem">
+      <div class="benefit-num" aria-hidden="true">01</div>
+      <h3 class="benefit-title">Book ahead of time</h3>
+      <p class="benefit-desc">Choose your preferred car wash, pick a time that works for you, and arrive to a ready bay. Your car doesn't wait. You don't either.</p>
+      <span class="benefit-tag">Available at all partner washes</span>
+    </div>
+    <div class="benefit-item" role="listitem">
+      <div class="benefit-num" aria-hidden="true">02</div>
+      <h3 class="benefit-title">Pay securely with M-Pesa</h3>
+      <p class="benefit-desc">Pay via Lipa na M-Pesa before you arrive. No handling cash at the wash bay. A confirmed receipt lands in your messages immediately.</p>
+      <span class="benefit-tag">Instant M-Pesa confirmation</span>
+    </div>
+    <div class="benefit-item" role="listitem">
+      <div class="benefit-num" aria-hidden="true">03</div>
+      <h3 class="benefit-title">Scan and go</h3>
+      <p class="benefit-desc">Show your SplashPass QR code at arrival. The attendant scans it, your booking is verified, and your wash begins. No paper, no receipts, no friction.</p>
+      <span class="benefit-tag">Zero paperwork</span>
+    </div>
+    <div class="benefit-item" role="listitem">
+      <div class="benefit-num" aria-hidden="true">04</div>
+      <h3 class="benefit-title">Earn with every wash</h3>
+      <p class="benefit-desc">Every booking earns SplashPass Points. Reach Gold and Platinum status for priority access, free washes, and partner rewards across Mombasa.</p>
+      <span class="benefit-tag">Bronze · Silver · Gold · Platinum</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════
+     HOW IT WORKS
+════════════════════════════════════ -->
+<section class="hiw" id="how-it-works" aria-labelledby="hiw-heading">
+  <div class="hiw-head">
+    <div>
+      <p class="section-eyebrow">How it works</p>
+      <h2 class="section-h2" id="hiw-heading">From app to bay in three steps.</h2>
+    </div>
+    <p style="font-size:15px; color:var(--ink-2); max-width:280px; line-height:1.7;">The whole process takes under two minutes. The wash takes care of itself.</p>
+  </div>
+  <div class="hiw-steps" role="list">
+    <div class="hiw-step" role="listitem">
+      <div class="hiw-step-marker" aria-hidden="true">1</div>
+      <h3 class="hiw-step-title">Choose your wash</h3>
+      <p class="hiw-step-desc">Open SplashPass, see every car wash near you with live pricing, ratings, and available time slots. Pick the one that fits.</p>
+      <div class="hiw-step-visual" aria-hidden="true">
+        <svg width="100%" height="100%" viewBox="0 0 320 160" xmlns="http://www.w3.org/2000/svg">
+          <rect width="320" height="160" fill="#EEECEA"/>
+          <!-- Map-like background -->
+          <rect x="0" y="0" width="320" height="160" fill="#E8E5E0"/>
+          <path d="M0 80 Q80 60 160 80 Q240 100 320 70" stroke="#D8D4CE" stroke-width="12" fill="none"/>
+          <path d="M60 0 L60 160" stroke="#D8D4CE" stroke-width="8" opacity="0.5"/>
+          <path d="M200 0 L200 160" stroke="#D8D4CE" stroke-width="8" opacity="0.5"/>
+          <!-- Location pins -->
+          <circle cx="90" cy="70" r="16" fill="#2353E4" opacity="0.15"/>
+          <circle cx="90" cy="70" r="6" fill="#2353E4"/>
+          <circle cx="210" cy="95" r="12" fill="#2353E4" opacity="0.1"/>
+          <circle cx="210" cy="95" r="5" fill="#6B6B6B"/>
+          <circle cx="155" cy="55" r="12" fill="#2353E4" opacity="0.1"/>
+          <circle cx="155" cy="55" r="5" fill="#6B6B6B"/>
+          <!-- Card overlay -->
+          <rect x="24" y="110" width="180" height="38" rx="8" fill="white" opacity="0.95"/>
+          <rect x="32" y="118" width="8" height="8" rx="2" fill="#2353E4" opacity="0.7"/>
+          <rect x="46" y="119" width="80" height="5" rx="2" fill="#0D0D0D" opacity="0.7"/>
+          <rect x="46" y="128" width="50" height="4" rx="2" fill="#AEABA6"/>
+          <rect x="158" y="120" width="38" height="16" rx="4" fill="#EEF3FF"/>
+          <rect x="163" y="125" width="28" height="6" rx="2" fill="#2353E4" opacity="0.6"/>
+        </svg>
+      </div>
+    </div>
+    <div class="hiw-step" role="listitem">
+      <div class="hiw-step-marker" aria-hidden="true">2</div>
+      <h3 class="hiw-step-title">Pay and confirm</h3>
+      <p class="hiw-step-desc">Tap to pay via M-Pesa. You'll get an STK push, enter your PIN, and receive your booking confirmation instantly. Done before you start the engine.</p>
+      <div class="hiw-step-visual" aria-hidden="true">
+        <svg width="100%" height="100%" viewBox="0 0 320 160" xmlns="http://www.w3.org/2000/svg">
+          <rect width="320" height="160" fill="#EEECEA"/>
+          <!-- M-Pesa style payment screen -->
+          <rect x="60" y="16" width="200" height="128" rx="16" fill="white" opacity="0.9"/>
+          <!-- Safaricom green bar (stylized) -->
+          <rect x="60" y="16" width="200" height="28" rx="16" fill="#4CAF50" opacity="0.15"/>
+          <rect x="60" y="32" width="200" height="12" fill="#4CAF50" opacity="0.15"/>
+          <circle cx="160" cy="52" r="18" fill="#F0F0F0"/>
+          <path d="M152 52 L158 58 L170 46" stroke="#4CAF50" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <rect x="90" y="76" width="140" height="6" rx="3" fill="#0D0D0D" opacity="0.15"/>
+          <rect x="100" y="88" width="120" height="4" rx="2" fill="#0D0D0D" opacity="0.08"/>
+          <!-- Amount -->
+          <rect x="110" y="100" width="100" height="18" rx="4" fill="#EEF3FF"/>
+          <rect x="125" y="105" width="70" height="8" rx="2" fill="#2353E4" opacity="0.5"/>
+          <!-- PIN dots -->
+          <circle cx="140" cy="130" r="4" fill="#0D0D0D" opacity="0.6"/>
+          <circle cx="153" cy="130" r="4" fill="#0D0D0D" opacity="0.6"/>
+          <circle cx="166" cy="130" r="4" fill="#0D0D0D" opacity="0.6"/>
+          <circle cx="179" cy="130" r="4" fill="#0D0D0D" opacity="0.2"/>
+        </svg>
+      </div>
+    </div>
+    <div class="hiw-step" role="listitem">
+      <div class="hiw-step-marker" aria-hidden="true">3</div>
+      <h3 class="hiw-step-title">Scan and enjoy</h3>
+      <p class="hiw-step-desc">Arrive, show your SplashPass QR. The attendant scans it in seconds. Your booking is verified automatically — no receipts, no disputes.</p>
+      <div class="hiw-step-visual" aria-hidden="true">
+        <svg width="100%" height="100%" viewBox="0 0 320 160" xmlns="http://www.w3.org/2000/svg">
+          <rect width="320" height="160" fill="#EEECEA"/>
+          <!-- Dark phone with scanner beam -->
+          <rect x="100" y="20" width="120" height="120" rx="14" fill="#111111"/>
+          <rect x="110" y="30" width="100" height="80" rx="8" fill="#1C1C1C"/>
+          <!-- QR code simplified -->
+          <rect x="126" y="42" width="22" height="22" rx="3" fill="#333"/>
+          <rect x="130" y="46" width="14" height="14" rx="1" fill="#1C1C1C"/>
+          <rect x="133" y="49" width="8" height="8" rx="0.5" fill="#555"/>
+          <rect x="172" y="42" width="22" height="22" rx="3" fill="#333"/>
+          <rect x="176" y="46" width="14" height="14" rx="1" fill="#1C1C1C"/>
+          <rect x="179" y="49" width="8" height="8" rx="0.5" fill="#555"/>
+          <rect x="126" y="76" width="22" height="22" rx="3" fill="#333"/>
+          <rect x="130" y="80" width="14" height="14" rx="1" fill="#1C1C1C"/>
+          <rect x="133" y="83" width="8" height="8" rx="0.5" fill="#555"/>
+          <rect x="155" y="55" width="6" height="6" fill="#333" rx="1"/>
+          <rect x="163" y="63" width="6" height="6" fill="#333" rx="1"/>
+          <rect x="155" y="79" width="6" height="6" fill="#333" rx="1"/>
+          <rect x="171" y="79" width="6" height="6" fill="#333" rx="1"/>
+          <rect x="163" y="87" width="6" height="6" fill="#333" rx="1"/>
+          <!-- Scanner beam -->
+          <rect x="110" y="58" width="100" height="2" fill="#2353E4" opacity="0.8" rx="1"/>
+          <rect x="110" y="54" width="100" height="10" fill="url(#beam)" rx="1"/>
+          <defs>
+            <linearGradient id="beam" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#2353E4" stop-opacity="0"/>
+              <stop offset="0.5" stop-color="#2353E4" stop-opacity="0.15"/>
+              <stop offset="1" stop-color="#2353E4" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <!-- Checkmark success -->
+          <circle cx="220" cy="120" r="20" fill="#0D0D0D" opacity="0.8"/>
+          <path d="M212 120 L218 126 L230 112" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════
+     OPERATORS — DARK SECTION
+════════════════════════════════════ -->
+<section class="operator" id="operators" aria-labelledby="operator-heading">
+  <div class="operator-inner">
+    <div>
+      <p class="operator-label">For car wash owners</p>
+      <h2 class="operator-h2" id="operator-heading">Grow your business on autopilot.</h2>
+      <p class="operator-sub">SplashPass gives your car wash a professional booking system, digital payments, and customer analytics — without the complexity of building it yourself.</p>
+      <div class="operator-features" role="list">
+        <div class="op-feature" role="listitem">
+          <div class="op-feature-check" aria-hidden="true">
+            <svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 5L4.5 7.5L8 3" stroke="#6FA3FF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <p class="op-feature-text"><strong>Real-time booking management</strong> — see every booking as it comes in, with customer details and service requests.</p>
+        </div>
+        <div class="op-feature" role="listitem">
+          <div class="op-feature-check" aria-hidden="true">
+            <svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 5L4.5 7.5L8 3" stroke="#6FA3FF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <p class="op-feature-text"><strong>Revenue tracking</strong> — daily, weekly, and monthly revenue dashboards with payout history.</p>
+        </div>
+        <div class="op-feature" role="listitem">
+          <div class="op-feature-check" aria-hidden="true">
+            <svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 5L4.5 7.5L8 3" stroke="#6FA3FF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <p class="op-feature-text"><strong>Customer analytics</strong> — understand your busiest hours, most popular services, and repeat customers.</p>
+        </div>
+        <div class="op-feature" role="listitem">
+          <div class="op-feature-check" aria-hidden="true">
+            <svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 5L4.5 7.5L8 3" stroke="#6FA3FF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <p class="op-feature-text"><strong>Loyalty management</strong> — your customers earn SplashScore points and come back more often.</p>
+        </div>
+        <div class="op-feature" role="listitem">
+          <div class="op-feature-check" aria-hidden="true">
+            <svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 5L4.5 7.5L8 3" stroke="#6FA3FF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <p class="op-feature-text"><strong>QR scan verification</strong> — no cash disputes, no fraudulent bookings. Every wash is confirmed digitally.</p>
+        </div>
+      </div>
+      <a href="#" class="btn-operator">
+        Become a partner
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+
+    <div class="operator-visual" aria-hidden="true">
+      <div class="op-dash">
+        <div class="op-dash-topbar">
+          <div class="op-dash-dot op-dash-dot-r"></div>
+          <div class="op-dash-dot op-dash-dot-y"></div>
+          <div class="op-dash-dot op-dash-dot-g"></div>
+          <span class="op-dash-title">Operator Portal — Sparkle Auto Spa</span>
+        </div>
+        <div class="op-dash-body">
+          <div class="op-dash-stats">
+            <div class="op-stat">
+              <div class="op-stat-label">Today</div>
+              <div class="op-stat-value">KSh 14,200</div>
+              <div class="op-stat-delta">↑ 18% vs last week</div>
+            </div>
+            <div class="op-stat">
+              <div class="op-stat-label">Bookings</div>
+              <div class="op-stat-value">23</div>
+              <div class="op-stat-delta">↑ 5 from yesterday</div>
+            </div>
+            <div class="op-stat">
+              <div class="op-stat-label">Avg. Value</div>
+              <div class="op-stat-value">KSh 617</div>
+              <div class="op-stat-delta">↑ 3% this week</div>
+            </div>
+          </div>
+
+          <div class="op-dash-chart">
+            <div class="op-chart-label">Revenue — Last 7 days</div>
+            <svg width="100%" height="70" viewBox="0 0 380 70" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#2353E4" stop-opacity="0.2"/>
+                  <stop offset="1" stop-color="#2353E4" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <path d="M0 55 L54 45 L108 50 L162 30 L216 35 L270 20 L324 15 L380 10 L380 70 L0 70 Z" fill="url(#chartGrad)"/>
+              <path d="M0 55 L54 45 L108 50 L162 30 L216 35 L270 20 L324 15 L380 10" stroke="#2353E4" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="380" cy="10" r="4" fill="#2353E4"/>
+            </svg>
+          </div>
+
+          <div class="op-dash-bookings">
+            <div class="op-booking">
+              <div class="op-booking-dot" style="background:#4ADE80"></div>
+              <div class="op-booking-info">
+                <div class="op-booking-name">Full Detail · Toyota Prado</div>
+                <div class="op-booking-time">Now · KBZ 447K</div>
+              </div>
+              <div class="op-booking-amount">KSh 1,800</div>
+            </div>
+            <div class="op-booking">
+              <div class="op-booking-dot" style="background:#FBBF24"></div>
+              <div class="op-booking-info">
+                <div class="op-booking-name">Exterior Wash · Nissan X-Trail</div>
+                <div class="op-booking-time">In 15 min · KCG 211E</div>
+              </div>
+              <div class="op-booking-amount">KSh 600</div>
+            </div>
+            <div class="op-booking">
+              <div class="op-booking-dot" style="background:#6B6B6B"></div>
+              <div class="op-booking-info">
+                <div class="op-booking-name">Full Service · Subaru Forester</div>
+                <div class="op-booking-time">2:30 PM · KBG 553W</div>
+              </div>
+              <div class="op-booking-amount">KSh 1,200</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════
+     PRICING
+════════════════════════════════════ -->
+<section class="pricing" id="pricing" aria-labelledby="pricing-heading">
+  <div class="pricing-head">
+    <p class="section-eyebrow">Operator pricing</p>
+    <h2 class="section-h2" id="pricing-heading">Simple, honest pricing.</h2>
+    <p class="section-sub">Start free for 30 days. No setup fees. No hidden charges. Cancel any time.</p>
+  </div>
+  <div class="pricing-cards" role="list">
+    <div class="pricing-card" role="listitem">
+      <p class="pricing-tier">Starter</p>
+      <p class="pricing-price">Free</p>
+      <p class="pricing-price-sub">First 30 days · 20% commission</p>
+      <div class="pricing-divider" aria-hidden="true"></div>
+      <ul class="pricing-features" aria-label="Starter plan features">
+        <li class="pricing-feature">
+          <svg class="pricing-feature-check" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7L5.5 10.5L12 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Booking management
+        </li>
+        <li class="pricing-feature">
+          <svg class="pricing-feature-check" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7L5.5 10.5L12 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          M-Pesa payments
+        </li>
+        <li class="pricing-feature">
+          <svg class="pricing-feature-check" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7L5.5 10.5L12 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          QR code scanning
+        </li>
+        <li class="pricing-feature">
+          <svg class="pricing-feature-check" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7L5.5 10.5L12 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Basic revenue reports
+        </li>
+      </ul>
+      <a href="#" class="btn-pricing">Get started free</a>
+    </div>
+
+    <div class="pricing-card pricing-card--featured" role="listitem">
+      <div class="pricing-badge">Most popular</div>
+      <p class="pricing-tier">Growth</p>
+      <p class="pricing-price">KSh 4,999</p>
+      <p class="pricing-price-sub">per month · flat rate</p>
+      <div class="pricing-divider" aria-hidden="true"></div>
+      <ul class="pricing-features" aria-label="Growth plan features">
+        <li class="pricing-feature">
+          <svg class="pricing-feature-check" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7L5.5 10.5L12 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Everything in Starter
+        </li>
+        <li class="pricing-feature">
+          <svg class="pricing-feature-check" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7L5.5 10.5L12 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Full analytics dashboard
+        </li>
+        <li class="pricing-feature">
+          <svg class="pricing-feature-check" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7L5.5 10.5L12 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Loyalty & SplashScore
+        </li>
+        <li class="pricing-feature">
+          <svg class="pricing-feature-check" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7L5.5 10.5L12 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          SMS booking notifications
+        </li>
+        <li class="pricing-feature">
+          <svg class="pricing-feature-check" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7L5.5 10.5L12 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Priority customer support
+        </li>
+      </ul>
+      <a href="#" class="btn-pricing btn-pricing--featured">Start with Growth</a>
+    </div>
+
+    <div class="pricing-card" role="listitem">
+      <p class="pricing-tier">Enterprise</p>
+      <p class="pricing-price">Custom</p>
+      <p class="pricing-price-sub">Multi-location · dedicated support</p>
+      <div class="pricing-divider" aria-hidden="true"></div>
+      <ul class="pricing-features" aria-label="Enterprise plan features">
+        <li class="pricing-feature">
+          <svg class="pricing-feature-check" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7L5.5 10.5L12 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Everything in Growth
+        </li>
+        <li class="pricing-feature">
+          <svg class="pricing-feature-check" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7L5.5 10.5L12 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Unlimited wash locations
+        </li>
+        <li class="pricing-feature">
+          <svg class="pricing-feature-check" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7L5.5 10.5L12 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Custom branding & white-label
+        </li>
+        <li class="pricing-feature">
+          <svg class="pricing-feature-check" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7L5.5 10.5L12 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Dedicated account manager
+        </li>
+      </ul>
+      <a href="mailto:splashpass.site@gmail.com" class="btn-pricing">Contact us</a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════
+     CTA BANNER
+════════════════════════════════════ -->
+<section class="cta-section" aria-labelledby="cta-heading">
+  <p class="cta-eyebrow">Get started today</p>
+  <h2 class="cta-h2" id="cta-heading">Ready to move at the speed of clean?</h2>
+  <p class="cta-sub">Join customers across Mombasa who've already skipped the queue. Operators, your dashboard is waiting.</p>
+  <div class="cta-actions">
+    <button onclick="openBookingModal()" class="btn-cta-primary">
+      Book a wash
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <a href="#operators" class="btn-cta-secondary">Become a partner</a>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════
+     FOOTER
+════════════════════════════════════ -->
+<!-- ═══════════════════════════════════
+     CONTACT
+════════════════════════════════════ -->
+<section class="contact" id="contact" aria-labelledby="contact-heading">
+  <div class="contact-inner">
+    <div class="contact-left">
+      <p class="section-eyebrow">Get in touch</p>
+      <h2 class="section-h2" id="contact-heading">We're here to help.</h2>
+      <p class="section-sub">Whether you're a customer with a question or an operator ready to list your wash — reach out and we'll respond fast.</p>
+    </div>
+    <div class="contact-cards">
+      <a href="tel:+254768154892" class="contact-card">
+        <div class="contact-card-icon">
+          <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M4 3C4 3 5.5 3 6.5 5.5C7.5 8 6 9 6 9C6 9 7 11 9 13C11 15 13 16 13 16C13 16 14 14.5 16.5 15.5C19 16.5 19 18 19 18C19 18 19 20 17 20C15 20 7 18 3 10C-1 2 2 1 2 1C2 1 4 1 4 3Z" stroke="#0D0D0D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div>
+          <div class="contact-card-label">Phone</div>
+          <div class="contact-card-value">+254 768 154 892</div>
+        </div>
+        <span class="contact-card-arrow" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+      </a>
+      <a href="mailto:splashpass.site@gmail.com" class="contact-card">
+        <div class="contact-card-icon">
+          <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect x="2" y="4" width="16" height="12" rx="2" stroke="#0D0D0D" stroke-width="1.5"/>
+            <path d="M2 7L10 12L18 7" stroke="#0D0D0D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div>
+          <div class="contact-card-label">Email</div>
+          <div class="contact-card-value">splashpass.site@gmail.com</div>
+        </div>
+        <span class="contact-card-arrow" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════
+     BOOKING MODAL
+════════════════════════════════════ -->
+<div class="modal-overlay" id="bookingModal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal" id="modalBox">
+
+    <div class="modal-header">
+      <div>
+        <div class="modal-steps" aria-hidden="true">
+          <div class="modal-step-dot active" id="dot-1"></div>
+          <div class="modal-step-dot" id="dot-2"></div>
+          <div class="modal-step-dot" id="dot-3"></div>
+          <div class="modal-step-dot" id="dot-4"></div>
+          <span class="modal-step-label" id="stepLabel">Step 1 of 4</span>
+        </div>
+        <h2 class="modal-title" id="modal-title">Choose a wash point</h2>
+        <p class="modal-subtitle" id="modal-subtitle">Enable location to see car washes near you.</p>
+      </div>
+      <button class="modal-close" onclick="closeBookingModal()" aria-label="Close booking">
+        <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 2L12 12M12 2L2 12" stroke="#0D0D0D" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+
+      <!-- ── STEP 1: Location + wash point ── -->
+      <div class="modal-step-panel active" id="step1">
+        <div class="location-permission-box" id="locationBox">
+          <div class="location-permission-icon">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="10" r="4" stroke="#2353E4" stroke-width="1.8"/>
+              <path d="M12 2C7.6 2 4 5.6 4 10C4 15 12 22 12 22C12 22 20 15 20 10C20 5.6 16.4 2 12 2Z" stroke="#2353E4" stroke-width="1.8" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <p class="location-permission-title">Allow location access</p>
+          <p class="location-permission-desc">SplashPass needs your location to show car washes near you. We only use it while you book.</p>
+          <button class="btn-enable-location" onclick="enableLocation()">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="white" stroke-width="1.4"/><circle cx="7" cy="7" r="2" fill="white"/></svg>
+            Enable location
+          </button>
+        </div>
+        <div class="wash-list" id="washList" style="display:none;">
+          <div class="wash-list-item" onclick="selectWash(this, 'Sparkle Auto Spa', 'from KSh 600')" data-wash="Sparkle Auto Spa">
+            <div class="wash-item-icon">🚿</div>
+            <div>
+              <div class="wash-item-name">Sparkle Auto Spa</div>
+              <div class="wash-item-meta">0.4 km · ★ 4.8 · Nyali</div>
+            </div>
+            <div class="wash-item-price">from KSh 600</div>
+          </div>
+          <div class="wash-list-item" onclick="selectWash(this, 'Clean & Shine Nyali', 'from KSh 450')" data-wash="Clean & Shine Nyali">
+            <div class="wash-item-icon">✨</div>
+            <div>
+              <div class="wash-item-name">Clean & Shine Nyali</div>
+              <div class="wash-item-meta">0.9 km · ★ 4.6 · Nyali</div>
+            </div>
+            <div class="wash-item-price">from KSh 450</div>
+          </div>
+          <div class="wash-list-item" onclick="selectWash(this, 'Aqua Wash Bamburi', 'from KSh 500')" data-wash="Aqua Wash Bamburi">
+            <div class="wash-item-icon">💧</div>
+            <div>
+              <div class="wash-item-name">Aqua Wash Bamburi</div>
+              <div class="wash-item-meta">1.4 km · ★ 4.5 · Bamburi</div>
+            </div>
+            <div class="wash-item-price">from KSh 500</div>
+          </div>
+          <div class="wash-list-item" onclick="selectWash(this, 'Pro Detail Mombasa', 'from KSh 1,200')" data-wash="Pro Detail Mombasa">
+            <div class="wash-item-icon">🏆</div>
+            <div>
+              <div class="wash-item-name">Pro Detail Mombasa</div>
+              <div class="wash-item-meta">2.1 km · ★ 4.9 · Mombasa CBD</div>
+            </div>
+            <div class="wash-item-price">from KSh 1,200</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── STEP 2: Service + Time ── -->
+      <div class="modal-step-panel" id="step2">
+        <div class="service-grid">
+          <div class="service-card" onclick="selectService(this, 'Exterior Wash', 600)">
+            <div class="service-card-name">Exterior Wash</div>
+            <div class="service-card-price">KSh 600</div>
+            <div class="service-card-desc">Body, windows & wheels</div>
+          </div>
+          <div class="service-card" onclick="selectService(this, 'Full Service', 1000)">
+            <div class="service-card-name">Full Service</div>
+            <div class="service-card-price">KSh 1,000</div>
+            <div class="service-card-desc">Interior + exterior clean</div>
+          </div>
+          <div class="service-card" onclick="selectService(this, 'Full Detail', 1800)">
+            <div class="service-card-name">Full Detail</div>
+            <div class="service-card-price">KSh 1,800</div>
+            <div class="service-card-desc">Deep clean + polish</div>
+          </div>
+          <div class="service-card" onclick="selectService(this, 'Engine Clean', 800)">
+            <div class="service-card-name">Engine Clean</div>
+            <div class="service-card-price">KSh 800</div>
+            <div class="service-card-desc">Bay degreasing & rinse</div>
+          </div>
+        </div>
+        <p class="time-label">Available slots — Today</p>
+        <div class="time-slots">
+          <button class="time-slot unavailable" disabled>9:00 AM</button>
+          <button class="time-slot unavailable" disabled>10:00 AM</button>
+          <button class="time-slot" onclick="selectTime(this, '11:00 AM')">11:00 AM</button>
+          <button class="time-slot" onclick="selectTime(this, '12:00 PM')">12:00 PM</button>
+          <button class="time-slot" onclick="selectTime(this, '1:00 PM')">1:00 PM</button>
+          <button class="time-slot" onclick="selectTime(this, '2:00 PM')">2:00 PM</button>
+          <button class="time-slot" onclick="selectTime(this, '3:30 PM')">3:30 PM</button>
+          <button class="time-slot" onclick="selectTime(this, '4:30 PM')">4:30 PM</button>
+        </div>
+      </div>
+
+      <!-- ── STEP 3: Car details ── -->
+      <div class="modal-step-panel" id="step3">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="firstName">First name</label>
+            <input class="form-input" type="text" id="firstName" placeholder="James" autocomplete="given-name"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="lastName">Last name</label>
+            <input class="form-input" type="text" id="lastName" placeholder="Kamau" autocomplete="family-name"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="plateNumber">Number plate</label>
+          <input class="form-input" type="text" id="plateNumber" placeholder="KBZ 447K" style="text-transform:uppercase;" autocomplete="off"/>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="carMake">Make</label>
+            <input class="form-input" type="text" id="carMake" placeholder="Toyota" autocomplete="off"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="carModel">Model</label>
+            <input class="form-input" type="text" id="carModel" placeholder="Prado" autocomplete="off"/>
+          </div>
+        </div>
+        <div class="booking-summary" id="bookingSummary">
+          <div class="booking-summary-title">Booking summary</div>
+          <div class="booking-summary-row">
+            <span class="booking-summary-key">Wash point</span>
+            <span class="booking-summary-val" id="sum-wash">—</span>
+          </div>
+          <div class="booking-summary-row">
+            <span class="booking-summary-key">Service</span>
+            <span class="booking-summary-val" id="sum-service">—</span>
+          </div>
+          <div class="booking-summary-row">
+            <span class="booking-summary-key">Time</span>
+            <span class="booking-summary-val" id="sum-time">—</span>
+          </div>
+          <div class="booking-summary-divider"></div>
+          <div class="booking-summary-row booking-summary-total">
+            <span class="booking-summary-key">Total</span>
+            <span class="booking-summary-val" id="sum-total">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── STEP 4: M-Pesa ── -->
+      <div class="modal-step-panel" id="step4">
+        <div class="mpesa-header">
+          <div class="mpesa-logo" aria-hidden="true">
+            <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <text x="4" y="28" font-family="Arial Black, sans-serif" font-size="18" font-weight="900" fill="white">M</text>
+              <path d="M22 10 L28 22 L34 10" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            </svg>
+          </div>
+          <p class="mpesa-title">Pay with M-Pesa</p>
+          <p class="mpesa-desc">Enter your Safaricom number. We'll send an STK push prompt to your phone to complete payment.</p>
+        </div>
+        <div class="mpesa-phone-box">
+          <p class="mpesa-phone-label">Safaricom number</p>
+          <div class="mpesa-phone-input-wrap">
+            <span class="mpesa-prefix">🇰🇪 +254</span>
+            <input class="mpesa-phone-input" type="tel" id="mpesaPhone" placeholder="7XX XXX XXX" maxlength="9" inputmode="numeric"/>
+          </div>
+          <div class="mpesa-amount-row">
+            <span class="mpesa-amount-key">Amount to pay</span>
+            <span class="mpesa-amount-val" id="mpesa-amount">KSh —</span>
+          </div>
+        </div>
+        <p class="mpesa-note">
+          <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="7" cy="7" r="5.5" stroke="#AEABA6" stroke-width="1.3"/><path d="M7 6V9.5" stroke="#AEABA6" stroke-width="1.3" stroke-linecap="round"/><circle cx="7" cy="4.5" r="0.6" fill="#AEABA6"/></svg>
+          You'll receive a payment prompt on your phone. Enter your M-Pesa PIN to confirm. Do not share your PIN with anyone.
+        </p>
+        <div class="mpesa-sending" id="mpesaSending">
+          <div class="mpesa-spinner"></div>
+          <p class="mpesa-sending-text">Sending STK push…</p>
+          <p class="mpesa-sending-sub">Check your phone for the M-Pesa prompt.</p>
+        </div>
+      </div>
+
+    </div><!-- /modal-body -->
+
+    <div class="modal-footer">
+      <button class="btn-modal-back" id="btnBack" onclick="prevStep()">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7L9 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Back
+      </button>
+      <button class="btn-modal-next" id="btnNext" onclick="nextStep()">
+        Find washes nearby
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7H12M12 7L8 3M12 7L8 11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+
+  </div><!-- /modal -->
+</div><!-- /modal-overlay -->
+
+<footer role="contentinfo">
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div>
+        <div class="footer-brand-logo">
+          <div class="nav-logo-mark" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+              <rect width="512" height="512" rx="80" fill="#0d1b2a"/>
+              <path d="M256 100 C256 100 160 220 160 300 C160 355 203 400 256 400 C309 400 352 355 352 300 C352 220 256 100 256 100Z" fill="#f5a623"/>
+              <path d="M296 210 C296 210 288 188 256 188 C228 188 210 204 210 224 C210 244 226 254 256 262 C286 270 306 282 306 306 C306 330 286 348 256 348 C224 348 210 328 210 328" stroke="#0d1b2a" stroke-width="28" stroke-linecap="round" fill="none"/>
+            </svg>
+          </div>
+          <span class="nav-logo-name">SplashPass</span>
+        </div>
+        <p class="footer-brand-desc">Kenya's car wash booking and payments platform. Find, book, and pay for car washes across the country.</p>
+        <div class="footer-badge">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M6 1L7.5 4.5L11 5L8.5 7.5L9 11L6 9.5L3 11L3.5 7.5L1 5L4.5 4.5L6 1Z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></svg>
+          Built in Mombasa, Kenya
+        </div>
+      </div>
+      <div>
+        <p class="footer-col-title">Product</p>
+        <ul class="footer-links" role="list">
+          <li><a href="#benefits">Features</a></li>
+          <li><a href="#how-it-works">How it works</a></li>
           <li><a href="#pricing">Pricing</a></li>
-          <li><a href="https://app.splashpass.site">Customer App</a></li>
+          <li><a href="#">Download app</a></li>
+          <li><a href="#">Loyalty rewards</a></li>
         </ul>
       </div>
-      <div class="footer-col">
-        <h4>Company</h4>
-        <ul>
-          <li><a href="#about">About Us</a></li>
-          <li><a href="#contact">Contact</a></li>
-          <li><a href="/privacy-policy">Privacy Policy</a></li>
-          <li><a href="/terms-of-use">Terms of Use</a></li>
+      <div>
+        <p class="footer-col-title">Operators</p>
+        <ul class="footer-links" role="list">
+          <li><a href="#operators">Partner with us</a></li>
+          <li><a href="#">Operator portal</a></li>
+          <li><a href="#">Pricing plans</a></li>
+          <li><a href="#">Onboarding guide</a></li>
         </ul>
       </div>
-      <div class="footer-col">
-        <h4>Contact</h4>
-        <ul>
-          <li><a href="mailto:splashpass.site@gmail.com">splashpass.site@gmail.com</a></li>
-          <li><a href="tel:+254768154892">+254 768 154892</a></li>
-          <li><a href="#contact">Send us a message</a></li>
+      <div>
+        <p class="footer-col-title">Company</p>
+        <ul class="footer-links" role="list">
+          <li><a href="#">About us</a></li>
+          <li><a href="#">Blog</a></li>
+          <li><a href="#">Careers</a></li>
+          <li><a href="#">Press</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="footer-col-title">Legal</p>
+        <ul class="footer-links" role="list">
+          <li><a href="#">Privacy policy</a></li>
+          <li><a href="#">Terms of service</a></li>
+          <li><a href="#">Cookie policy</a></li>
+          <li><a href="mailto:splashpass.site@gmail.com">Contact</a></li>
         </ul>
       </div>
     </div>
     <div class="footer-bottom">
-      <div>© 2026 SplashPass Technologies Ltd. All rights reserved.</div>
-      <div style="display:flex;gap:1.5rem;align-items:center">
-        <a href="/privacy-policy" style="color:rgba(255,255,255,0.5);text-decoration:none;font-size:0.8rem;transition:color 0.15s" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">Privacy Policy</a>
-        <a href="/terms-of-use" style="color:rgba(255,255,255,0.5);text-decoration:none;font-size:0.8rem;transition:color 0.15s" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">Terms of Use</a>
-        <span>Made with ❤️ in Kenya</span>
-      </div>
+      <p class="footer-copy">© 2026 KINGJAMES TECHNOLOGIES. All rights reserved.</p>
+      <nav class="footer-legal" aria-label="Legal navigation">
+        <a href="#">Privacy</a>
+        <a href="#">Terms</a>
+        <a href="#">Cookies</a>
+      </nav>
     </div>
   </div>
 </footer>
 
 <script>
-const bars = document.getElementById('dashBars');
-if(bars){
-  const vals=[42,58,35,71,88,64,76];
-  const max=Math.max(...vals);
-  vals.forEach(v=>{
-    const b=document.createElement('div');
-    b.className='dm-bar';
-    b.style.height=(v/max*100)+'%';
-    bars.appendChild(b);
-  });
+// ── Booking modal state ──────────────────────
+const state = {
+  step: 1,
+  wash: null,
+  service: null,
+  servicePrice: 0,
+  time: null,
+};
+
+const stepTitles    = ['Choose a wash point', 'Pick your service', 'Your details', 'Pay with M-Pesa'];
+const stepSubtitles = [
+  'Enable location to see car washes near you.',
+  'Select a service and available time slot.',
+  'Tell us about your car.',
+  'One tap to confirm. No cash needed.',
+];
+const nextLabels = ['Find washes nearby', 'Choose service & time', 'Review booking', 'Send M-Pesa prompt'];
+
+function openBookingModal() {
+  state.step = 1;
+  renderStep();
+  document.getElementById('bookingModal').classList.add('is-open');
+  document.body.style.overflow = 'hidden';
+  // Reset wash list visibility
+  document.getElementById('locationBox').style.display = '';
+  document.getElementById('washList').style.display = 'none';
+  // Clear selections
+  document.querySelectorAll('.wash-list-item').forEach(el => el.classList.remove('selected'));
+  document.querySelectorAll('.service-card').forEach(el => el.classList.remove('selected'));
+  document.querySelectorAll('.time-slot').forEach(el => el.classList.remove('selected'));
+  state.wash = null; state.service = null; state.servicePrice = 0; state.time = null;
 }
 
-document.querySelectorAll('.dm-item').forEach(el=>{
-  el.addEventListener('click',function(){
-    this.parentElement.querySelectorAll('.dm-item').forEach(e=>e.classList.remove('active'));
-    this.classList.add('active');
-  });
+function closeBookingModal() {
+  document.getElementById('bookingModal').classList.remove('is-open');
+  document.body.style.overflow = '';
+}
+
+// Close on backdrop click
+document.getElementById('bookingModal').addEventListener('click', function(e) {
+  if (e.target === this) closeBookingModal();
 });
 
-const observer=new IntersectionObserver(entries=>{
-  entries.forEach(e=>{
-    if(e.isIntersecting){
-      e.target.style.opacity='1';
-      e.target.style.transform='translateY(0)';
-    }
-  });
-},{threshold:0.1});
-document.querySelectorAll('.feat-card,.price-card,.review-card,.step,.op-feat').forEach(el=>{
-  el.style.opacity='0';
-  el.style.transform='translateY(20px)';
-  el.style.transition='opacity 0.5s ease, transform 0.5s ease';
-  observer.observe(el);
+// Close on Escape
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeBookingModal();
 });
+
+function renderStep() {
+  const s = state.step;
+  // Panels
+  document.querySelectorAll('.modal-step-panel').forEach((p, i) => {
+    p.classList.toggle('active', i + 1 === s);
+  });
+  // Dots
+  for (let i = 1; i <= 4; i++) {
+    const dot = document.getElementById('dot-' + i);
+    dot.classList.remove('active', 'done');
+    if (i === s)    dot.classList.add('active');
+    else if (i < s) dot.classList.add('done');
+  }
+  // Labels
+  document.getElementById('stepLabel').textContent = `Step ${s} of 4`;
+  document.getElementById('modal-title').textContent = stepTitles[s - 1];
+  document.getElementById('modal-subtitle').textContent = stepSubtitles[s - 1];
+  // Back button
+  const back = document.getElementById('btnBack');
+  back.classList.toggle('visible', s > 1);
+  // Next button
+  const next = document.getElementById('btnNext');
+  next.textContent = '';
+  const span = document.createTextNode(s === 4 ? 'Send M-Pesa prompt' : nextLabels[s - 1]);
+  const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  arrow.setAttribute('width', '14'); arrow.setAttribute('height', '14');
+  arrow.setAttribute('viewBox', '0 0 14 14'); arrow.setAttribute('fill', 'none');
+  arrow.innerHTML = '<path d="M2 7H12M12 7L8 3M12 7L8 11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>';
+  next.appendChild(span);
+  next.appendChild(arrow);
+  next.classList.toggle('mpesa-green', s === 4);
+  // Update summary in step 3
+  if (s === 3) updateSummary();
+  // Update M-Pesa amount in step 4
+  if (s === 4) {
+    document.getElementById('mpesa-amount').textContent = state.servicePrice ? 'KSh ' + state.servicePrice.toLocaleString() : 'KSh —';
+    document.getElementById('mpesaSending').classList.remove('visible');
+    document.getElementById('btnNext').style.display = 'flex';
+  }
+  // Scroll modal to top
+  document.getElementById('modalBox').scrollTop = 0;
+}
+
+function nextStep() {
+  const s = state.step;
+  // Validate
+  if (s === 1 && !state.wash)    { shakeNext('Please choose a wash point.'); return; }
+  if (s === 2 && !state.service) { shakeNext('Please select a service.'); return; }
+  if (s === 2 && !state.time)    { shakeNext('Please pick a time slot.'); return; }
+  if (s === 3) {
+    const plate = document.getElementById('plateNumber').value.trim();
+    const fname = document.getElementById('firstName').value.trim();
+    if (!fname || !plate) { shakeNext('Please fill in your name and plate number.'); return; }
+  }
+  if (s === 4) { sendMpesa(); return; }
+  state.step = Math.min(s + 1, 4);
+  renderStep();
+}
+
+function prevStep() {
+  state.step = Math.max(state.step - 1, 1);
+  renderStep();
+}
+
+function shakeNext(msg) {
+  const btn = document.getElementById('btnNext');
+  btn.style.background = '#DC2626';
+  const originalText = btn.querySelector('text') ? '' : '';
+  const firstChild = btn.firstChild;
+  if (firstChild && firstChild.nodeType === 3) firstChild.textContent = msg;
+  setTimeout(() => {
+    btn.style.background = '';
+    renderStep();
+  }, 1400);
+}
+
+// Step 1 — Location
+function enableLocation() {
+  const box = document.getElementById('locationBox');
+  const list = document.getElementById('washList');
+  box.innerHTML = `
+    <div class="location-permission-icon" style="background:#E8F5E9; border-color:rgba(0,166,81,0.2);">
+      <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="10" r="4" stroke="#00A651" stroke-width="1.8"/><path d="M12 2C7.6 2 4 5.6 4 10C4 15 12 22 12 22C12 22 20 15 20 10C20 5.6 16.4 2 12 2Z" stroke="#00A651" stroke-width="1.8" stroke-linejoin="round"/></svg>
+    </div>
+    <p class="location-permission-title" style="color:#00A651;">Location found</p>
+    <p class="location-permission-desc">Showing 4 wash points near Nyali, Mombasa.</p>
+  `;
+  setTimeout(() => {
+    box.style.display = 'none';
+    list.style.display = 'flex';
+  }, 900);
+}
+
+function selectWash(el, name, price) {
+  document.querySelectorAll('.wash-list-item').forEach(i => i.classList.remove('selected'));
+  el.classList.add('selected');
+  state.wash = name;
+}
+
+// Step 2 — Service + Time
+function selectService(el, name, price) {
+  document.querySelectorAll('.service-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  state.service = name;
+  state.servicePrice = price;
+}
+
+function selectTime(el, time) {
+  document.querySelectorAll('.time-slot:not(.unavailable)').forEach(t => t.classList.remove('selected'));
+  el.classList.add('selected');
+  state.time = time;
+}
+
+// Step 3 — Summary
+function updateSummary() {
+  document.getElementById('sum-wash').textContent = state.wash || '—';
+  document.getElementById('sum-service').textContent = state.service || '—';
+  document.getElementById('sum-time').textContent = state.time ? 'Today, ' + state.time : '—';
+  document.getElementById('sum-total').textContent = state.servicePrice ? 'KSh ' + state.servicePrice.toLocaleString() : '—';
+}
+
+// Step 4 — M-Pesa
+function sendMpesa() {
+  const phone = document.getElementById('mpesaPhone').value.trim();
+  if (!phone || phone.length < 9) {
+    const input = document.getElementById('mpesaPhone');
+    input.style.borderColor = '#DC2626';
+    input.focus();
+    setTimeout(() => input.style.borderColor = '', 1500);
+    return;
+  }
+  const sending = document.getElementById('mpesaSending');
+  const btn = document.getElementById('btnNext');
+  sending.classList.add('visible');
+  btn.style.display = 'none';
+  // Simulate STK push sent
+  setTimeout(() => {
+    sending.innerHTML = `
+      <div style="width:48px;height:48px;border-radius:50%;background:#E8F5E9;border:2px solid #00A651;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 11L9 16L18 7" stroke="#00A651" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <p class="mpesa-sending-text">Prompt sent!</p>
+      <p class="mpesa-sending-sub">Enter your M-Pesa PIN on your phone to complete the booking.</p>
+    `;
+    document.getElementById('modal-title').textContent = 'Check your phone';
+    document.getElementById('modal-subtitle').textContent = 'Your M-Pesa prompt is on its way.';
+    document.getElementById('btnBack').style.display = 'none';
+    const doneBtn = document.createElement('button');
+    doneBtn.className = 'btn-modal-next';
+    doneBtn.style.cssText = 'background:#00A651; margin: 0 32px 28px;';
+    doneBtn.textContent = 'Done';
+    doneBtn.onclick = closeBookingModal;
+    document.querySelector('.modal-footer').appendChild(doneBtn);
+  }, 2200);
+}
 </script>
 </body>
 </html>
