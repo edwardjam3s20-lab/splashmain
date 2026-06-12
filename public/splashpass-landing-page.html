@@ -241,6 +241,47 @@ nav {
   background: var(--warm-gray);
   transform: translateY(-1px);
 }
+.hero-store-badges {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.hero-store-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  border-radius: 12px;
+  background: #0b0b0c;
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.hero-store-badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.25);
+}
+.hero-store-badge-icon {
+  flex-shrink: 0;
+  display: flex;
+}
+.hero-store-badge-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+.hero-store-badge-eyebrow {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.55);
+}
+.hero-store-badge-name {
+  font-size: 16px;
+  font-weight: 600;
+}
 .hero-aside {
   text-align: right;
   font-size: 13px;
@@ -1849,9 +1890,21 @@ a:focus-visible, button:focus-visible {
           Book a wash
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </a>
-        <a href="#get-app" class="btn-secondary">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="4" y="2" width="8" height="12" rx="1.5" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="11" r="0.75" fill="currentColor"/></svg>
-          Download app
+      </div>
+      <div class="hero-store-badges">
+        <a href="#get-app" class="hero-store-badge">
+          <span class="hero-store-badge-icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 384 512" fill="currentColor"><path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 35-17.5 19.8-27.8 44.3-25.6 71.9 25.9-2 49.5-15.1 69.5-34.4z"/></svg></span>
+          <span class="hero-store-badge-text">
+            <span class="hero-store-badge-eyebrow">Launching soon on the</span>
+            <span class="hero-store-badge-name">App Store</span>
+          </span>
+        </a>
+        <a href="#get-app" class="hero-store-badge">
+          <span class="hero-store-badge-icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 512 512" fill="currentColor"><path d="M325.3 234.3L104.6 13l280.8 161.2-60.1 60.1zM47 0C34 6.8 25.4 19.2 25.4 35.3v441.3c0 16.1 8.6 28.5 21.6 35.3l256.6-256L47 0zm365.9 247.7l-58.9-34.1-65.7 65.5 65.7 65.5 60.1-34.1c18-14.5 18-48.2-1.2-62.8zM104.6 499l280.8-161.2-60.1-60.1L104.6 499z"/></svg></span>
+          <span class="hero-store-badge-text">
+            <span class="hero-store-badge-eyebrow">Launching soon on</span>
+            <span class="hero-store-badge-name">Google Play</span>
+          </span>
         </a>
       </div>
     </div>
@@ -2362,12 +2415,6 @@ a:focus-visible, button:focus-visible {
     </div>
   </div>
 
-  <div class="plans-note">
-    <div class="plans-note-inner">
-      <svg class="plans-note-icon" width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="8.25" stroke="currentColor" stroke-width="1.5"/><path d="M10 9V14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="10" cy="6.5" r="0.75" fill="currentColor"/></svg>
-      <div><strong>Manual monthly billing.</strong> SplashPass plans are not auto-renewing — you pay each cycle yourself via M-Pesa, right in the app. Upgrade, downgrade, or cancel any time with no penalties.</div>
-    </div>
-  </div>
 </section>
 
 <!-- ═══════════════════════════════════
@@ -2411,7 +2458,7 @@ a:focus-visible, button:focus-visible {
           <p class="op-feature-text"><strong>QR scan verification</strong> — no cash disputes, no fraudulent bookings. Every wash is confirmed digitally.</p>
         </div>
       </div>
-      <a href="#" class="btn-operator">
+      <a href="https://operator.splashpass.site" class="btn-operator">
         Become a partner
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </a>
@@ -2691,7 +2738,7 @@ a:focus-visible, button:focus-visible {
       Book a wash
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </a>
-    <a href="#operators" class="btn-cta-secondary">Become a partner</a>
+    <a href="https://operator.splashpass.site" class="btn-cta-secondary">Become a partner</a>
   </div>
 </section>
 
