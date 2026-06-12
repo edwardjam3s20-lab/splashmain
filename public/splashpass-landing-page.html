@@ -1020,6 +1020,228 @@ nav {
 .pricing-feature-check { flex-shrink: 0; margin-top: 2px; color: var(--accent); }
 .pricing-card--featured .pricing-feature-check { color: #6FA3FF; }
 
+/* ─────────────────────────────────────────────
+   MEMBERSHIP PLANS (customers)
+───────────────────────────────────────────── */
+.plans {
+  padding: 128px 0;
+  background: var(--warm-gray);
+  border-top: 1px solid var(--border);
+}
+.plans-head {
+  max-width: 1200px;
+  margin: 0 auto 56px;
+  padding: 0 48px;
+  text-align: center;
+}
+.plans-head .section-h2 { max-width: 100%; margin: 0 auto; }
+.plans-head .section-sub { max-width: 560px; margin: 16px auto 0; }
+
+.plans-cards {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 48px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.plans-card {
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-xl);
+  padding: 32px 26px;
+  position: relative;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.plans-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-3px); }
+.plans-card--featured {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--dark-text);
+  padding-top: 40px;
+}
+.plans-card--featured:hover { box-shadow: 0 32px 64px rgba(0,0,0,0.2); }
+.plans-badge {
+  position: absolute;
+  top: -1px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--accent);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 5px 14px;
+  border-radius: 0 0 10px 10px;
+  white-space: nowrap;
+}
+.plans-tier {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 14px;
+}
+.plans-card--featured .plans-tier { color: rgba(240,237,232,0.45); }
+.plans-price {
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.plans-card--featured .plans-price { color: var(--dark-text); }
+.plans-price-sub {
+  font-size: 12.5px;
+  color: var(--ink-3);
+  margin-bottom: 16px;
+}
+.plans-card--featured .plans-price-sub { color: var(--dark-muted); }
+.plans-desc {
+  font-size: 13.5px;
+  color: var(--ink-2);
+  line-height: 1.5;
+  margin-bottom: 20px;
+  min-height: 41px;
+}
+.plans-card--featured .plans-desc { color: rgba(240,237,232,0.7); }
+.plans-divider {
+  height: 1px;
+  background: var(--border);
+  margin-bottom: 20px;
+}
+.plans-card--featured .plans-divider { background: rgba(255,255,255,0.1); }
+.plans-features { list-style: none; display: flex; flex-direction: column; gap: 9px; margin-bottom: 28px; }
+.plans-feature {
+  font-size: 13.5px;
+  color: var(--ink-2);
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  line-height: 1.4;
+}
+.plans-card--featured .plans-feature { color: rgba(240,237,232,0.7); }
+.plans-feature-check { flex-shrink: 0; margin-top: 2px; color: var(--accent); }
+.plans-card--featured .plans-feature-check { color: #6FA3FF; }
+
+.plans-note {
+  max-width: 1200px;
+  margin: 40px auto 0;
+  padding: 0 48px;
+}
+.plans-note-inner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 18px 22px;
+  font-size: 14px;
+  color: var(--ink-2);
+  line-height: 1.6;
+}
+.plans-note-icon {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--accent);
+}
+.plans-note-inner strong { color: var(--ink); }
+
+/* ─────────────────────────────────────────────
+   DOWNLOAD APP MODAL
+───────────────────────────────────────────── */
+.download-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: rgba(13,13,13,0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.download-modal-overlay.is-open { display: flex; }
+.download-modal {
+  background: var(--off-white);
+  border-radius: var(--r-xl);
+  max-width: 420px;
+  width: 100%;
+  padding: 36px;
+  box-shadow: var(--shadow-xl);
+  text-align: center;
+  position: relative;
+  animation: dmIn 0.2s ease;
+}
+@keyframes dmIn { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.download-modal-close {
+  position: absolute;
+  top: 16px; right: 16px;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ink-2);
+  transition: background 0.15s, color 0.15s;
+}
+.download-modal-close:hover { background: var(--warm-gray); color: var(--ink); }
+.download-modal-icon {
+  width: 56px; height: 56px;
+  border-radius: 14px;
+  background: var(--ink);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 20px;
+}
+.download-modal h3 {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 10px;
+}
+.download-modal p {
+  font-size: 14.5px;
+  color: var(--ink-2);
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+.download-modal-stores {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.download-modal-store-badge {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--r);
+  padding: 11px 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-3);
+  background: var(--warm-gray);
+  cursor: default;
+}
+.download-modal-store-badge .store-soon {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: rgba(35,83,228,0.1);
+  padding: 2px 6px;
+  border-radius: 5px;
+  margin-left: 4px;
+}
+.download-modal-actions a { width: 100%; justify-content: center; display: inline-flex; }
+
 .btn-pricing {
   display: block;
   width: 100%;
@@ -1228,6 +1450,11 @@ footer {
   .pricing-head { padding: 0 24px; }
   .pricing-cards { padding: 0 24px; grid-template-columns: 1fr; }
 
+  .plans { padding: 80px 0; }
+  .plans-head { padding: 0 24px; }
+  .plans-cards { padding: 0 24px; grid-template-columns: repeat(2, 1fr); }
+  .plans-note { padding: 0 24px; }
+
   .cta-section { padding: 80px 24px; }
 
   footer { padding: 56px 0 32px; }
@@ -1240,6 +1467,8 @@ footer {
 @media (max-width: 560px) {
   .hero-actions { flex-direction: column; }
   .btn-primary, .btn-secondary { justify-content: center; }
+  .plans-cards { grid-template-columns: 1fr; }
+  .download-modal-stores { flex-direction: column; }
   .footer-top { grid-template-columns: 1fr; }
   .footer-top > :first-child { grid-column: 1; }
   .cta-actions { flex-direction: column; align-items: center; }
@@ -1361,6 +1590,7 @@ a:focus-visible, button:focus-visible {
     <ul class="nav-links" role="list">
       <li><a href="#benefits">Features</a></li>
       <li><a href="#how-it-works">How it works</a></li>
+      <li><a href="#plans">Plans</a></li>
       <li><a href="#operators">For operators</a></li>
       <li><a href="#pricing">Pricing</a></li>
     </ul>
@@ -1387,10 +1617,10 @@ a:focus-visible, button:focus-visible {
           Book a wash
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </a>
-        <a href="#" class="btn-secondary">
+        <button type="button" class="btn-secondary" onclick="openDownloadModal()">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="4" y="2" width="8" height="12" rx="1.5" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="11" r="0.75" fill="currentColor"/></svg>
           Download app
-        </a>
+        </button>
       </div>
     </div>
     <p class="hero-aside">Available across Mombasa and expanding across Kenya's major cities.</p>
@@ -1777,6 +2007,138 @@ a:focus-visible, button:focus-visible {
 </section>
 
 <!-- ═══════════════════════════════════
+     MEMBERSHIP PLANS — CUSTOMERS
+════════════════════════════════════ -->
+<section class="plans" id="plans" aria-labelledby="plans-heading">
+  <div class="plans-head">
+    <p class="section-eyebrow">Membership plans</p>
+    <h2 class="section-h2" id="plans-heading">Subscribe and wash for less.</h2>
+    <p class="section-sub">Pick a monthly plan to unlock member pricing, priority slots, and bonus SplashScore points on every booking.</p>
+  </div>
+  <div class="plans-cards" role="list">
+    <div class="plans-card" role="listitem">
+      <p class="plans-tier">Mini</p>
+      <p class="plans-price">KSh 199</p>
+      <p class="plans-price-sub">per month</p>
+      <p class="plans-desc">For light, occasional washers. One vehicle, simple savings.</p>
+      <div class="plans-divider" aria-hidden="true"></div>
+      <ul class="plans-features" aria-label="Mini plan features">
+        <li class="plans-feature">
+          <svg class="plans-feature-check" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7L5.5 10.5L12 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          1 vehicle on the plan
+        </li>
+        <li class="plans-feature">
+          <svg class="plans-feature-check" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7L5.5 10.5L12 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Member pricing on every wash
+        </li>
+        <li class="plans-feature">
+          <svg class="plans-feature-check" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7L5.5 10.5L12 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Earn SplashScore points
+        </li>
+        <li class="plans-feature">
+          <svg class="plans-feature-check" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7L5.5 10.5L12 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Pay manually via M-Pesa
+        </li>
+      </ul>
+      <a href="https://app.splashpass.site" class="btn-pricing">Choose Mini</a>
+    </div>
+
+    <div class="plans-card plans-card--featured" role="listitem">
+      <div class="plans-badge">Most popular</div>
+      <p class="plans-tier">Individual</p>
+      <p class="plans-price">KSh 499</p>
+      <p class="plans-price-sub">per month</p>
+      <p class="plans-desc">For drivers who wash regularly and want the best rates.</p>
+      <div class="plans-divider" aria-hidden="true"></div>
+      <ul class="plans-features" aria-label="Individual plan features">
+        <li class="plans-feature">
+          <svg class="plans-feature-check" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7L5.5 10.5L12 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          1 vehicle on the plan
+        </li>
+        <li class="plans-feature">
+          <svg class="plans-feature-check" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7L5.5 10.5L12 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Extra discount on every wash
+        </li>
+        <li class="plans-feature">
+          <svg class="plans-feature-check" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7L5.5 10.5L12 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Priority booking slots
+        </li>
+        <li class="plans-feature">
+          <svg class="plans-feature-check" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7L5.5 10.5L12 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Bonus SplashScore points
+        </li>
+        <li class="plans-feature">
+          <svg class="plans-feature-check" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7L5.5 10.5L12 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Pay manually via M-Pesa
+        </li>
+      </ul>
+      <a href="https://app.splashpass.site" class="btn-pricing btn-pricing--featured">Choose Individual</a>
+    </div>
+
+    <div class="plans-card" role="listitem">
+      <p class="plans-tier">Duo</p>
+      <p class="plans-price">KSh 999</p>
+      <p class="plans-price-sub">per month</p>
+      <p class="plans-desc">Share one plan across two vehicles or with a partner.</p>
+      <div class="plans-divider" aria-hidden="true"></div>
+      <ul class="plans-features" aria-label="Duo plan features">
+        <li class="plans-feature">
+          <svg class="plans-feature-check" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7L5.5 10.5L12 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          2 vehicles on one account
+        </li>
+        <li class="plans-feature">
+          <svg class="plans-feature-check" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7L5.5 10.5L12 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Everything in Individual
+        </li>
+        <li class="plans-feature">
+          <svg class="plans-feature-check" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7L5.5 10.5L12 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Shared SplashScore wallet
+        </li>
+        <li class="plans-feature">
+          <svg class="plans-feature-check" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7L5.5 10.5L12 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Pay manually via M-Pesa
+        </li>
+      </ul>
+      <a href="https://app.splashpass.site" class="btn-pricing">Choose Duo</a>
+    </div>
+
+    <div class="plans-card" role="listitem">
+      <p class="plans-tier">Family</p>
+      <p class="plans-price">KSh 1,999</p>
+      <p class="plans-price-sub">per month</p>
+      <p class="plans-desc">Cover the whole household with up to four vehicles.</p>
+      <div class="plans-divider" aria-hidden="true"></div>
+      <ul class="plans-features" aria-label="Family plan features">
+        <li class="plans-feature">
+          <svg class="plans-feature-check" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7L5.5 10.5L12 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Up to 4 vehicles
+        </li>
+        <li class="plans-feature">
+          <svg class="plans-feature-check" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7L5.5 10.5L12 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Everything in Duo
+        </li>
+        <li class="plans-feature">
+          <svg class="plans-feature-check" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7L5.5 10.5L12 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Family booking dashboard
+        </li>
+        <li class="plans-feature">
+          <svg class="plans-feature-check" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7L5.5 10.5L12 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Pay manually via M-Pesa
+        </li>
+      </ul>
+      <a href="https://app.splashpass.site" class="btn-pricing">Choose Family</a>
+    </div>
+  </div>
+
+  <div class="plans-note">
+    <div class="plans-note-inner">
+      <svg class="plans-note-icon" width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="8.25" stroke="currentColor" stroke-width="1.5"/><path d="M10 9V14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="10" cy="6.5" r="0.75" fill="currentColor"/></svg>
+      <div><strong>Manual monthly billing.</strong> SplashPass plans are not auto-renewing — you pay each cycle yourself via M-Pesa, right in the app. Upgrade, downgrade, or cancel any time with no penalties.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════
      OPERATORS — DARK SECTION
 ════════════════════════════════════ -->
 <section class="operator" id="operators" aria-labelledby="operator-heading">
@@ -2082,7 +2444,7 @@ a:focus-visible, button:focus-visible {
           <li><a href="#benefits">Features</a></li>
           <li><a href="#how-it-works">How it works</a></li>
           <li><a href="#pricing">Pricing</a></li>
-          <li><a href="#">Download app</a></li>
+          <li><a href="#" onclick="openDownloadModal(); return false;">Download app</a></li>
           <li><a href="#">Loyalty rewards</a></li>
         </ul>
       </div>
@@ -2124,6 +2486,55 @@ a:focus-visible, button:focus-visible {
     </div>
   </div>
 </footer>
+
+<!-- ═══════════════════════════════════
+     DOWNLOAD APP MODAL
+════════════════════════════════════ -->
+<div class="download-modal-overlay" id="downloadModal" role="dialog" aria-modal="true" aria-labelledby="download-modal-title" onclick="if(event.target===this) closeDownloadModal()">
+  <div class="download-modal">
+    <button type="button" class="download-modal-close" aria-label="Close" onclick="closeDownloadModal()">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 3L13 13M13 3L3 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </button>
+    <div class="download-modal-icon" aria-hidden="true">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="32" height="32">
+        <path d="M256 100 C256 100 160 220 160 300 C160 355 203 400 256 400 C309 400 352 355 352 300 C352 220 256 100 256 100Z" fill="#f5a623"/>
+        <path d="M296 210 C296 210 288 188 256 188 C228 188 210 204 210 224 C210 244 226 254 256 262 C286 270 306 282 306 306 C306 330 286 348 256 348 C224 348 210 328 210 328" stroke="#f0ede8" stroke-width="28" stroke-linecap="round" fill="none"/>
+      </svg>
+    </div>
+    <h3 id="download-modal-title">The app is coming to Play Store soon</h3>
+    <p>We're putting the finishing touches on the SplashPass Android app. In the meantime, book, pay, and manage your plan straight from your browser — it works just like the app.</p>
+    <div class="download-modal-stores">
+      <div class="download-modal-store-badge">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 20.5V3.5C3 3.04 3.27 2.66 3.67 2.46L13.5 12L3.67 21.54C3.27 21.34 3 20.96 3 20.5Z"/><path d="M16.81 8.88L5.5 2.5L14.5 11.5L16.81 8.88Z"/><path d="M20.16 10.81C20.93 11.27 20.93 12.73 20.16 13.19L17.89 14.5L15.39 12L17.89 9.5L20.16 10.81Z"/><path d="M5.5 21.5L16.81 15.12L14.5 12.5L5.5 21.5Z"/></svg>
+          Google Play <span class="store-soon">Soon</span>
+      </div>
+      <div class="download-modal-store-badge">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.5 1.5c.1 1.1-.3 2.2-1 3-0.8.9-1.9 1.5-3 1.4-.1-1.1.3-2.2 1-3 .8-.9 2-1.5 3-1.4zM20.5 17.2c-.5 1.1-1 2-1.7 2.9-1 1.4-2 2.7-3.5 2.7-1.4 0-1.9-.9-3.5-.9-1.6 0-2.2.9-3.5.9-1.5 0-2.6-1.4-3.6-2.8-2-2.9-3.5-8.1-1.5-11.6.9-1.7 2.6-2.8 4.4-2.8 1.4 0 2.3.9 3.5.9 1.1 0 1.8-.9 3.5-.9 1.6 0 3.2.9 4.2 2.4-3.7 2.1-3.1 7.5 1.7 9.2z"/></svg>
+          App Store <span class="store-soon">Soon</span>
+      </div>
+    </div>
+    <div class="download-modal-actions">
+      <a href="https://app.splashpass.site" class="btn-primary">
+        Use the web app now
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openDownloadModal() {
+    document.getElementById('downloadModal').classList.add('is-open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeDownloadModal() {
+    document.getElementById('downloadModal').classList.remove('is-open');
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeDownloadModal();
+  });
+</script>
 
 </body>
 </html>
