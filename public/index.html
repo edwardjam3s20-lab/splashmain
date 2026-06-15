@@ -1861,7 +1861,7 @@ async function register() {
       name: name, email: email, phone: phone,
       password: hashedPassword,  // store hash, never plain text
       role: 'customer', sub_status: 'trial',
-      sub_plan: null, sub_start: null,
+      plan: null, sub_start: null,
       loyalty_points: 0, loyalty_tier: 'Bronze'
     });
     var newUser = result[0];
