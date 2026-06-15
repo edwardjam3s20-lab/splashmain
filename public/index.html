@@ -1855,7 +1855,7 @@ async function register() {
       body: JSON.stringify({ p_password: pass }),
       prefer: 'return=representation'
     });
-    var hashedPassword = hashResult && hashResult[0] ? hashResult[0].hash_password : null;
+    var hashedPassword = hashResult || null;
     if (!hashedPassword) throw new Error('Password hashing failed.');
     var result = await createUser({
       name: name, email: email, phone: phone,
