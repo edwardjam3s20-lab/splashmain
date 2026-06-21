@@ -612,6 +612,11 @@ textarea { resize:vertical; min-height:80px; }
 .service-desc { font-size:11px; color:var(--muted); margin-top:2px; }
 .service-duration { font-size:10px; color:var(--muted); margin-top:3px; }
 .service-price { font-size:18px; font-weight:800; color:var(--gold); font-family:'Syne',sans-serif; white-space:nowrap; }
+.car-price-badge {
+  font-size:10px; font-weight:600;
+  background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.08);
+  color:var(--muted); padding:2px 8px; border-radius:999px;
+}
 .service-actions { display:flex; gap:8px; align-items:center; flex-direction:column; }
 .icon-btn {
   width:32px; height:32px; border-radius:8px; border:none;
@@ -1038,6 +1043,35 @@ textarea { resize:vertical; min-height:80px; }
     <div class="form-group">
       <label>Price (KSh)</label>
       <input type="number" id="svc-price" min="0" placeholder="e.g. 800">
+    </div>
+    <div class="form-group">
+      <label>Price by Car Type (optional — leave blank to use base price above)</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px">
+        <div>
+          <label style="margin-bottom:4px">Saloon</label>
+          <input type="number" id="svc-price-saloon" min="0" placeholder="e.g. 300" inputmode="decimal">
+        </div>
+        <div>
+          <label style="margin-bottom:4px">SUV</label>
+          <input type="number" id="svc-price-suv" min="0" placeholder="e.g. 500" inputmode="decimal">
+        </div>
+        <div>
+          <label style="margin-bottom:4px">Pickup</label>
+          <input type="number" id="svc-price-pickup" min="0" placeholder="e.g. 500" inputmode="decimal">
+        </div>
+        <div>
+          <label style="margin-bottom:4px">Van</label>
+          <input type="number" id="svc-price-van" min="0" placeholder="e.g. 600" inputmode="decimal">
+        </div>
+        <div>
+          <label style="margin-bottom:4px">Hatchback</label>
+          <input type="number" id="svc-price-hatchback" min="0" placeholder="e.g. 300" inputmode="decimal">
+        </div>
+        <div>
+          <label style="margin-bottom:4px">Coupe</label>
+          <input type="number" id="svc-price-coupe" min="0" placeholder="e.g. 350" inputmode="decimal">
+        </div>
+      </div>
     </div>
     <div class="form-group">
       <label>Duration (minutes)</label>
@@ -2156,6 +2190,12 @@ function freeWasher(id) {
 }
 
 // ── SERVICES TAB ──────────────────────────────────
+var CAR_TYPES = ['saloon', 'suv', 'pickup', 'van', 'hatchback', 'coupe'];
+var CAR_TYPE_LABELS = {
+  saloon: 'Saloon', suv: 'SUV', pickup: 'Pickup',
+  van: 'Van', hatchback: 'Hatch', coupe: 'Coupe'
+};
+
 async function renderServices() {
   var el = document.getElementById('services-list');
   el.innerHTML = '<div class="empty-state"><div class="splash-spinner" style="margin:0 auto"></div></div>';
@@ -2169,15 +2209,24 @@ async function renderServices() {
       return;
     }
     el.innerHTML = services.map(function(s) {
+      var carBadges = Object.keys(CAR_TYPE_LABELS).filter(function(t) {
+        return s['price_' + t] != null;
+      }).map(function(t) {
+        return '<span class="car-price-badge">' + CAR_TYPE_LABELS[t] + ': KSh ' +
+          Number(s['price_' + t]).toLocaleString() + '</span>';
+      }).join('');
+
       return '<div class="service-card">' +
         '<div class="service-icon-box">' + (s.icon||'🚿') + '</div>' +
         '<div class="service-info">' +
           '<div class="service-name">' + s.name + '</div>' +
           '<div class="service-desc">' + (s.description||'') + '</div>' +
           '<div class="service-duration">⭐ ' + (s.points_value||10) + ' pts · ⏱ ' + (s.duration||'—') + ' min</div>' +
+          (carBadges ? '<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px">' + carBadges + '</div>' : '') +
         '</div>' +
         '<div style="text-align:right">' +
           '<div class="service-price">KSh ' + Number(s.price).toLocaleString() + '</div>' +
+          '<div style="font-size:10px;color:var(--muted)">base price</div>' +
           '<div style="display:flex;gap:6px;margin-top:8px;justify-content:flex-end">' +
             '<button class="icon-btn edit" onclick="showServiceModal(\'' + s.id + '\')">✏</button>' +
             '<button class="icon-btn del" onclick="deleteService(\'' + s.id + '\')">🗑</button>' +
@@ -2192,6 +2241,12 @@ async function renderServices() {
 async function showServiceModal(id) {
   document.getElementById('service-modal-title').textContent = id ? 'Edit Service' : 'Add Service';
   document.getElementById('service-edit-id').value = id || '';
+
+  CAR_TYPES.forEach(function(t) {
+    var el = document.getElementById('svc-price-' + t);
+    if (el) el.value = '';
+  });
+
   if (id) {
     try {
       var res = await apiFetch('/api/operator/services');
@@ -2202,6 +2257,11 @@ async function showServiceModal(id) {
         document.getElementById('svc-price').value    = s.price || '';
         document.getElementById('svc-duration').value = s.duration || '';
         document.getElementById('svc-icon').value     = s.icon || '🚿';
+        CAR_TYPES.forEach(function(t) {
+          var el = document.getElementById('svc-price-' + t);
+          var val = s['price_' + t];
+          if (el && val != null) el.value = val;
+        });
       }
     } catch(e) {}
   } else {
@@ -2226,17 +2286,27 @@ async function saveService() {
   if (isNaN(price) || price < 0)   { toast('Please enter a valid price', true); return; }
   if (!currentOperator.wash_point_id) { toast('No wash point linked to account', true); return; }
 
+  var pricesByCarType = {};
+  CAR_TYPES.forEach(function(t) {
+    var el = document.getElementById('svc-price-' + t);
+    pricesByCarType[t] = el ? el.value.trim() : '';
+  });
+
   setBtn('save-service-btn', true, 'Saving...');
   try {
+    var payload = {
+      name: name, description: desc, price: price, duration: duration, icon: icon,
+      prices_by_car_type: pricesByCarType
+    };
     if (editId) {
       await apiFetch('/api/operator/services/' + editId, {
         method: 'PATCH',
-        body: JSON.stringify({ name: name, description: desc, price: price, duration: duration, icon: icon })
+        body: JSON.stringify(payload)
       });
     } else {
       await apiFetch('/api/operator/services', {
         method: 'POST',
-        body: JSON.stringify({ name: name, description: desc, price: price, duration: duration, icon: icon })
+        body: JSON.stringify(payload)
       });
     }
     closeModal('modal-service');
