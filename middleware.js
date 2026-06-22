@@ -30,14 +30,18 @@ function getSiteFromHost(hostname, opts = {}) {
   // Allow the operator React dev app (localhost) to call operator APIs
   if (hostname === 'localhost') return SITE.OPERATOR
 
+  // Allow proxied dev builds to identify themselves via header (all envs,
+  // since Vite proxy runs against the deployed Vercel instance which is
+  // always NODE_ENV=production).
+  const headerSite = opts.devSiteHeader?.toLowerCase()
+  if (headerSite === SITE.ADMIN || headerSite === SITE.OPERATOR || headerSite === SITE.CUSTOMER) {
+    return headerSite
+  }
+
   const host = (hostname || '').toLowerCase()
   const root = getRootDomain(host)
 
   if (process.env.NODE_ENV === 'development') {
-    const headerSite = opts.devSiteHeader?.toLowerCase()
-    if (headerSite === SITE.ADMIN || headerSite === SITE.OPERATOR || headerSite === SITE.CUSTOMER) {
-      return headerSite
-    }
     const devOverride = process.env.DEV_SITE?.toLowerCase()
     if (devOverride === SITE.ADMIN || devOverride === SITE.OPERATOR || devOverride === SITE.CUSTOMER) {
       return devOverride
