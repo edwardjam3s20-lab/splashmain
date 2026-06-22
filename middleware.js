@@ -27,6 +27,9 @@ function getRootDomain(hostname) {
 }
 
 function getSiteFromHost(hostname, opts = {}) {
+  // Allow the operator React dev app (localhost) to call operator APIs
+  if (hostname === 'localhost') return SITE.OPERATOR
+
   const host = (hostname || '').toLowerCase()
   const root = getRootDomain(host)
 
