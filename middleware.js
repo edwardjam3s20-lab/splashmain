@@ -10,6 +10,13 @@ const SITE = {
 
 const CANONICAL_ROOT = 'splashpass.site'
 
+// Origins allowed to call /api/operator/* from a browser cross-origin context.
+// localhost:5173 = Vite dev server; the Vercel URL = deployed operator React app.
+const OPERATOR_REACT_ORIGINS = new Set([
+  'http://localhost:5173',
+  'https://splashpass-operator-react.vercel.app',
+])
+
 function normalizeRootDomain(value) {
   const v = (value || '').toLowerCase().trim()
   if (!v || v === 'slashpass.site' || v.endsWith('.slashpass.site')) {
@@ -108,13 +115,6 @@ async function verifyOperatorSession(request) {
 
 const STATIC_EXT = /\.(?:html|css|js|mjs|json|svg|ico|png|jpe?g|webp|gif|woff2?|webmanifest|txt|map)$/i
 
-const ADMIN_PUBLIC_API = new Set([
-  '/api/auth/login',
-  '/api/auth/logout',
-  '/api/tfa/email-send',
-  '/api/tfa/email-verify',
-])
-
 const OPERATOR_PUBLIC_API = new Set([
   '/api/operator/auth/login',
   '/api/operator/auth/logout',
@@ -148,16 +148,55 @@ function isAdminPaymentsApi(pathname) {
   return pathname.startsWith('/api/operator-payments')
 }
 
+function corsHeaders(origin) {
+  return {
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Credentials': 'true',
+    'Access-Control-Allow-Methods': 'GET,POST,PATCH,DELETE,OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+  }
+}
+
 export async function middleware(request) {
   const hostname = hostnameFromRequest(request)
-  const site = getSiteFromHost(hostname, {
-    devSiteHeader: request.headers.get('x-splashpass-site'),
-  })
   const { pathname } = request.nextUrl
+  const requestOrigin = request.headers.get('origin') || ''
 
   if (pathname.startsWith('/_next')) {
     return NextResponse.next()
   }
+
+  // ── CORS + site-check bypass for the operator React app ──────────
+  // Requests from OPERATOR_REACT_ORIGINS are always treated as operator-site
+  // calls, regardless of what hostname the request hits. This covers both
+  // the Vite dev server (localhost:5173) and the deployed Vercel app.
+  if (isOperatorApi(pathname) && OPERATOR_REACT_ORIGINS.has(requestOrigin)) {
+    // Handle preflight
+    if (request.method === 'OPTIONS') {
+      return new NextResponse(null, {
+        status: 204,
+        headers: corsHeaders(requestOrigin),
+      })
+    }
+
+    // Auth check (same logic as the normal operator API path below)
+    if (!OPERATOR_PUBLIC_API.has(pathname)) {
+      const session = await verifyOperatorSession(request)
+      if (!session) {
+        const res = NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        Object.entries(corsHeaders(requestOrigin)).forEach(([k, v]) => res.headers.set(k, v))
+        return res
+      }
+    }
+
+    const response = NextResponse.next()
+    Object.entries(corsHeaders(requestOrigin)).forEach(([k, v]) => response.headers.set(k, v))
+    return response
+  }
+
+  const site = getSiteFromHost(hostname, {
+    devSiteHeader: request.headers.get('x-splashpass-site'),
+  })
 
   const url = request.nextUrl.clone()
 
@@ -250,11 +289,9 @@ export async function middleware(request) {
   // CUSTOMER site (splashpass.site and app.splashpass.site)
   if (pathname === '/' || pathname === '') {
     if (hostname === 'splashpass.site' || hostname === 'www.splashpass.site') {
-      // Root domain → landing page
       url.pathname = '/splashpass-landing-page.html'
       return NextResponse.rewrite(url)
     }
-    // app.splashpass.site (and any other subdomain) → customer app
     url.pathname = '/index.html'
     return NextResponse.rewrite(url)
   }
