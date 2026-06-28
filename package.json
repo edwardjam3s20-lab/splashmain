@@ -17,6 +17,7 @@
     "posthog-js": "^1.384.0",
     "react": "^18",
     "react-dom": "^18",
-    "resend": "^3"
+    "resend": "^3",
+    "web-push": "^3.6.7"
   }
 }

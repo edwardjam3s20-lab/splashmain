@@ -32,6 +32,24 @@ function isUniqueViolation(error) {
   return error?.code === '23505'
 }
 
+// Fire-and-forget SMS via the existing /api/send-sms endpoint. Booking
+// accept/reject should never fail (and the operator should never see an
+// error) just because the SMS provider hiccupped — the status update is
+// the thing that matters; the text is a courtesy on top of it. Errors are
+// logged server-side only.
+async function notifyCustomer(request, booking, message) {
+  try {
+    const origin = new URL(request.url).origin
+    await fetch(`${origin}/api/send-sms`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: booking.user_phone || booking.user_email, message }),
+    })
+  } catch (e) {
+    console.error('notifyCustomer SMS failed:', e.message)
+  }
+}
+
 export async function GET(_request, { params }) {
   const result = await requireOperator()
   if (result.error) {
@@ -61,8 +79,36 @@ export async function PATCH(request, { params }) {
 
   const booking = found.booking
   const updates = {}
+  let smsMessage = null
 
   switch (body.action) {
+    case 'accept': {
+      if (booking.status !== 'pending') {
+        return NextResponse.json(
+          { error: `Cannot accept a booking with status "${booking.status}".` },
+          { status: 409 }
+        )
+      }
+      updates.status = 'accepted'
+      updates.accepted_at = new Date().toISOString()
+      smsMessage = `SplashPass: ${booking.location} accepted your booking request for ${booking.date} at ${booking.time}. Complete payment in the app to confirm.`
+      break
+    }
+
+    case 'reject': {
+      if (booking.status !== 'pending') {
+        return NextResponse.json(
+          { error: `Cannot reject a booking with status "${booking.status}".` },
+          { status: 409 }
+        )
+      }
+      updates.status = 'rejected'
+      updates.rejected_at = new Date().toISOString()
+      updates.rejection_reason = body.reason || null
+      smsMessage = `SplashPass: ${booking.location} could not accept your booking for ${booking.date} at ${booking.time}. Please book another wash point in the app.`
+      break
+    }
+
     case 'complete': {
       updates.status = 'completed'
       updates.points_earned = body.points_earned ?? booking.points_earned ?? 10
@@ -147,7 +193,22 @@ export async function PATCH(request, { params }) {
         { status: 500 }
       )
     }
+    if (msg.includes('accepted_at') || msg.includes('rejected_at') || msg.includes('rejection_reason')) {
+      return NextResponse.json(
+        {
+          error:
+            'Database missing accept/reject columns. Run the booking_lifecycle migration in Supabase SQL editor (see splashpass-react-poc/splashpass-react/supabase/booking_lifecycle.sql).',
+        },
+        { status: 500 }
+      )
+    }
     return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  // Fire after the write succeeds — no point texting the customer about a
+  // status change that didn't actually persist.
+  if (smsMessage) {
+    await notifyCustomer(request, data, smsMessage)
   }
 
   return NextResponse.json({ booking: data })
