@@ -6,6 +6,21 @@ import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 
+const ALLOWED_ORIGIN = process.env.CUSTOMER_APP_ORIGIN || 'https://splashpass-react-poc.vercel.app'
+
+function corsHeaders() {
+  return {
+    'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Credentials': 'true',
+  }
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 200, headers: corsHeaders() })
+}
+
 const TIERS = [
   { name: 'Bronze',   min: 0,    max: 499,  discount_addon: 0,  discount_premium: 0  },
   { name: 'Silver',   min: 500,  max: 1499, discount_addon: 5,  discount_premium: 0  },
@@ -30,13 +45,12 @@ function getTierInfo(points) {
 export async function GET() {
   const session = await getSession()
   if (!session) {
-    return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorised' }, { status: 401, headers: corsHeaders() })
   }
 
   const email = session.email
   const supabase = getSupabaseAdmin()
 
-  // Fetch profile — loyalty_points and loyalty_tier
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('loyalty_points, loyalty_tier, name')
@@ -44,13 +58,12 @@ export async function GET() {
     .single()
 
   if (profileError) {
-    return NextResponse.json({ error: profileError.message }, { status: 500 })
+    return NextResponse.json({ error: profileError.message }, { status: 500, headers: corsHeaders() })
   }
 
   const points   = profile.loyalty_points || 0
   const tierInfo = getTierInfo(points)
 
-  // Fetch active redemptions
   const { data: redemptions } = await supabase
     .from('redemptions')
     .select('id, redemption_type, points_spent, expires_at, metadata, created_at')
@@ -67,5 +80,5 @@ export async function GET() {
     next_tier_at:     tierInfo.next_tier_at,
     points_to_next:   tierInfo.points_to_next,
     active_redemptions: redemptions || [],
-  })
+  }, { headers: corsHeaders() })
 }
