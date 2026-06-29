@@ -9,5 +9,11 @@
       "source": "/ingest/:path*",
       "destination": "https://eu.i.posthog.com/:path*"
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/day-before-reminders",
+      "schedule": "0 17 * * *"
+    }
   ]
 }
