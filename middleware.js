@@ -137,7 +137,12 @@ function isAdminProtectedApi(pathname) {
 }
 
 function isAdminAuthApi(pathname) {
-  return pathname.startsWith('/api/auth') || pathname.startsWith('/api/tfa')
+  // NOTE: /api/auth/* (login, register, logout) is customer-facing and
+  // handles its own CORS via CUSTOMER_APP_ORIGIN in each route file — it
+  // must NOT be gated to the admin subdomain here. Only /api/tfa/* is
+  // genuinely admin-only (no CORS headers of its own, same-origin calls
+  // from admin.splashpass.site only).
+  return pathname.startsWith('/api/tfa')
 }
 
 function isOperatorApi(pathname) {
