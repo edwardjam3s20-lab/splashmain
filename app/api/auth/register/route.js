@@ -1,11 +1,15 @@
-// app/api/auth/register/route.js
-// POST — create customer account, set session cookie, return user
+// api/auth/register/route.js
+// POST — create customer account (unverified), send email OTP, return pendingToken
+// Flow: register → verify email → verify phone → fully logged in
 
 import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase'
-import { createSession, setSessionCookie } from '@/lib/session'
+import { createSession } from '@/lib/session'
+import { Resend } from 'resend'
 
-const ALLOWED_ORIGIN = process.env.CUSTOMER_APP_ORIGIN || 'https://splashpass-react-poc.vercel.app'
+const resend = new Resend(process.env.RESEND_API_KEY)
+
+const ALLOWED_ORIGIN = process.env.CUSTOMER_APP_ORIGIN || 'https://splashpass-react.vercel.app'
 
 function corsHeaders() {
   return {
@@ -20,75 +24,138 @@ export async function OPTIONS() {
   return new NextResponse(null, { status: 200, headers: corsHeaders() })
 }
 
+function generateCode() {
+  return Math.floor(100000 + Math.random() * 900000).toString()
+}
+
 export async function POST(request) {
   const { name, email, phone, password } = await request.json()
 
   if (!name || !email || !phone || !password) {
-    return NextResponse.json({ error: 'All fields required' }, { status: 400, headers: corsHeaders() })
+    return NextResponse.json(
+      { error: 'All fields required' },
+      { status: 400, headers: corsHeaders() }
+    )
   }
   if (password.length < 6) {
-    return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400, headers: corsHeaders() })
+    return NextResponse.json(
+      { error: 'Password must be at least 6 characters' },
+      { status: 400, headers: corsHeaders() }
+    )
+  }
+
+  // Basic phone format check — must start with + and have 7-15 digits
+  if (!/^\+\d{7,15}$/.test(phone.trim())) {
+    return NextResponse.json(
+      { error: 'Phone must be in international format e.g. +254712345678' },
+      { status: 400, headers: corsHeaders() }
+    )
   }
 
   const supabase = getSupabaseAdmin()
   const cleanEmail = email.toLowerCase().trim()
+  const cleanPhone = phone.trim()
 
-  // Check if account already exists
+  // Check for existing account
   const { data: existing } = await supabase
     .from('profiles')
-    .select('id')
+    .select('id, email_verified, phone_verified')
     .eq('email', cleanEmail)
     .maybeSingle()
 
   if (existing) {
-    return NextResponse.json({ error: 'Account already exists' }, { status: 409, headers: corsHeaders() })
+    return NextResponse.json(
+      { error: 'An account with this email already exists' },
+      { status: 409, headers: corsHeaders() }
+    )
   }
 
-  // Hash password server-side via pgcrypto RPC
+  // Hash password
   const { data: hashData, error: hashError } = await supabase.rpc('hash_password', {
     p_password: password,
   })
 
   if (hashError || !hashData) {
-    return NextResponse.json({ error: 'Password hashing failed' }, { status: 500, headers: corsHeaders() })
+    return NextResponse.json(
+      { error: 'Registration failed. Please try again.' },
+      { status: 500, headers: corsHeaders() }
+    )
   }
 
   const hashedPassword = Array.isArray(hashData) ? hashData[0]?.hash_password : hashData
 
-  if (!hashedPassword) {
-    return NextResponse.json({ error: 'Password hashing failed' }, { status: 500, headers: corsHeaders() })
-  }
-
-  // Create profile
+  // Create profile — unverified by default
   const { data: newUsers, error: insertError } = await supabase
     .from('profiles')
     .insert({
       name,
       email:          cleanEmail,
-      phone,
+      phone:          cleanPhone,
       password:       hashedPassword,
       role:           'customer',
       sub_status:     'trial',
       loyalty_points: 0,
       loyalty_tier:   'Bronze',
+      email_verified: false,
+      phone_verified: false,
     })
     .select()
 
   if (insertError) {
-    return NextResponse.json({ error: insertError.message }, { status: 500, headers: corsHeaders() })
+    return NextResponse.json(
+      { error: insertError.message },
+      { status: 500, headers: corsHeaders() }
+    )
   }
 
   const user = newUsers[0]
   delete user.password
 
-  // Create JWT session
-  const token = await createSession({
-    email: user.email,
+  // Create a pending JWT — same mechanism as TFA, not a full session yet.
+  // The client holds this and passes it to /verify/email-send and
+  // /verify/phone-send so we can validate the request without a session.
+  const pendingToken = await createSession({
+    email: cleanEmail,
     name:  user.name,
     role:  user.role,
+    pending: true,   // flag so middleware can distinguish from a full session
   })
 
-  const res = NextResponse.json({ ok: true, user }, { headers: corsHeaders() })
-  setSessionCookie(res, token)
-  return res
+  // Immediately send email OTP so the user lands on the verify screen
+  // with a code already in their inbox
+  const code = generateCode()
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString()
+
+  await supabase.from('customer_verification').upsert(
+    {
+      email:             cleanEmail,
+      email_code:        code,
+      email_code_expires_at: expiresAt,
+    },
+    { onConflict: 'email' }
+  )
+
+  await resend.emails.send({
+    from: 'SplashPass <onboarding@resend.dev>',
+    to:   cleanEmail,
+    subject: 'Verify your SplashPass email',
+    html: `
+      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0f1d30;border-radius:16px;">
+        <div style="font-size:28px;font-weight:800;color:#f0f4f8;margin-bottom:8px;">SplashPass</div>
+        <div style="font-size:15px;color:#f0f4f8;margin-bottom:24px;">Hi ${user.name}, verify your email to get started.</div>
+        <div style="background:#1e3050;border-radius:12px;padding:24px;text-align:center;margin-bottom:24px;">
+          <div style="font-size:42px;font-weight:800;letter-spacing:12px;color:#f5a623;font-family:monospace;">${code}</div>
+        </div>
+        <div style="font-size:13px;color:#7a90a8;line-height:1.6;">
+          This code expires in <strong style="color:#f0f4f8;">10 minutes</strong>.<br>
+          If you didn't create a SplashPass account, you can ignore this email.
+        </div>
+      </div>
+    `,
+  })
+
+  return NextResponse.json(
+    { ok: true, user, pendingToken },
+    { headers: corsHeaders() }
+  )
 }

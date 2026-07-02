@@ -1,16 +1,14 @@
-// app/api/auth/login/route.js
-// POST — verify customer password, set session cookie, return user
+// api/auth/login/route.js
+// POST — verify password, check verification status, set session or return pendingToken
 
 import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase'
 import { createSession, setSessionCookie } from '@/lib/session'
+import { Resend } from 'resend'
 
-// Credentialed cross-origin requests (cookies included) cannot use a
-// wildcard Access-Control-Allow-Origin — the browser rejects that
-// combination outright. The exact customer-app origin must be echoed
-// back instead. Set CUSTOMER_APP_ORIGIN to the real deployed URL, e.g.
-// https://splashpass-react-poc.vercel.app (no trailing slash).
-const ALLOWED_ORIGIN = process.env.CUSTOMER_APP_ORIGIN || 'https://splashpass-react-poc.vercel.app'
+const resend = new Resend(process.env.RESEND_API_KEY)
+
+const ALLOWED_ORIGIN = process.env.CUSTOMER_APP_ORIGIN || 'https://splashpass-react.vercel.app'
 
 function corsHeaders() {
   return {
@@ -25,46 +23,112 @@ export async function OPTIONS() {
   return new NextResponse(null, { status: 200, headers: corsHeaders() })
 }
 
+function generateCode() {
+  return Math.floor(100000 + Math.random() * 900000).toString()
+}
+
 export async function POST(request) {
   const { email, password } = await request.json()
 
   if (!email || !password) {
-    return NextResponse.json({ error: 'Email and password required' }, { status: 400, headers: corsHeaders() })
+    return NextResponse.json(
+      { error: 'Email and password required' },
+      { status: 400, headers: corsHeaders() }
+    )
   }
 
   const supabase = getSupabaseAdmin()
 
-  // Verify password via existing RPC — password checked server-side with pgcrypto
   const { data, error } = await supabase.rpc('verify_password', {
     p_email:    email.toLowerCase().trim(),
     p_password: password,
   })
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500, headers: corsHeaders() })
+    return NextResponse.json(
+      { error: error.message },
+      { status: 500, headers: corsHeaders() }
+    )
   }
 
   if (!data || data.length === 0) {
-    return NextResponse.json({ error: 'Invalid email or password' }, { status: 401, headers: corsHeaders() })
+    return NextResponse.json(
+      { error: 'Invalid email or password' },
+      { status: 401, headers: corsHeaders() }
+    )
   }
 
   const user = data[0]
-
-  if (user.role === 'operator') {
-    return NextResponse.json({ error: 'Use the operator app' }, { status: 403, headers: corsHeaders() })
-  }
-
-  // Create JWT session — same mechanism as operator auth
-  const token = await createSession({
-    email:    user.email,
-    name:     user.name,
-    role:     user.role,
-  })
-
-  // Strip password before sending to client
   delete user.password
 
-  const res = NextResponse.json({ ok: true, user, pendingToken: token }, { headers: corsHeaders() })
+  if (user.role === 'operator') {
+    return NextResponse.json(
+      { error: 'Use the operator app to log in' },
+      { status: 403, headers: corsHeaders() }
+    )
+  }
+
+  // If either verification is incomplete, return a pendingToken so the
+  // client can resume the verification flow rather than blocking silently.
+  if (!user.email_verified || !user.phone_verified) {
+    const pendingToken = await createSession({
+      email:   user.email,
+      name:    user.name,
+      role:    user.role,
+      pending: true,
+    })
+
+    // Re-send whichever OTP they still need so they land on the right
+    // screen with a fresh code already in their inbox/messages.
+    const cleanEmail = user.email
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString()
+
+    if (!user.email_verified) {
+      const code = generateCode()
+      await supabase.from('customer_verification').upsert(
+        { email: cleanEmail, email_code: code, email_code_expires_at: expiresAt },
+        { onConflict: 'email' }
+      )
+      await resend.emails.send({
+        from: 'SplashPass <onboarding@resend.dev>',
+        to:   cleanEmail,
+        subject: 'Verify your SplashPass email',
+        html: `
+          <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0f1d30;border-radius:16px;">
+            <div style="font-size:28px;font-weight:800;color:#f0f4f8;margin-bottom:8px;">SplashPass</div>
+            <div style="font-size:15px;color:#f0f4f8;margin-bottom:24px;">Your email verification code:</div>
+            <div style="background:#1e3050;border-radius:12px;padding:24px;text-align:center;margin-bottom:24px;">
+              <div style="font-size:42px;font-weight:800;letter-spacing:12px;color:#f5a623;font-family:monospace;">${code}</div>
+            </div>
+            <div style="font-size:13px;color:#7a90a8;">Expires in 10 minutes.</div>
+          </div>
+        `,
+      })
+    }
+
+    return NextResponse.json(
+      {
+        ok:           false,
+        pendingToken,
+        user,
+        emailVerified: user.email_verified,
+        phoneVerified: user.phone_verified,
+      },
+      { headers: corsHeaders() }
+    )
+  }
+
+  // Fully verified — issue real session
+  const token = await createSession({
+    email: user.email,
+    name:  user.name,
+    role:  user.role,
+  })
+
+  const res = NextResponse.json(
+    { ok: true, user, pendingToken: token },
+    { headers: corsHeaders() }
+  )
   setSessionCookie(res, token)
   return res
 }
