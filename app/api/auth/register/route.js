@@ -44,7 +44,6 @@ export async function POST(request) {
     )
   }
 
-  // Basic phone format check — must start with + and have 7-15 digits
   if (!/^\+\d{7,15}$/.test(phone.trim())) {
     return NextResponse.json(
       { error: 'Phone must be in international format e.g. +254712345678' },
@@ -56,7 +55,6 @@ export async function POST(request) {
   const cleanEmail = email.toLowerCase().trim()
   const cleanPhone = phone.trim()
 
-  // Check for existing account
   const { data: existing } = await supabase
     .from('profiles')
     .select('id, email_verified, phone_verified')
@@ -70,7 +68,6 @@ export async function POST(request) {
     )
   }
 
-  // Hash password
   const { data: hashData, error: hashError } = await supabase.rpc('hash_password', {
     p_password: password,
   })
@@ -84,7 +81,6 @@ export async function POST(request) {
 
   const hashedPassword = Array.isArray(hashData) ? hashData[0]?.hash_password : hashData
 
-  // Create profile — unverified by default
   const { data: newUsers, error: insertError } = await supabase
     .from('profiles')
     .insert({
@@ -111,32 +107,27 @@ export async function POST(request) {
   const user = newUsers[0]
   delete user.password
 
-  // Create a pending JWT — same mechanism as TFA, not a full session yet.
-  // The client holds this and passes it to /verify/email-send and
-  // /verify/phone-send so we can validate the request without a session.
   const pendingToken = await createSession({
     email: cleanEmail,
     name:  user.name,
     role:  user.role,
-    pending: true,   // flag so middleware can distinguish from a full session
+    pending: true,
   })
 
-  // Immediately send email OTP so the user lands on the verify screen
-  // with a code already in their inbox
   const code = generateCode()
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString()
 
   await supabase.from('customer_verification').upsert(
     {
-      email:             cleanEmail,
-      email_code:        code,
+      email:                 cleanEmail,
+      email_code:            code,
       email_code_expires_at: expiresAt,
     },
     { onConflict: 'email' }
   )
 
   await resend.emails.send({
-    from: 'SplashPass <onboarding@resend.dev>',
+    from: 'SplashPass <noreply@splashpass.site>',
     to:   cleanEmail,
     subject: 'Verify your SplashPass email',
     html: `

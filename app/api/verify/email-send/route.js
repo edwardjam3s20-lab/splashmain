@@ -81,7 +81,7 @@ export async function POST(request) {
   )
 
   const { error: emailError } = await resend.emails.send({
-    from: 'SplashPass <onboarding@resend.dev>',
+    from: 'SplashPass <noreply@splashpass.site>',
     to:   cleanEmail,
     subject: 'Verify your SplashPass email',
     html: `
