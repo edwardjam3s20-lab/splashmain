@@ -77,12 +77,17 @@ export async function POST(request) {
     )
   }
 
+  // Normalize phone to WapiSMS's expected format: 254XXXXXXXXX (no +, no leading 0)
+  const normalizedPhone = profile.phone
+    .replace(/\D/g, '')          // strip non-digits (removes the +)
+    .replace(/^0/, '254')        // convert leading 0 -> 254
+
   // Send OTP via WapiSMS — they generate, send, and store the code
   const formData = new FormData()
   formData.append('secret', process.env.WAPISMS_API_SECRET)
   formData.append('type', 'sms')
   formData.append('message', 'Your SplashPass verification code is {{otp}}. Valid for 10 minutes.')
-  formData.append('phone', profile.phone)
+  formData.append('phone', normalizedPhone)
   formData.append('expire', '600') // 10 minutes in seconds
 
   try {
