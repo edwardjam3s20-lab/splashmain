@@ -82,6 +82,15 @@ export async function POST(request) {
     .replace(/\D/g, '')          // strip non-digits (removes the +)
     .replace(/^0/, '254')        // convert leading 0 -> 254
 
+  // TEMP DIAGNOSTIC — remove once WapiSMS 400 is resolved
+  console.log('WapiSMS diagnostic:', {
+    rawPhoneFromDB: profile.phone,
+    normalizedPhone,
+    normalizedLength: normalizedPhone.length,
+    secretIsSet: !!process.env.WAPISMS_API_SECRET,
+    secretLength: process.env.WAPISMS_API_SECRET?.length || 0,
+  })
+
   // Send OTP via WapiSMS — they generate, send, and store the code
   const formData = new FormData()
   formData.append('secret', process.env.WAPISMS_API_SECRET)
