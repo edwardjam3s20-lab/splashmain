@@ -1,7 +1,6 @@
-// api/verify/phone-verify/route.js
-// POST — confirm phone OTP, mark phone_verified, issue full session cookie
+// app/api/verify/phone-verify/route.js
+// POST — verify phone OTP via WapiSMS, mark phone_verified, issue full session
 // Body: { email, pendingToken, code }
-// This is the final step — on success the user is fully authenticated.
 
 import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase'
@@ -55,47 +54,41 @@ export async function POST(request) {
     )
   }
 
+  // Verify OTP with WapiSMS — they stored the code when we called send/otp
+  try {
+    const url = new URL('https://wapisms.com/api/get/otp')
+    url.searchParams.set('secret', process.env.WAPISMS_API_SECRET)
+    url.searchParams.set('otp', code.trim())
+
+    const res = await fetch(url.toString(), {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    })
+
+    const data = await res.json()
+
+    // WapiSMS returns data: true when OTP matches, data: false when it doesn't
+    if (!res.ok || data.status !== 200 || data.data !== true) {
+      return NextResponse.json(
+        { error: 'Incorrect code. Please try again.' },
+        { status: 400, headers: corsHeaders() }
+      )
+    }
+  } catch (err) {
+    console.error('WapiSMS verify error:', err)
+    return NextResponse.json(
+      { error: 'Verification failed. Please try again.' },
+      { status: 500, headers: corsHeaders() }
+    )
+  }
+
+  // OTP verified — mark phone_verified on profile
   const supabase = getSupabaseAdmin()
 
-  // Fetch stored code
-  const { data: row } = await supabase
-    .from('customer_verification')
-    .select('phone_code, phone_code_expires_at')
+  await supabase
+    .from('profiles')
+    .update({ phone_verified: true })
     .eq('email', cleanEmail)
-    .single()
-
-  if (!row?.phone_code) {
-    return NextResponse.json(
-      { error: 'No code found. Please request a new one.' },
-      { status: 400, headers: corsHeaders() }
-    )
-  }
-
-  if (new Date() > new Date(row.phone_code_expires_at)) {
-    return NextResponse.json(
-      { error: 'Code expired. Please request a new one.' },
-      { status: 400, headers: corsHeaders() }
-    )
-  }
-
-  if (code.trim() !== row.phone_code) {
-    return NextResponse.json(
-      { error: 'Incorrect code. Please try again.' },
-      { status: 400, headers: corsHeaders() }
-    )
-  }
-
-  // Clear used code and mark phone verified
-  await Promise.all([
-    supabase
-      .from('customer_verification')
-      .update({ phone_code: null, phone_code_expires_at: null })
-      .eq('email', cleanEmail),
-    supabase
-      .from('profiles')
-      .update({ phone_verified: true })
-      .eq('email', cleanEmail),
-  ])
 
   // Fetch full profile to return to client
   const { data: profile } = await supabase
@@ -106,7 +99,7 @@ export async function POST(request) {
 
   delete profile.password
 
-  // Issue real session — both verified, user is now fully authenticated
+  // Issue real session — both verified, user is fully authenticated
   const token = await createSession({
     email: profile.email,
     name:  profile.name,

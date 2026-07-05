@@ -1,19 +1,11 @@
-// api/verify/phone-send/route.js
-// POST — send SMS OTP to phone number for customer verification
+// app/api/verify/phone-send/route.js
+// POST — send phone OTP via WapiSMS
 // Body: { email, pendingToken }
-// Uses Africa's Talking SMS (same provider as booking reminders)
 
 import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase'
 import { checkRateLimit } from '@/lib/rateLimit'
 import { jwtVerify } from 'jose'
-import AfricasTalking from 'africastalking'
-
-const at = AfricasTalking({
-  apiKey:   process.env.AT_API_KEY,
-  username: process.env.AT_USERNAME || 'sandbox',
-})
-const sms = at.SMS
 
 const SECRET = new TextEncoder().encode(
   process.env.SESSION_SECRET || 'fallback_secret_32_chars_minimum!!'
@@ -32,10 +24,6 @@ function corsHeaders() {
 
 export async function OPTIONS() {
   return new NextResponse(null, { status: 200, headers: corsHeaders() })
-}
-
-function generateCode() {
-  return Math.floor(100000 + Math.random() * 900000).toString()
 }
 
 export async function POST(request) {
@@ -75,7 +63,7 @@ export async function POST(request) {
 
   const supabase = getSupabaseAdmin()
 
-  // Get user's phone number from profiles
+  // Get user's phone number
   const { data: profile } = await supabase
     .from('profiles')
     .select('phone')
@@ -89,26 +77,31 @@ export async function POST(request) {
     )
   }
 
-  const code = generateCode()
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString()
-
-  await supabase.from('customer_verification').upsert(
-    {
-      email:                 cleanEmail,
-      phone_code:            code,
-      phone_code_expires_at: expiresAt,
-    },
-    { onConflict: 'email' }
-  )
+  // Send OTP via WapiSMS — they generate, send, and store the code
+  const formData = new FormData()
+  formData.append('secret', process.env.WAPISMS_API_SECRET)
+  formData.append('type', 'sms')
+  formData.append('message', 'Your SplashPass verification code is {{otp}}. Valid for 10 minutes.')
+  formData.append('phone', profile.phone)
+  formData.append('expire', '600') // 10 minutes in seconds
 
   try {
-    await sms.send({
-      to:      [profile.phone],
-      message: `Your SplashPass verification code is ${code}. Valid for 10 minutes. Do not share this code.`,
-      from:    process.env.AT_SENDER_ID || undefined,
+    const res = await fetch('https://wapisms.com/api/send/otp', {
+      method: 'POST',
+      body: formData,
     })
-  } catch (smsError) {
-    console.error('SMS error:', smsError)
+
+    const data = await res.json()
+
+    if (!res.ok || data.status !== 200) {
+      console.error('WapiSMS OTP send error:', data)
+      return NextResponse.json(
+        { error: 'Failed to send SMS. Please try again.' },
+        { status: 500, headers: corsHeaders() }
+      )
+    }
+  } catch (err) {
+    console.error('WapiSMS network error:', err)
     return NextResponse.json(
       { error: 'Failed to send SMS. Please try again.' },
       { status: 500, headers: corsHeaders() }
