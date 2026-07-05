@@ -1,9 +1,11 @@
-// api/verify/email-verify/route.js
-// POST — confirm 6-digit email OTP, mark email_verified on profile
+// app/api/verify/email-verify/route.js
+// POST — confirm 6-digit email OTP, mark email_verified, issue full session
+// Phone verification is deferred — users can verify phone later from Profile.
 // Body: { email, pendingToken, code }
 
 import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase'
+import { createSession, setSessionCookie } from '@/lib/session'
 import { jwtVerify } from 'jose'
 
 const SECRET = new TextEncoder().encode(
@@ -35,8 +37,9 @@ export async function POST(request) {
     )
   }
 
-  // Validate pending token
   const cleanEmail = email.toLowerCase().trim()
+
+  // Validate pending token
   try {
     const { payload } = await jwtVerify(pendingToken, SECRET)
     if (payload.email !== cleanEmail) {
@@ -82,7 +85,7 @@ export async function POST(request) {
     )
   }
 
-  // Clear used code and mark email verified on profile
+  // Clear used code and mark email verified
   await Promise.all([
     supabase
       .from('customer_verification')
@@ -94,5 +97,26 @@ export async function POST(request) {
       .eq('email', cleanEmail),
   ])
 
-  return NextResponse.json({ ok: true }, { headers: corsHeaders() })
+  // Fetch full profile to return to client
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('email', cleanEmail)
+    .single()
+
+  delete profile.password
+
+  // Issue full session — phone verification deferred
+  const token = await createSession({
+    email: profile.email,
+    name:  profile.name,
+    role:  profile.role,
+  })
+
+  const res = NextResponse.json(
+    { ok: true, user: profile },
+    { headers: corsHeaders() }
+  )
+  setSessionCookie(res, token)
+  return res
 }
