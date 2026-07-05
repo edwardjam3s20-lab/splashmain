@@ -83,13 +83,21 @@ export async function POST(request) {
     .replace(/^0/, '254')        // convert leading 0 -> 254
 
   // TEMP DIAGNOSTIC — remove once WapiSMS 400 is resolved
-  console.log('WapiSMS diagnostic:', {
+  console.log('WapiSMS phone diagnostic:', {
     rawPhoneFromDB: profile.phone,
     normalizedPhone,
     normalizedLength: normalizedPhone.length,
-    secretIsSet: !!process.env.WAPISMS_API_SECRET,
-    secretLength: process.env.WAPISMS_API_SECRET?.length || 0,
   })
+
+  // TEMP DIAGNOSTIC — log exact outgoing payload, remove once WapiSMS 400 is resolved
+  const outgoingPayload = {
+    secret: process.env.WAPISMS_API_SECRET ? '[REDACTED - length ' + process.env.WAPISMS_API_SECRET.length + ']' : '[MISSING]',
+    type: 'sms',
+    message: 'Your SplashPass verification code is {{otp}}. Valid for 10 minutes.',
+    phone: normalizedPhone,
+    expire: '600',
+  }
+  console.log('WapiSMS outgoing payload:', outgoingPayload)
 
   // Send OTP via WapiSMS — they generate, send, and store the code
   const formData = new FormData()
@@ -105,17 +113,44 @@ export async function POST(request) {
       body: formData,
     })
 
-    const data = await res.json()
+    // Capture response metadata before touching the body
+    const responseHeaders = {}
+    res.headers.forEach((value, key) => { responseHeaders[key] = value })
 
-    if (!res.ok || data.status !== 200) {
-      console.error('WapiSMS OTP send error:', data)
+    // Read as text FIRST — if WapiSMS ever returns an HTML error page
+    // (e.g. a Cloudflare block, gateway timeout, or misrouted request),
+    // res.json() would throw and we'd lose the actual error content.
+    const rawText = await res.text()
+
+    let data = null
+    let parseError = null
+    try {
+      data = JSON.parse(rawText)
+    } catch (e) {
+      parseError = e.message
+    }
+
+    if (!res.ok || !data || data.status !== 200) {
+      console.error('WapiSMS OTP send error — FULL DETAIL:', {
+        httpStatus: res.status,
+        httpStatusText: res.statusText,
+        responseHeaders,
+        rawResponseText: rawText,
+        parsedData: data,
+        jsonParseError: parseError,
+        payloadSent: outgoingPayload,
+      })
       return NextResponse.json(
         { error: 'Failed to send SMS. Please try again.' },
         { status: 500, headers: corsHeaders() }
       )
     }
   } catch (err) {
-    console.error('WapiSMS network error:', err)
+    console.error('WapiSMS network/fetch error:', {
+      message: err.message,
+      stack: err.stack,
+      payloadSent: outgoingPayload,
+    })
     return NextResponse.json(
       { error: 'Failed to send SMS. Please try again.' },
       { status: 500, headers: corsHeaders() }
