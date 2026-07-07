@@ -4,6 +4,7 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase'
 import { createSession, setSessionCookie } from '@/lib/session'
+import { checkRateLimit, resetRateLimit } from '@/lib/rateLimit'
 import { Resend } from 'resend'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
@@ -28,6 +29,15 @@ function generateCode() {
 }
 
 export async function POST(request) {
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+  const limit = checkRateLimit(`cust:${ip}`)
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: `Too many attempts. Try again in ${limit.retryAfter}s.` },
+      { status: 429, headers: corsHeaders() }
+    )
+  }
+
   const { email, password } = await request.json()
 
   if (!email || !password) {
@@ -67,6 +77,8 @@ export async function POST(request) {
       { status: 403, headers: corsHeaders() }
     )
   }
+
+  resetRateLimit(`cust:${ip}`)
 
   // If either verification is incomplete, return a pendingToken so the
   // client can resume the verification flow rather than blocking silently.

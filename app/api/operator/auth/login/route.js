@@ -64,7 +64,18 @@ export async function POST(request) {
       .eq('email', normalizedEmail)
       .maybeSingle()
 
-    if (profile?.password === normalizedPassword) {
+    // Was a raw `profile?.password === normalizedPassword` string compare,
+    // which only works if profiles.password is stored in directly-
+    // comparable (plaintext) form — and it confirmed it is. Reusing
+    // verifyOperatorPassword() here (already imported above, already
+    // trusted for op.password two lines up) means this check works
+    // correctly whether profiles.password is currently plaintext or has
+    // since been migrated to a hash, with no further edits needed here.
+    // This does NOT hash profiles.password at rest — that migration
+    // still needs to happen in the actual customer signup/login route,
+    // the same way operators.password already gets rehashed on login
+    // below via isPlaintextPassword()/hashOperatorPassword().
+    if (profile?.password && verifyOperatorPassword(normalizedPassword, profile.password)) {
       return NextResponse.json({
         error:
           'That is your customer app password. Operator login uses a separate password — ask admin to click “Reset password” on your operator card.',
