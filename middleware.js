@@ -84,10 +84,16 @@ function absoluteUrlForSite(site, pathname, request) {
 const ADMIN_COOKIE = 'splashpass_session'
 const OPERATOR_COOKIE = 'splashpass_operator_session'
 
+// SECURITY: no fallback secret -- see lib/session.js for why. Every request
+// that needs a session check will throw (caught below, treated as
+// "unauthenticated") rather than silently verifying against a public
+// hardcoded string if SESSION_SECRET was never configured.
 function getSecretKey() {
-  return new TextEncoder().encode(
-    process.env.SESSION_SECRET || 'fallback_secret_32_chars_minimum!!'
-  )
+  const secret = process.env.SESSION_SECRET
+  if (!secret || secret.length < 32) {
+    throw new Error('SESSION_SECRET is not set (or is shorter than 32 chars).')
+  }
+  return new TextEncoder().encode(secret)
 }
 
 async function verifyAdminSession(request) {

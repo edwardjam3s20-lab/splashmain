@@ -52,6 +52,21 @@ async function markPendingTransaction(checkoutRequestId, status) {
 // a top-up callback and a wallet booking-payment spend could in principle
 // land close together, and a plain read-then-write update isn't safe
 // against that.
+//
+// SECURITY: `amount` here is `pending.amount` — the figure THIS SERVER
+// recorded when it initiated the STK push (see recordPendingTransaction in
+// the customer app's api/mpesa-stk.js) — never the callback body's own
+// Amount field. Daraja callbacks aren't signed, so anything that knows this
+// URL can POST a forged "payment succeeded" body; if that forged body's
+// Amount were trusted directly, anyone could credit their own wallet with
+// an arbitrary number just by initiating a real (small) STK push to get a
+// matching pending_transactions row, then faking the callback for it. Using
+// the stored amount bounds a forged callback to, at most, the real amount
+// that specific push was already limited to (capped and rate-limited at
+// STK-push time) — it doesn't fully stop a forged "success" for a
+// legitimately-initiated push the user never actually paid for. Closing
+// that fully needs either the MPESA_CALLBACK_SECRET check below (set it!)
+// or re-querying Daraja's Transaction Status API before crediting.
 async function creditWallet(email, amount, mpesaReceipt) {
   if (!SUPABASE_SERVICE_KEY) {
     console.error('Wallet credit failed: SUPABASE_SERVICE_ROLE_KEY not configured')
@@ -129,6 +144,27 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
+  // Daraja doesn't sign its callbacks, so there's no cryptographic way to
+  // confirm this request actually came from Safaricom. The standard
+  // mitigation (recommended by Safaricom's own integration guides) is a
+  // secret token embedded in the callback URL itself, e.g. setting
+  // MPESA_CALLBACK_URL to ".../api/mpesa-callback?token=<random>" — set
+  // MPESA_CALLBACK_SECRET to that same random value here to enforce it.
+  // Not hard-required (yet) so this doesn't break an existing deployment
+  // that hasn't set it, but every request is logged as a warning until it
+  // is, and without it this endpoint is only bounded by the fix below, not
+  // actually authenticated.
+  const expectedToken = process.env.MPESA_CALLBACK_SECRET;
+  if (expectedToken) {
+    const providedToken = req.query?.token;
+    if (providedToken !== expectedToken) {
+      console.warn('M-Pesa callback rejected: missing/incorrect token');
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+  } else {
+    console.warn('M-Pesa callback received with MPESA_CALLBACK_SECRET unset — this endpoint is unauthenticated. Set MPESA_CALLBACK_SECRET and add ?token=<value> to MPESA_CALLBACK_URL.');
+  }
+
   try {
     const body = req.body;
     const result = body?.Body?.stkCallback;
@@ -148,13 +184,11 @@ export default async function handler(req, res) {
 
     const metadata = result.CallbackMetadata?.Item || [];
     const phoneItem = metadata.find(i => i.Name === 'PhoneNumber');
-    const amountItem = metadata.find(i => i.Name === 'Amount');
     const receiptItem = metadata.find(i => i.Name === 'MpesaReceiptNumber');
     const phone = phoneItem?.Value?.toString() || '';
-    const amount = amountItem?.Value || 0;
     const receipt = receiptItem?.Value?.toString() || null;
 
-    console.log('Payment confirmed. Phone:', phone, 'Amount:', amount);
+    console.log('Payment confirmed. Phone:', phone);
 
     // Look up what this push was actually for. A push with no matching
     // row (legacy callers that don't pass purpose/email yet, or the row
@@ -164,7 +198,10 @@ export default async function handler(req, res) {
     const pending = await findPendingTransaction(checkoutRequestId)
 
     if (pending?.purpose === 'wallet_topup') {
-      const ok = await creditWallet(pending.user_email, amount, receipt)
+      // Use the amount THIS SERVER recorded at STK-push time, not the
+      // callback body's own Amount field — see the comment on
+      // creditWallet() above for why.
+      const ok = await creditWallet(pending.user_email, pending.amount, receipt)
       await markPendingTransaction(checkoutRequestId, ok ? 'completed' : 'failed')
       return res.status(200).json({ message: ok ? 'Wallet topped up' : 'Wallet credit failed' });
     }

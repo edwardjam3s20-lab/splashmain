@@ -29,8 +29,13 @@ function generateCode() {
 }
 
 export async function POST(request) {
+  // SECURITY: this route previously had no rate limiting at all, unlike
+  // the operator login (app/api/operator/auth/login/route.js), which
+  // already uses this same limiter — customer accounts were open to
+  // unlimited password guessing. Matches the operator login's limits
+  // (5 attempts / 15 min / IP) for consistency.
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
-  const limit = checkRateLimit(`cust:${ip}`)
+  const limit = checkRateLimit(`customer-login:${ip}`)
   if (!limit.allowed) {
     return NextResponse.json(
       { error: `Too many attempts. Try again in ${limit.retryAfter}s.` },
@@ -77,8 +82,6 @@ export async function POST(request) {
       { status: 403, headers: corsHeaders() }
     )
   }
-
-  resetRateLimit(`cust:${ip}`)
 
   // If either verification is incomplete, return a pendingToken so the
   // client can resume the verification flow rather than blocking silently.
@@ -131,14 +134,26 @@ export async function POST(request) {
   }
 
   // Fully verified — issue real session
+  resetRateLimit(`customer-login:${ip}`)
   const token = await createSession({
     email: user.email,
     name:  user.name,
     role:  user.role,
   })
 
+  // SECURITY: previously this returned `pendingToken: token` here too —
+  // `token` at this point is the real, live session JWT, sent in the
+  // plaintext JSON body in addition to being set as an httpOnly cookie
+  // below. Anything that can read a fetch response (client JS, browser
+  // extensions, logging/analytics SDKs that capture responses) would get
+  // a bearer-equivalent of the session, defeating the purpose of
+  // httpOnly. The client never used this value in the success branch
+  // anyway (see loginWithEmail in the customer app, which discards it
+  // when data.ok is true) — it's only meaningful in the pending/
+  // unverified branch above, where it really is a distinct short-lived
+  // "pending" token, not the full session.
   const res = NextResponse.json(
-    { ok: true, user, pendingToken: token },
+    { ok: true, user },
     { headers: corsHeaders() }
   )
   setSessionCookie(res, token)

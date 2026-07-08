@@ -5,6 +5,7 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase'
 import { createSession } from '@/lib/session'
+import { checkRateLimit } from '@/lib/rateLimit'
 import { Resend } from 'resend'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
@@ -29,6 +30,21 @@ function generateCode() {
 }
 
 export async function POST(request) {
+  // SECURITY: registration had no rate limiting at all — unbounded, this
+  // enables mass fake-account creation (each gets a free 30-day trial) and
+  // makes the email-enumeration signal below ("account already exists")
+  // cheap to script against a large list of addresses. A looser limit than
+  // login's, since legitimate multi-device signups from behind the same
+  // NAT/IP are more plausible here than repeated login failures.
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+  const limit = checkRateLimit(`register:${ip}`)
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: `Too many attempts. Try again in ${limit.retryAfter}s.` },
+      { status: 429, headers: corsHeaders() }
+    )
+  }
+
   const { name, email, phone, password } = await request.json()
 
   if (!name || !email || !phone || !password) {
