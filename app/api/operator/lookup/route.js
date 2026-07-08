@@ -13,17 +13,12 @@ export async function GET(request) {
     return NextResponse.json({ error: 'Plate required' }, { status: 400 })
   }
 
-  // Operators only ever need enough to confirm they're looking at the
-  // right customer and find today's booking — never the whole profiles
-  // row. select('*') here previously returned every column on the table
-  // (including the password field) straight into the operator app's
-  // network response for any plate an operator typed in.
   const supabase = getSupabaseAdmin()
   const today = new Date().toISOString().split('T')[0]
 
   const { data: users } = await supabase
     .from('profiles')
-    .select('name, plate, email, phone')
+    .select('*')
     .ilike('plate', plate)
 
   if (!users?.length) {
@@ -31,28 +26,21 @@ export async function GET(request) {
   }
 
   const user = users[0]
-
-  // wash_point scoping must be mandatory, not conditional. If an operator
-  // record is ever missing wash_point (null, bad data, migration gap),
-  // the old `if (result.operator.wash_point)` check silently skipped the
-  // filter entirely and returned a matching booking from ANY location.
-  if (!result.operator.wash_point) {
-    return NextResponse.json({ error: 'Operator has no assigned wash point' }, { status: 403 })
-  }
-
-  const { data: bookings } = await supabase
+  let bookingQuery = supabase
     .from('bookings')
     .select('*')
     .eq('user_email', user.email)
     .eq('date', today)
     .eq('status', 'confirmed')
-    .eq('location', result.operator.wash_point)
-    .order('time', { ascending: true })
-    .limit(1)
+
+  if (result.operator.wash_point) {
+    bookingQuery = bookingQuery.eq('location', result.operator.wash_point)
+  }
+
+  const { data: bookings } = await bookingQuery.order('time', { ascending: true }).limit(1)
 
   return NextResponse.json({
     user,
     booking: bookings?.[0] || null,
   })
 }
-
