@@ -120,14 +120,25 @@ export async function POST(request) {
   // split.
   const { data: washPoint, error: wpError } = await supabase
     .from('wash_points')
-    .select('id, name, commission_tier, status')
+    .select('id, name, commission_tier')
     .eq('name', body.location)
     .maybeSingle()
 
   if (wpError || !washPoint) {
     return NextResponse.json({ error: 'Wash point not found' }, { status: 400, headers: corsHeaders() })
   }
-  if (washPoint.status === 'paused') {
+
+  // wash_points has no status column — open/paused lives on the operator
+  // (one operator per wash point, possibly logged in on multiple devices,
+  // but a single status row per wash point either way). Matches how the
+  // customer app's own fetchOperatorStatuses() already reads this.
+  const { data: operatorRow } = await supabase
+    .from('operators')
+    .select('status')
+    .eq('wash_point', washPoint.name)
+    .maybeSingle()
+
+  if (operatorRow?.status === 'paused') {
     return NextResponse.json({ error: 'This wash point is not currently accepting bookings' }, { status: 409, headers: corsHeaders() })
   }
 
