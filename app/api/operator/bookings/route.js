@@ -29,7 +29,10 @@ export async function GET(request) {
     if (to) query = query.lte('date', to)
   }
 
-  if (status) query = query.eq('status', status)
+  if (status) {
+    const statuses = status.split(',').map((s) => s.trim()).filter(Boolean)
+    query = statuses.length > 1 ? query.in('status', statuses) : query.eq('status', statuses[0])
+  }
 
   const { data, error } = await query
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
