@@ -15,6 +15,7 @@ const CANONICAL_ROOT = 'splashpass.site'
 const OPERATOR_REACT_ORIGINS = new Set([
   'http://localhost:5173',
   'https://splashpass-operator-react.vercel.app',
+  'https://operator.splashpass.site',
 ])
 
 function normalizeRootDomain(value) {
@@ -165,6 +166,13 @@ function corsHeaders(origin) {
     'Access-Control-Allow-Credentials': 'true',
     'Access-Control-Allow-Methods': 'GET,POST,PATCH,DELETE,OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
+    // Multiple origins share this same route, so the response MUST vary by
+    // Origin — otherwise a CDN/edge cache can serve one origin's preflight
+    // response (e.g. localhost:5173 during dev) back to a different origin
+    // (e.g. a newly added custom domain), which is exactly the mismatched
+    // Access-Control-Allow-Origin bug this caused.
+    'Vary': 'Origin',
+    'Cache-Control': 'no-store',
   }
 }
 
