@@ -10,19 +10,42 @@ import { Resend } from 'resend'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
-const ALLOWED_ORIGIN = process.env.CUSTOMER_APP_ORIGIN || 'https://splashpass-react.vercel.app'
+// SECURITY/BUGFIX: this used to be a single hardcoded string
+// (CUSTOMER_APP_ORIGIN || the old splashpass-react.vercel.app URL), so it
+// always echoed back one fixed value regardless of which origin actually
+// made the request. Once the customer app moved to app.splashpass.site,
+// every request from there got a mismatched Access-Control-Allow-Origin
+// and the browser blocked it. Mirrors the OPERATOR_REACT_ORIGINS allowlist
+// pattern in middleware.js and the fix already applied in
+// api/auth/login/route.js: check the request's Origin against a known
+// set, and only echo it back if it's on the list.
+const CUSTOMER_APP_ORIGINS = new Set([
+  'http://localhost:5173',
+  'https://splashpass-react.vercel.app',
+  'https://splashpass.site',
+  'https://www.splashpass.site',
+  'https://app.splashpass.site',
+])
 
-function corsHeaders() {
+function corsHeaders(origin) {
+  const allowOrigin = CUSTOMER_APP_ORIGINS.has(origin) ? origin : ''
   return {
-    'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
+    'Access-Control-Allow-Origin': allowOrigin,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Allow-Credentials': 'true',
+    // Multiple origins share this route, so the response MUST vary by
+    // Origin -- otherwise a CDN/edge cache can serve one origin's
+    // response back to a different origin.
+    'Vary': 'Origin',
+    'Cache-Control': 'no-store',
   }
 }
 
-export async function OPTIONS() {
-  return new NextResponse(null, { status: 200, headers: corsHeaders() })
+export async function OPTIONS(request) {
+  const origin = request.headers.get('origin') || ''
+
+  return new NextResponse(null, { status: 200, headers: corsHeaders(origin) })
 }
 
 function generateCode() {
@@ -30,6 +53,8 @@ function generateCode() {
 }
 
 export async function POST(request) {
+  const origin = request.headers.get('origin') || ''
+
   // SECURITY: registration had no rate limiting at all — unbounded, this
   // enables mass fake-account creation (each gets a free 30-day trial) and
   // makes the email-enumeration signal below ("account already exists")
@@ -41,7 +66,7 @@ export async function POST(request) {
   if (!limit.allowed) {
     return NextResponse.json(
       { error: `Too many attempts. Try again in ${limit.retryAfter}s.` },
-      { status: 429, headers: corsHeaders() }
+      { status: 429, headers: corsHeaders(origin) }
     )
   }
 
@@ -50,20 +75,20 @@ export async function POST(request) {
   if (!name || !email || !phone || !password) {
     return NextResponse.json(
       { error: 'All fields required' },
-      { status: 400, headers: corsHeaders() }
+      { status: 400, headers: corsHeaders(origin) }
     )
   }
   if (password.length < 6) {
     return NextResponse.json(
       { error: 'Password must be at least 6 characters' },
-      { status: 400, headers: corsHeaders() }
+      { status: 400, headers: corsHeaders(origin) }
     )
   }
 
   if (!/^\+\d{7,15}$/.test(phone.trim())) {
     return NextResponse.json(
       { error: 'Phone must be in international format e.g. +254712345678' },
-      { status: 400, headers: corsHeaders() }
+      { status: 400, headers: corsHeaders(origin) }
     )
   }
 
@@ -80,7 +105,7 @@ export async function POST(request) {
   if (existing) {
     return NextResponse.json(
       { error: 'An account with this email already exists' },
-      { status: 409, headers: corsHeaders() }
+      { status: 409, headers: corsHeaders(origin) }
     )
   }
 
@@ -91,7 +116,7 @@ export async function POST(request) {
   if (hashError || !hashData) {
     return NextResponse.json(
       { error: 'Registration failed. Please try again.' },
-      { status: 500, headers: corsHeaders() }
+      { status: 500, headers: corsHeaders(origin) }
     )
   }
 
@@ -116,7 +141,7 @@ export async function POST(request) {
   if (insertError) {
     return NextResponse.json(
       { error: insertError.message },
-      { status: 500, headers: corsHeaders() }
+      { status: 500, headers: corsHeaders(origin) }
     )
   }
 
@@ -163,6 +188,6 @@ export async function POST(request) {
 
   return NextResponse.json(
     { ok: true, user, pendingToken },
-    { headers: corsHeaders() }
+    { headers: corsHeaders(origin) }
   )
 }

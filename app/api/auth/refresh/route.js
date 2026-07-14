@@ -17,19 +17,42 @@ import {
   rotateRefreshToken,
 } from '@/lib/session'
 
-const ALLOWED_ORIGIN = process.env.CUSTOMER_APP_ORIGIN || 'https://splashpass-react.vercel.app'
+// SECURITY/BUGFIX: this used to be a single hardcoded string
+// (CUSTOMER_APP_ORIGIN || the old splashpass-react.vercel.app URL), so it
+// always echoed back one fixed value regardless of which origin actually
+// made the request. Once the customer app moved to app.splashpass.site,
+// every request from there got a mismatched Access-Control-Allow-Origin
+// and the browser blocked it. Mirrors the OPERATOR_REACT_ORIGINS allowlist
+// pattern in middleware.js and the fix already applied in
+// api/auth/login/route.js: check the request's Origin against a known
+// set, and only echo it back if it's on the list.
+const CUSTOMER_APP_ORIGINS = new Set([
+  'http://localhost:5173',
+  'https://splashpass-react.vercel.app',
+  'https://splashpass.site',
+  'https://www.splashpass.site',
+  'https://app.splashpass.site',
+])
 
-function corsHeaders() {
+function corsHeaders(origin) {
+  const allowOrigin = CUSTOMER_APP_ORIGINS.has(origin) ? origin : ''
   return {
-    'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
+    'Access-Control-Allow-Origin': allowOrigin,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Allow-Credentials': 'true',
+    // Multiple origins share this route, so the response MUST vary by
+    // Origin -- otherwise a CDN/edge cache can serve one origin's
+    // response back to a different origin.
+    'Vary': 'Origin',
+    'Cache-Control': 'no-store',
   }
 }
 
-export async function OPTIONS() {
-  return new NextResponse(null, { status: 200, headers: corsHeaders() })
+export async function OPTIONS(request) {
+  const origin = request.headers.get('origin') || ''
+
+  return new NextResponse(null, { status: 200, headers: corsHeaders(origin) })
 }
 
 export async function POST(request) {
@@ -38,15 +61,15 @@ export async function POST(request) {
   // gap flagged on the operator side. SameSite=None cookies are sent
   // cross-site regardless of who triggered the request, so the cookie alone
   // isn't proof this came from our own app.
-  const origin = request.headers.get('origin')
-  if (origin && origin !== ALLOWED_ORIGIN) {
-    return NextResponse.json({ error: 'Invalid origin' }, { status: 403, headers: corsHeaders() })
+  const origin = request.headers.get('origin') || ''
+  if (origin && !CUSTOMER_APP_ORIGINS.has(origin)) {
+    return NextResponse.json({ error: 'Invalid origin' }, { status: 403, headers: corsHeaders(origin) })
   }
 
   const refreshToken = getRefreshCookieValue()
 
   if (!refreshToken) {
-    return NextResponse.json({ error: 'No refresh token' }, { status: 401, headers: corsHeaders() })
+    return NextResponse.json({ error: 'No refresh token' }, { status: 401, headers: corsHeaders(origin) })
   }
 
   const result = await rotateRefreshToken(refreshToken)
@@ -60,7 +83,7 @@ export async function POST(request) {
     // everyone holding a copy of that chain.
     const res = NextResponse.json(
       { error: result.status === 'reuse_detected' ? 'Session revoked' : 'Session expired' },
-      { status: 401, headers: corsHeaders() }
+      { status: 401, headers: corsHeaders(origin) }
     )
     clearSessionCookie(res)
     clearRefreshCookie(res)
@@ -82,7 +105,7 @@ export async function POST(request) {
     role: profile?.role || 'customer',
   })
 
-  const res = NextResponse.json({ ok: true }, { headers: corsHeaders() })
+  const res = NextResponse.json({ ok: true }, { headers: corsHeaders(origin) })
   setSessionCookie(res, accessToken)
   setRefreshCookie(res, result.newToken)
   return res

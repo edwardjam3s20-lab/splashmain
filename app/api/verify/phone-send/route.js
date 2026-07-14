@@ -11,28 +11,53 @@ const SECRET = new TextEncoder().encode(
   process.env.SESSION_SECRET || 'fallback_secret_32_chars_minimum!!'
 )
 
-const ALLOWED_ORIGIN = process.env.CUSTOMER_APP_ORIGIN || 'https://splashpass-react.vercel.app'
+// SECURITY/BUGFIX: this used to be a single hardcoded string
+// (CUSTOMER_APP_ORIGIN || the old splashpass-react.vercel.app URL), so it
+// always echoed back one fixed value regardless of which origin actually
+// made the request. Once the customer app moved to app.splashpass.site,
+// every request from there got a mismatched Access-Control-Allow-Origin
+// and the browser blocked it. Mirrors the OPERATOR_REACT_ORIGINS allowlist
+// pattern in middleware.js and the fix already applied in
+// api/auth/login/route.js: check the request's Origin against a known
+// set, and only echo it back if it's on the list.
+const CUSTOMER_APP_ORIGINS = new Set([
+  'http://localhost:5173',
+  'https://splashpass-react.vercel.app',
+  'https://splashpass.site',
+  'https://www.splashpass.site',
+  'https://app.splashpass.site',
+])
 
-function corsHeaders() {
+function corsHeaders(origin) {
+  const allowOrigin = CUSTOMER_APP_ORIGINS.has(origin) ? origin : ''
   return {
-    'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
+    'Access-Control-Allow-Origin': allowOrigin,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Allow-Credentials': 'true',
+    // Multiple origins share this route, so the response MUST vary by
+    // Origin -- otherwise a CDN/edge cache can serve one origin's
+    // response back to a different origin.
+    'Vary': 'Origin',
+    'Cache-Control': 'no-store',
   }
 }
 
-export async function OPTIONS() {
-  return new NextResponse(null, { status: 200, headers: corsHeaders() })
+export async function OPTIONS(request) {
+  const origin = request.headers.get('origin') || ''
+
+  return new NextResponse(null, { status: 200, headers: corsHeaders(origin) })
 }
 
 export async function POST(request) {
+  const origin = request.headers.get('origin') || ''
+
   const ip = request.headers.get('x-forwarded-for') || 'unknown'
   const limit = checkRateLimit(ip)
   if (!limit.allowed) {
     return NextResponse.json(
       { error: `Too many attempts. Try again in ${limit.retryAfter}s.` },
-      { status: 429, headers: corsHeaders() }
+      { status: 429, headers: corsHeaders(origin) }
     )
   }
 
@@ -40,7 +65,7 @@ export async function POST(request) {
   if (!email || !pendingToken) {
     return NextResponse.json(
       { error: 'Invalid request.' },
-      { status: 400, headers: corsHeaders() }
+      { status: 400, headers: corsHeaders(origin) }
     )
   }
 
@@ -51,13 +76,13 @@ export async function POST(request) {
     if (payload.email !== cleanEmail) {
       return NextResponse.json(
         { error: 'Invalid session. Please log in again.' },
-        { status: 401, headers: corsHeaders() }
+        { status: 401, headers: corsHeaders(origin) }
       )
     }
   } catch {
     return NextResponse.json(
       { error: 'Invalid session. Please log in again.' },
-      { status: 401, headers: corsHeaders() }
+      { status: 401, headers: corsHeaders(origin) }
     )
   }
 
@@ -73,7 +98,7 @@ export async function POST(request) {
   if (!profile?.phone) {
     return NextResponse.json(
       { error: 'No phone number found on your account.' },
-      { status: 400, headers: corsHeaders() }
+      { status: 400, headers: corsHeaders(origin) }
     )
   }
 
@@ -142,7 +167,7 @@ export async function POST(request) {
       })
       return NextResponse.json(
         { error: 'Failed to send SMS. Please try again.' },
-        { status: 500, headers: corsHeaders() }
+        { status: 500, headers: corsHeaders(origin) }
       )
     }
   } catch (err) {
@@ -153,9 +178,9 @@ export async function POST(request) {
     })
     return NextResponse.json(
       { error: 'Failed to send SMS. Please try again.' },
-      { status: 500, headers: corsHeaders() }
+      { status: 500, headers: corsHeaders(origin) }
     )
   }
 
-  return NextResponse.json({ ok: true }, { headers: corsHeaders() })
+  return NextResponse.json({ ok: true }, { headers: corsHeaders(origin) })
 }

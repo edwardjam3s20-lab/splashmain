@@ -60,37 +60,62 @@ function isOnTrial(profile) {
 // user_email with any price. It's now paired with a required session AND
 // credentials — '*' can't be combined with credentialed requests per the
 // CORS spec anyway, so this is tightened to the real customer app origin.
-const ALLOWED_ORIGIN = process.env.CUSTOMER_APP_ORIGIN || 'https://splashpass-react-poc.vercel.app'
+// SECURITY/BUGFIX: this used to be a single hardcoded string
+// (CUSTOMER_APP_ORIGIN || the old splashpass-react.vercel.app URL), so it
+// always echoed back one fixed value regardless of which origin actually
+// made the request. Once the customer app moved to app.splashpass.site,
+// every request from there got a mismatched Access-Control-Allow-Origin
+// and the browser blocked it. Mirrors the OPERATOR_REACT_ORIGINS allowlist
+// pattern in middleware.js and the fix already applied in
+// api/auth/login/route.js: check the request's Origin against a known
+// set, and only echo it back if it's on the list.
+const CUSTOMER_APP_ORIGINS = new Set([
+  'http://localhost:5173',
+  'https://splashpass-react.vercel.app',
+  'https://splashpass.site',
+  'https://www.splashpass.site',
+  'https://app.splashpass.site',
+])
 
-function corsHeaders() {
+function corsHeaders(origin) {
+  const allowOrigin = CUSTOMER_APP_ORIGINS.has(origin) ? origin : ''
   return {
-    'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
+    'Access-Control-Allow-Origin': allowOrigin,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Allow-Credentials': 'true',
+    // Multiple origins share this route, so the response MUST vary by
+    // Origin -- otherwise a CDN/edge cache can serve one origin's
+    // response back to a different origin.
+    'Vary': 'Origin',
+    'Cache-Control': 'no-store',
   }
 }
 
-export async function OPTIONS() {
-  return new NextResponse(null, { status: 200, headers: corsHeaders() })
+export async function OPTIONS(request) {
+  const origin = request.headers.get('origin') || ''
+
+  return new NextResponse(null, { status: 200, headers: corsHeaders(origin) })
 }
 
 export async function POST(request) {
+  const origin = request.headers.get('origin') || ''
+
   const session = await getSession()
   if (!session?.email) {
-    return NextResponse.json({ error: 'Unauthorised' }, { status: 401, headers: corsHeaders() })
+    return NextResponse.json({ error: 'Unauthorised' }, { status: 401, headers: corsHeaders(origin) })
   }
 
   const body = await request.json().catch(() => null)
   if (!body) {
-    return NextResponse.json({ error: 'Invalid request body' }, { status: 400, headers: corsHeaders() })
+    return NextResponse.json({ error: 'Invalid request body' }, { status: 400, headers: corsHeaders(origin) })
   }
 
   const missing = REQUIRED_FIELDS.filter((f) => body[f] === undefined || body[f] === null || body[f] === '')
   if (missing.length) {
     return NextResponse.json(
       { error: `Missing required fields: ${missing.join(', ')}` },
-      { status: 400, headers: corsHeaders() }
+      { status: 400, headers: corsHeaders(origin) }
     )
   }
 
@@ -108,7 +133,7 @@ export async function POST(request) {
     .maybeSingle()
 
   if (profileError || !profile) {
-    return NextResponse.json({ error: 'Could not load your profile' }, { status: 500, headers: corsHeaders() })
+    return NextResponse.json({ error: 'Could not load your profile' }, { status: 500, headers: corsHeaders(origin) })
   }
 
   // Price: always derived from the actual wash point + service rows, never
@@ -125,7 +150,7 @@ export async function POST(request) {
     .maybeSingle()
 
   if (wpError || !washPoint) {
-    return NextResponse.json({ error: 'Wash point not found' }, { status: 400, headers: corsHeaders() })
+    return NextResponse.json({ error: 'Wash point not found' }, { status: 400, headers: corsHeaders(origin) })
   }
 
   // wash_points has no status column — open/paused lives on the operator
@@ -139,7 +164,7 @@ export async function POST(request) {
     .maybeSingle()
 
   if (operatorRow?.status === 'paused') {
-    return NextResponse.json({ error: 'This wash point is not currently accepting bookings' }, { status: 409, headers: corsHeaders() })
+    return NextResponse.json({ error: 'This wash point is not currently accepting bookings' }, { status: 409, headers: corsHeaders(origin) })
   }
 
   const { data: service, error: svcError } = await supabase
@@ -150,7 +175,7 @@ export async function POST(request) {
     .maybeSingle()
 
   if (svcError || !service) {
-    return NextResponse.json({ error: 'Service not found at this wash point' }, { status: 400, headers: corsHeaders() })
+    return NextResponse.json({ error: 'Service not found at this wash point' }, { status: 400, headers: corsHeaders(origin) })
   }
 
   const washPrice = Number(service.price)
@@ -190,10 +215,10 @@ export async function POST(request) {
     if (error.code === '23505') {
       return NextResponse.json(
         { error: 'That booking code is already taken — please retry.' },
-        { status: 409, headers: corsHeaders() }
+        { status: 409, headers: corsHeaders(origin) }
       )
     }
-    return NextResponse.json({ error: error.message }, { status: 500, headers: corsHeaders() })
+    return NextResponse.json({ error: error.message }, { status: 500, headers: corsHeaders(origin) })
   }
 
   // Find the operator(s) for this wash point and push-notify them. This
@@ -222,5 +247,5 @@ export async function POST(request) {
   // realtime subscription + the SMS already sent client-side cover the
   // case where the operator only ever checks the app manually.
 
-  return NextResponse.json({ booking }, { headers: corsHeaders() })
+  return NextResponse.json({ booking }, { headers: corsHeaders(origin) })
 }
