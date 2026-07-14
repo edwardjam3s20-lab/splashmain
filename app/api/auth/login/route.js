@@ -9,19 +9,41 @@ import { Resend } from 'resend'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
-const ALLOWED_ORIGIN = process.env.CUSTOMER_APP_ORIGIN || 'https://splashpass-react.vercel.app'
+// SECURITY/BUGFIX: this used to be a single hardcoded string
+// (CUSTOMER_APP_ORIGIN || the old splashpass-react.vercel.app URL), so it
+// always echoed back one fixed value regardless of which origin actually
+// made the request. Once the customer app moved to www.splashpass.site,
+// every request from there got a mismatched Access-Control-Allow-Origin
+// and the browser blocked it. Mirrors the OPERATOR_REACT_ORIGINS allowlist
+// pattern in middleware.js: check the request's Origin against a known
+// set, and only echo it back if it's on the list.
+const CUSTOMER_APP_ORIGINS = new Set([
+  'http://localhost:5173',
+  'https://splashpass-react.vercel.app',
+  'https://splashpass.site',
+  'https://www.splashpass.site',
+  'https://app.splashpass.site',
+])
 
-function corsHeaders() {
+function corsHeaders(origin) {
+  const allowOrigin = CUSTOMER_APP_ORIGINS.has(origin) ? origin : ''
   return {
-    'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
+    'Access-Control-Allow-Origin': allowOrigin,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Allow-Credentials': 'true',
+    // Multiple origins share this route, so the response MUST vary by
+    // Origin -- otherwise a CDN/edge cache can serve one origin's
+    // preflight response back to a different origin. Same fix already
+    // applied to the operator route's corsHeaders() in middleware.js.
+    'Vary': 'Origin',
+    'Cache-Control': 'no-store',
   }
 }
 
-export async function OPTIONS() {
-  return new NextResponse(null, { status: 200, headers: corsHeaders() })
+export async function OPTIONS(request) {
+  const origin = request.headers.get('origin') || ''
+  return new NextResponse(null, { status: 200, headers: corsHeaders(origin) })
 }
 
 function generateCode() {
@@ -29,6 +51,8 @@ function generateCode() {
 }
 
 export async function POST(request) {
+  const origin = request.headers.get('origin') || ''
+
   // SECURITY: this route previously had no rate limiting at all, unlike
   // the operator login (app/api/operator/auth/login/route.js), which
   // already uses this same limiter — customer accounts were open to
@@ -39,7 +63,7 @@ export async function POST(request) {
   if (!limit.allowed) {
     return NextResponse.json(
       { error: `Too many attempts. Try again in ${limit.retryAfter}s.` },
-      { status: 429, headers: corsHeaders() }
+      { status: 429, headers: corsHeaders(origin) }
     )
   }
 
@@ -48,7 +72,7 @@ export async function POST(request) {
   if (!email || !password) {
     return NextResponse.json(
       { error: 'Email and password required' },
-      { status: 400, headers: corsHeaders() }
+      { status: 400, headers: corsHeaders(origin) }
     )
   }
 
@@ -62,14 +86,14 @@ export async function POST(request) {
   if (error) {
     return NextResponse.json(
       { error: error.message },
-      { status: 500, headers: corsHeaders() }
+      { status: 500, headers: corsHeaders(origin) }
     )
   }
 
   if (!data || data.length === 0) {
     return NextResponse.json(
       { error: 'Invalid email or password' },
-      { status: 401, headers: corsHeaders() }
+      { status: 401, headers: corsHeaders(origin) }
     )
   }
 
@@ -79,7 +103,7 @@ export async function POST(request) {
   if (user.role === 'operator') {
     return NextResponse.json(
       { error: 'Use the operator app to log in' },
-      { status: 403, headers: corsHeaders() }
+      { status: 403, headers: corsHeaders(origin) }
     )
   }
 
@@ -129,7 +153,7 @@ export async function POST(request) {
         emailVerified: user.email_verified,
         phoneVerified: user.phone_verified,
       },
-      { headers: corsHeaders() }
+      { headers: corsHeaders(origin) }
     )
   }
 
@@ -158,7 +182,7 @@ export async function POST(request) {
   // "pending" token, not the full session.
   const res = NextResponse.json(
     { ok: true, user },
-    { headers: corsHeaders() }
+    { headers: corsHeaders(origin) }
   )
   setSessionCookie(res, token)
   setRefreshCookie(res, refreshToken)
