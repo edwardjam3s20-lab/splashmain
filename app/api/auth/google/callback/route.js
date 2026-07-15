@@ -77,7 +77,7 @@ export async function GET(request) {
 
   const { data: existing, error: lookupError } = await supabase
     .from('profiles')
-    .select('id, email, name, role, email_verified, phone_verified')
+    .select('id, email, name, phone, role, email_verified, phone_verified')
     .eq('email', cleanEmail)
     .maybeSingle()
 
@@ -139,9 +139,15 @@ export async function GET(request) {
 
   delete user.password
 
-  // Mirrors login/route.js: fully verified -> real session; otherwise ->
-  // pendingToken so the client resumes on the phone-verification step.
-  if (!user.phone_verified) {
+  // Mirrors login/route.js: fully verified -> real session. Accounts that
+  // already had a phone number on file but never confirmed it (e.g. an
+  // existing password-based account) still go through the OTP resend
+  // flow. Brand-new Google signups have no phone at all — there's
+  // nothing to text an OTP to yet — so instead of routing them into a
+  // broken OTP screen, we log them in with a full session and flag
+  // profileIncomplete so the client sends them to /profile-setup to
+  // collect (and then verify) a phone number.
+  if (!user.phone_verified && user.phone) {
     const pendingToken = await createSession({
       email: user.email,
       name: user.name,
@@ -165,7 +171,12 @@ export async function GET(request) {
   })
   const refreshToken = await issueRefreshToken(user.email)
 
-  const res = NextResponse.redirect(nextOrigin)
+  const url = new URL(nextOrigin)
+  if (!user.phone) {
+    url.searchParams.set('profileIncomplete', '1')
+  }
+
+  const res = NextResponse.redirect(url.toString())
   setSessionCookie(res, token)
   setRefreshCookie(res, refreshToken)
   res.cookies.delete('google_oauth_state')
