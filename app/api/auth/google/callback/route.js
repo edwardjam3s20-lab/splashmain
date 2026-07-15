@@ -150,6 +150,7 @@ export async function GET(request) {
     })
     const url = new URL(nextOrigin)
     url.searchParams.set('pendingToken', pendingToken)
+    url.searchParams.set('email', user.email)
     url.searchParams.set('needsPhone', '1')
     const res = NextResponse.redirect(url.toString())
     res.cookies.delete('google_oauth_state')
