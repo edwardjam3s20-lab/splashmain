@@ -2,11 +2,12 @@ import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { initiateB2CPayment, normalizeMpesaPhone } from '@/lib/mpesaB2c'
+import { computeOperatorOwed } from '@/lib/operatorPayouts'
 
 export async function GET() {
   const session = await getSession()
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!session || session.role !== 'admin') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
   const supabase = getSupabaseAdmin()
@@ -24,8 +25,8 @@ export async function GET() {
 
 export async function POST(request) {
   const session = await getSession()
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!session || session.role !== 'admin') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
   const body = await request.json()
@@ -56,6 +57,51 @@ export async function POST(request) {
 
   if (shouldSendMpesa && !normalPhone) {
     return NextResponse.json({ error: 'A valid operator M-Pesa phone number is required.' }, { status: 400 })
+  }
+
+  // Validate the requested amount against what's actually owed, computed
+  // server-side from real bookings + prior payments — not just trusted
+  // from the request body. Applies to manual payments too, since those
+  // still represent a real payout obligation being marked settled.
+  try {
+    const { owed } = await computeOperatorOwed(supabase, wash_point, operator_id || null)
+    if (payAmount > owed) {
+      return NextResponse.json(
+        { error: `Requested amount (${payAmount}) exceeds what this operator is currently owed (${Math.max(0, owed)}).` },
+        { status: 400 }
+      )
+    }
+  } catch (e) {
+    return NextResponse.json({ error: e.message }, { status: 500 })
+  }
+
+  // Idempotency guard: block a second real payout for the same operator
+  // while one is already in flight (pending/submitted). Without this, a
+  // retry, a double-click on the admin UI, or a network timeout-and-resend
+  // can create two separate rows and fire two separate real B2C payments
+  // for the same money owed.
+  if (shouldSendMpesa) {
+    let dupeQuery = supabase
+      .from('operator_payments')
+      .select('id', { count: 'exact', head: true })
+      .in('status', ['pending', 'submitted'])
+      .eq('wash_point', wash_point)
+
+    dupeQuery = operator_id
+      ? dupeQuery.eq('operator_id', operator_id)
+      : dupeQuery.eq('operator_phone', normalPhone)
+
+    const { count: dupeCount, error: dupeError } = await dupeQuery
+
+    if (dupeError) {
+      return NextResponse.json({ error: 'Could not verify existing payouts: ' + dupeError.message }, { status: 500 })
+    }
+    if (dupeCount > 0) {
+      return NextResponse.json(
+        { error: 'A payout for this operator is already pending or submitted. Wait for it to complete before sending another.' },
+        { status: 409 }
+      )
+    }
   }
 
   const row = {
