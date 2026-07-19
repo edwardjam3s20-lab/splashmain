@@ -22,6 +22,19 @@ function redirectWithError(nextOrigin, message) {
   return res
 }
 
+// Only used as a fallback if inserting a Google signup with no `phone`
+// fails on a not-null constraint (see the retry below). Built from
+// Google's `sub` — a stable, globally-unique per-account ID — so it can't
+// collide across different Google users even if `phone` also turns out to
+// be UNIQUE. This is never shown to the user or treated as a real phone
+// number; `isNewSignup` (not phone presence) is what the rest of this
+// route uses to decide whether they still need to provide a real one.
+function placeholderPhone(sub) {
+  const digits = String(sub || '').replace(/\D/g, '')
+  const base = digits || crypto.randomBytes(8).toString('hex').replace(/\D/g, '') || '1000000'
+  return `+${base.padEnd(7, '0').slice(0, 15)}`
+}
+
 export async function GET(request) {
   const { searchParams, origin: requestOrigin } = new URL(request.url)
   const code = searchParams.get('code')
@@ -90,16 +103,22 @@ export async function GET(request) {
   }
 
   let user = existing
+  let isNewSignup = false
 
   if (!user) {
+    isNewSignup = true
     // NOTE: `profiles` requires a `password` and (per register/route.js)
     // a validated `phone` — neither of which Google gives us. This sets
     // a random unusable password (Google users never need it — they'll
-    // always come back through this route) and leaves phone blank/unset.
-    // I haven't seen the actual `profiles` table schema/constraints, so
-    // if `phone` is NOT NULL this insert will fail — worth confirming
-    // before shipping, and swapping in whatever placeholder your schema
-    // allows.
+    // always come back through this route). For `phone`, we first try
+    // leaving it unset; if `profiles.phone` turns out to be NOT NULL
+    // (register/route.js's strict handling of it elsewhere suggests it
+    // is), the insert below retries once with a placeholder that's
+    // unique per Google account so it can't collide even if `phone` is
+    // also UNIQUE. Either way, `isNewSignup` — not phone presence — is
+    // what decides below whether this person still needs to provide a
+    // real phone number, so the placeholder (if used) never leaks into
+    // that decision.
     const { data: hashData, error: hashError } = await supabase.rpc('hash_password', {
       p_password: crypto.randomBytes(32).toString('hex'),
     })
@@ -108,23 +127,34 @@ export async function GET(request) {
     }
     const hashedPassword = Array.isArray(hashData) ? hashData[0]?.hash_password : hashData
 
-    const { data: newUsers, error: insertError } = await supabase
+    const baseProfile = {
+      name: googleProfile.name || cleanEmail.split('@')[0],
+      email: cleanEmail,
+      password: hashedPassword,
+      role: 'customer',
+      sub_status: 'trial',
+      loyalty_points: 0,
+      loyalty_tier: 'Bronze',
+      // Google's own email_verified flag confirms ownership, so we can
+      // skip our OTP step for email — same trust boundary as the rest
+      // of this codebase treats a confirmed OTP.
+      email_verified: true,
+      phone_verified: false,
+    }
+
+    let { data: newUsers, error: insertError } = await supabase
       .from('profiles')
-      .insert({
-        name: googleProfile.name || cleanEmail.split('@')[0],
-        email: cleanEmail,
-        password: hashedPassword,
-        role: 'customer',
-        sub_status: 'trial',
-        loyalty_points: 0,
-        loyalty_tier: 'Bronze',
-        // Google's own email_verified flag confirms ownership, so we can
-        // skip our OTP step for email — same trust boundary as the rest
-        // of this codebase treats a confirmed OTP.
-        email_verified: true,
-        phone_verified: false,
-      })
+      .insert(baseProfile)
       .select()
+
+    if (insertError?.code === '23502' && /phone/i.test(insertError.message || '')) {
+      // not_null_violation on `phone` specifically — retry once with a
+      // per-user placeholder instead of failing the whole signup.
+      ;({ data: newUsers, error: insertError } = await supabase
+        .from('profiles')
+        .insert({ ...baseProfile, phone: placeholderPhone(googleProfile.sub) })
+        .select())
+    }
 
     if (insertError || !newUsers?.length) {
       return redirectWithError(nextOrigin, 'account_creation_failed')
@@ -142,12 +172,13 @@ export async function GET(request) {
   // Mirrors login/route.js: fully verified -> real session. Accounts that
   // already had a phone number on file but never confirmed it (e.g. an
   // existing password-based account) still go through the OTP resend
-  // flow. Brand-new Google signups have no phone at all — there's
-  // nothing to text an OTP to yet — so instead of routing them into a
-  // broken OTP screen, we log them in with a full session and flag
-  // profileIncomplete so the client sends them to /profile-setup to
-  // collect (and then verify) a phone number.
-  if (!user.phone_verified && user.phone) {
+  // flow. Brand-new Google signups never have a real phone yet — there's
+  // nothing to text an OTP to — so instead of routing them into a broken
+  // OTP screen (which `isNewSignup` guards against below, even though a
+  // placeholder `phone` may be on file per the retry above), we log them
+  // in with a full session and flag profileIncomplete so the client sends
+  // them to /profile-setup to collect (and then verify) a real number.
+  if (!isNewSignup && !user.phone_verified && user.phone) {
     const pendingToken = await createSession({
       email: user.email,
       name: user.name,
@@ -172,7 +203,7 @@ export async function GET(request) {
   const refreshToken = await issueRefreshToken(user.email)
 
   const url = new URL(nextOrigin)
-  if (!user.phone) {
+  if (isNewSignup || !user.phone) {
     url.searchParams.set('profileIncomplete', '1')
   }
 
