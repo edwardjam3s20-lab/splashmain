@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase'
+import { isFromSafaricom } from '@/lib/mpesaCallbackAuth'
 
 function callbackResult(body) {
   return body?.Result || body?.result || body?.Body?.Result || null
@@ -39,6 +40,10 @@ async function updatePayment(result, rawBody, statusOverride) {
 }
 
 export async function POST(request) {
+  if (!isFromSafaricom(request, 'b2c/result')) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
   const body = await request.json().catch(() => ({}))
   const result = callbackResult(body)
   await updatePayment(result, body)

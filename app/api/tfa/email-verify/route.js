@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase'
-import { createSession, setSessionCookie } from '@/lib/session'
+import { createSession, setSessionCookie, getSecret } from '@/lib/session'
 import { resetRateLimit } from '@/lib/rateLimit'
 import { jwtVerify } from 'jose'
 
-const SECRET = new TextEncoder().encode(
-  process.env.SESSION_SECRET || 'fallback_secret_32_chars_minimum!!'
-)
+const SECRET = getSecret()
 
 export async function POST(request) {
   const { email, pendingToken, code } = await request.json()

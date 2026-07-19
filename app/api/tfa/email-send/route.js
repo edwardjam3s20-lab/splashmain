@@ -3,11 +3,10 @@ import { getSupabaseAdmin } from '@/lib/supabase'
 import { Resend } from 'resend'
 import { checkRateLimit } from '@/lib/rateLimit'
 import { jwtVerify } from 'jose'
+import { getSecret } from '@/lib/session'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
-const SECRET = new TextEncoder().encode(
-  process.env.SESSION_SECRET || 'fallback_secret_32_chars_minimum!!'
-)
+const SECRET = getSecret()
 
 function generateCode() {
   return Math.floor(100000 + Math.random() * 900000).toString()
