@@ -7,6 +7,7 @@ import { normalizeCommissionTier } from '@/lib/commission'
 export async function POST(request) {
   const session = await getSession()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (session.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const { name, email, password, wash_point, wash_point_id, commission_tier, mpesa_phone } = await request.json()
   if (!name || !email || !password || !wash_point) {
@@ -66,6 +67,7 @@ export async function POST(request) {
 export async function PATCH(request) {
   const session = await getSession()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (session.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const { id, password, wash_point, wash_point_id, commission_tier, mpesa_phone } = await request.json()
   if (!id) {
@@ -142,6 +144,7 @@ export async function PATCH(request) {
 export async function DELETE(request) {
   const session = await getSession()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (session.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const { id } = await request.json()
   if (!id) return NextResponse.json({ error: 'ID required.' }, { status: 400 })

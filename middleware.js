@@ -41,8 +41,17 @@ function getSiteFromHost(hostname, opts = {}) {
   // Allow proxied dev builds to identify themselves via header (all envs,
   // since Vite proxy runs against the deployed Vercel instance which is
   // always NODE_ENV=production).
+  //
+  // SECURITY: this MUST be paired with a secret the proxy alone knows
+  // (DEV_PROXY_SECRET). Trusting the site header alone means any external
+  // request could send `x-splashpass-site: admin` and be treated as coming
+  // from the admin subdomain -- bypassing the entire site-restriction below
+  // for /api/data, /api/operators, /api/wash-points, and /api/tfa. If
+  // DEV_PROXY_SECRET isn't set, this bypass is disabled entirely.
+  const devSecret = process.env.DEV_PROXY_SECRET
+  const devKeyMatches = Boolean(devSecret) && opts.devProxyKey === devSecret
   const headerSite = opts.devSiteHeader?.toLowerCase()
-  if (headerSite === SITE.ADMIN || headerSite === SITE.OPERATOR || headerSite === SITE.CUSTOMER) {
+  if (devKeyMatches && (headerSite === SITE.ADMIN || headerSite === SITE.OPERATOR || headerSite === SITE.CUSTOMER)) {
     return headerSite
   }
 
@@ -102,6 +111,10 @@ async function verifyAdminSession(request) {
   if (!token) return null
   try {
     const { payload } = await jwtVerify(token, getSecretKey())
+    // SECURITY: splashpass_session is shared with the customer login flow
+    // (same cookie name, same signing key -- see lib/session.js). Without
+    // this check, any authenticated customer session would verify here too.
+    if (payload.role !== 'admin') return null
     return payload
   } catch {
     return null
@@ -215,6 +228,7 @@ export async function middleware(request) {
 
   const site = getSiteFromHost(hostname, {
     devSiteHeader: request.headers.get('x-splashpass-site'),
+    devProxyKey: request.headers.get('x-splashpass-dev-key'),
   })
 
   const url = request.nextUrl.clone()
