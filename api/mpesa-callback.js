@@ -207,11 +207,36 @@ export default async function handler(req, res) {
     }
 
     if (pending?.purpose === 'booking_payment') {
-      // Booking payment confirmation is intentionally left on its existing
-      // mechanism (the manual "I've paid" button / payment_status poll) —
-      // not touched by this change. The pending_transactions row is still
-      // marked completed here so it doesn't linger as stale "pending"
-      // forever, but no further action is taken on the booking itself.
+      // FIX: this branch previously only marked the internal
+      // pending_transactions row as 'completed' and never touched the
+      // actual bookings row. The customer app's useBookingPaymentPoll
+      // hook polls bookings.payment_status waiting for it to equal
+      // 'paid' (see getBookingPaymentStatus in src/lib/bookings.ts) —
+      // since nothing ever wrote that value, the poll always timed out
+      // and the app never auto-advanced to /confirmed, even though the
+      // payment had actually gone through. This PATCH is what was
+      // missing.
+      if (pending.booking_id) {
+        const bookingRes = await fetch(
+          `${SUPABASE_URL}/rest/v1/bookings?id=eq.${pending.booking_id}`,
+          {
+            method: 'PATCH',
+            headers: {
+              apikey: SUPABASE_SERVICE_KEY,
+              Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
+              'Content-Type': 'application/json',
+              Prefer: 'return=minimal',
+            },
+            body: JSON.stringify({ payment_status: 'paid' }),
+          }
+        )
+        if (!bookingRes.ok) {
+          console.error('Failed to mark booking paid:', await bookingRes.text())
+        }
+      } else {
+        console.error('booking_payment callback with no booking_id on pending row — cannot update booking', checkoutRequestId)
+      }
+
       await markPendingTransaction(checkoutRequestId, 'completed')
       return res.status(200).json({ message: 'Booking payment recorded' });
     }
