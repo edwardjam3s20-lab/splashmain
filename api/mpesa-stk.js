@@ -101,7 +101,17 @@ async function recordPendingTransaction({ checkoutRequestId, purpose, email, amo
         purpose: safePurpose,
         user_email: email,
         amount,
-        booking_id: bookingId ? Number(bookingId) : null,
+        // bookingId is a UUID string (see Booking.id in bookings.ts / the
+        // rest of this codebase) — do NOT coerce with Number(). Number()
+        // on a UUID evaluates to NaN, and JSON.stringify(NaN) silently
+        // serialises to null, so this was writing booking_id: null into
+        // every pending_transactions row. mpesa-callback.js's
+        // booking_payment branch checks `if (pending.booking_id)` before
+        // PATCHing bookings.payment_status — with it always null, that
+        // PATCH never ran, payment_status never flipped to 'paid', and
+        // useBookingPaymentPoll had nothing to detect. That's why the app
+        // relied entirely on the manual "I've paid" button.
+        booking_id: bookingId || null,
       }),
     });
     if (!res.ok) {
