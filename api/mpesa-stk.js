@@ -26,6 +26,11 @@ const ALLOWED_ORIGINS = new Set([
   'https://splashpass.site',
   'https://www.splashpass.site',
   'https://app.splashpass.site',
+  // Operator app — same two origins middleware.js already trusts, so the
+  // operator subscription STK push (purpose: 'operator_subscription') can
+  // hit this same endpoint instead of needing a duplicate route.
+  'https://splashpass-operator-react.vercel.app',
+  'https://operator.splashpass.site',
 ]);
 
 const CONSUMER_KEY = process.env.MPESA_CONSUMER_KEY;
@@ -41,7 +46,7 @@ const MPESA_BASE = process.env.MPESA_BASE_URL;
 const SUPABASE_URL = 'https://msdvyiqjoogafzyaoycg.supabase.co';
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-const VALID_PURPOSES = new Set(['subscription', 'booking_payment', 'wallet_topup']);
+const VALID_PURPOSES = new Set(['subscription', 'booking_payment', 'wallet_topup', 'operator_subscription']);
 
 // Adjust to your actual business policy — this is a sanity ceiling to
 // limit blast radius from abuse or a typo'd amount, not a number I know
@@ -184,7 +189,11 @@ export default async function handler(req, res) {
         PhoneNumber: normalised,
         CallBackURL: CALLBACK_URL,
         AccountReference: accountReference || 'SplashPass',
-        TransactionDesc: transactionDesc || (purpose === 'booking_payment' ? 'SplashPass Booking' : 'SplashPass Subscription')
+        TransactionDesc: transactionDesc || (
+          purpose === 'booking_payment' ? 'SplashPass Booking' :
+          purpose === 'operator_subscription' ? 'SplashPass Operator Subscription' :
+          'SplashPass Subscription'
+        )
       })
     });
 

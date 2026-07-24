@@ -12,6 +12,7 @@ import {
   setOperatorSessionCookie,
   publicOperator,
 } from '@/lib/operatorSession'
+import { operatorHasAccess } from '@/lib/operatorAccess'
 
 export async function POST(request) {
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
@@ -83,6 +84,17 @@ export async function POST(request) {
       .from('operators')
       .update({ password: hashOperatorPassword(normalizedPassword) })
       .eq('id', op.id)
+  }
+
+  // Freemium gate: only enforced once operator_freemium.sql has actually
+  // run (op.created_at present) — if the migration hasn't been applied
+  // yet, created_at comes back undefined and this is skipped entirely
+  // rather than locking out every existing operator on deploy.
+  if (op.created_at && !operatorHasAccess(op)) {
+    return NextResponse.json({
+      error: 'Your 14-day free trial has ended. Subscribe to keep using SplashPass.',
+      code: 'SUBSCRIPTION_REQUIRED',
+    }, { status: 402 })
   }
 
   resetRateLimit(`op:${ip}`)

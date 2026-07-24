@@ -110,6 +110,46 @@ async function creditWallet(email, amount, mpesaReceipt) {
   }
 }
 
+// New path, for operator subscriptions. Unlike activateSubscriptionByPhone
+// below, this is keyed by email rather than phone — recordPendingTransaction
+// in mpesa-stk.js already refuses to write a pending_transactions row at all
+// without an email, so pending.user_email is guaranteed to be present here,
+// and email is a direct, non-fuzzy match against operators.email (the same
+// column loadOperator.js/operator login already key off). Single flat plan
+// (operator_monthly, 2000 KSh) for now — see OPERATOR_PLAN_PRICES in
+// lib/paystack/plans.js if a second operator tier is added later, at which
+// point this should look up which plan was paid for the same way the
+// Paystack path does, instead of hardcoding 'operator_monthly'.
+async function activateOperatorSubscriptionByEmail(email) {
+  if (!SUPABASE_SERVICE_KEY) {
+    console.error('Operator subscription activation failed: SUPABASE_SERVICE_ROLE_KEY not configured')
+    return false
+  }
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/operators?email=eq.${encodeURIComponent(email)}`,
+      {
+        method: 'PATCH',
+        headers: {
+          apikey: SUPABASE_SERVICE_KEY,
+          Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
+          'Content-Type': 'application/json',
+          Prefer: 'return=minimal',
+        },
+        body: JSON.stringify({ sub_status: 'active', sub_plan: 'operator_monthly' }),
+      }
+    )
+    if (!res.ok) {
+      console.error('Operator subscription PATCH failed:', await res.text())
+      return false
+    }
+    return true
+  } catch (e) {
+    console.error('activateOperatorSubscriptionByEmail error:', e.message)
+    return false
+  }
+}
+
 // Original path, entirely unchanged from before this file was touched —
 // existing subscription activations must keep working exactly as they
 // did. Phone-match matching here is fragile (see code comments in the
@@ -239,6 +279,12 @@ export default async function handler(req, res) {
 
       await markPendingTransaction(checkoutRequestId, 'completed')
       return res.status(200).json({ message: 'Booking payment recorded' });
+    }
+
+    if (pending?.purpose === 'operator_subscription') {
+      const ok = await activateOperatorSubscriptionByEmail(pending.user_email)
+      await markPendingTransaction(checkoutRequestId, ok ? 'completed' : 'failed')
+      return res.status(200).json({ message: ok ? 'Operator subscription activated' : 'Operator subscription activation failed' });
     }
 
     // purpose === 'subscription', or no tagged row found at all (legacy

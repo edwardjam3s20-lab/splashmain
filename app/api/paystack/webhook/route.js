@@ -17,7 +17,7 @@
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { applyPaystackPayment } from '@/lib/paystack/applyPayment'
-import { PLAN_PRICES } from '@/lib/paystack/plans'
+import { PLAN_PRICES, OPERATOR_PLAN_PRICES } from '@/lib/paystack/plans'
 
 export async function POST(request) {
   const secret = process.env.PAYSTACK_SECRET_KEY
@@ -67,19 +67,27 @@ export async function POST(request) {
     return NextResponse.json({ received: true })
   }
 
+  // accountType must come from metadata set when the transaction was
+  // initialized — make sure both checkout screens pass
+  // metadata: { accountType, planId } into their Paystack popup config.
+  // Defaults to 'customer' so existing (pre-operator) charges, which
+  // never set this, keep resolving against PLAN_PRICES exactly as before.
+  const accountType = metadata?.accountType === 'operator' ? 'operator' : 'customer'
+  const plans = accountType === 'operator' ? OPERATOR_PLAN_PRICES : PLAN_PRICES
+
   // planId should come from metadata set when the transaction was
-  // initialized — make sure the checkout screen passes
-  // metadata: { planId } into payWithPaystackCard(). Falling back to a
-  // reverse price lookup only because plan prices are all unique right
-  // now (199/499/999/1999); if two plans ever share a price, this
-  // fallback stops being reliable and metadata.planId becomes required.
+  // initialized. Falling back to a reverse price lookup only because
+  // plan prices are unique within each table right now (customer:
+  // 199/499/999/1999, operator: 2000) — if two plans in the same table
+  // ever share a price, this fallback stops being reliable and
+  // metadata.planId becomes required.
   let planId = metadata?.planId
-  if (!planId || !PLAN_PRICES[planId]) {
-    planId = Object.keys(PLAN_PRICES).find((id) => PLAN_PRICES[id].price * 100 === amount)
+  if (!planId || !plans[planId]) {
+    planId = Object.keys(plans).find((id) => plans[id].price * 100 === amount)
   }
 
   if (!planId) {
-    console.error(`Paystack webhook: could not determine plan for ref ${reference}, amount ${amount}`)
+    console.error(`Paystack webhook: could not determine ${accountType} plan for ref ${reference}, amount ${amount}`)
     return NextResponse.json({ received: true })
   }
 
@@ -90,6 +98,7 @@ export async function POST(request) {
     amountSubunit: amount,
     currency,
     source: 'webhook',
+    accountType,
   })
 
   if (!result.ok) {

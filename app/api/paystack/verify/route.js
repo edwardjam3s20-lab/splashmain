@@ -23,9 +23,18 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 })
   }
 
-  const { reference, planId, email } = body || {}
+  const { reference, planId, email, accountType: rawAccountType } = body || {}
   if (!reference || !planId || !email) {
     return NextResponse.json({ error: 'Missing reference, planId, or email.' }, { status: 400 })
+  }
+
+  // Defaults to 'customer' so the existing customer app (which has never
+  // sent this field) keeps working unchanged. Anything other than the
+  // two known values is rejected rather than silently coerced, since this
+  // string picks which table (profiles vs operators) gets written to.
+  const accountType = rawAccountType === 'operator' ? 'operator' : 'customer'
+  if (rawAccountType && rawAccountType !== 'customer' && rawAccountType !== 'operator') {
+    return NextResponse.json({ error: `Invalid accountType: ${rawAccountType}` }, { status: 400 })
   }
 
   if (!process.env.PAYSTACK_SECRET_KEY) {
@@ -66,11 +75,12 @@ export async function POST(request) {
     amountSubunit: tx.amount,
     currency: tx.currency,
     source: 'client_verify',
+    accountType,
   })
 
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: result.status })
   }
 
-  return NextResponse.json({ profile: result.profile })
+  return NextResponse.json(accountType === 'operator' ? { operator: result.operator } : { profile: result.profile })
 }

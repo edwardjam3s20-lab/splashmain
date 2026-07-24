@@ -1,7 +1,8 @@
 (function (global) {
+  // FREEMIUM MODEL: no per-wash commission — mirrors lib/commission.js.
   var TIERS = {
-    1: { label: 'Tier 1', platformRate: 0.2, operatorRate: 0.8, platformLabel: '20%', operatorLabel: '80%' },
-    2: { label: 'Tier 2', platformRate: 0.1, operatorRate: 0.9, platformLabel: '10%', operatorLabel: '90%' },
+    1: { label: 'Tier 1', platformRate: 0, operatorRate: 1, platformLabel: '0%', operatorLabel: '100%' },
+    2: { label: 'Tier 2', platformRate: 0, operatorRate: 1, platformLabel: '0%', operatorLabel: '100%' },
   }
 
   function normalizeTier(tier) {

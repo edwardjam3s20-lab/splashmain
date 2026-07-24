@@ -14,12 +14,17 @@ const REQUIRED_FIELDS = [
   'booking_code',
 ]
 
-const TRIAL_DAYS = 30
-const APP_BOOKING_FEE = 30 // KSh, flat fee per booking while on trial
+// FREEMIUM MODEL (replaces the old 30-day-trial + 30 KSh booking fee +
+// per-wash commission model): 14 days free from account creation, then a
+// hard paywall — no bookings at all without an active subscription. No
+// booking fee, no commission, ever; operator keeps 100% of wash_price
+// (see lib/commission.js / public/splashpass-commission.js, both zeroed
+// to match). Platform revenue is subscription-only from here on.
+const TRIAL_DAYS = 14
 
 const COMMISSION_TIERS = {
-  1: { operatorRate: 0.8 },
-  2: { operatorRate: 0.9 },
+  1: { operatorRate: 1 },
+  2: { operatorRate: 1 },
 }
 
 function normaliseTier(tier) {
@@ -38,7 +43,7 @@ function splitWashPrice(washPrice, tier) {
 }
 
 // Mirrors src/lib/access.ts's isOnTrial/getTrialDaysLeft in the customer
-// app — reimplemented server-side because pricing must never depend on a
+// app — reimplemented server-side because access must never depend on a
 // client-reported trial/subscription state.
 function isOnTrial(profile) {
   if (!profile?.created_at) return false
@@ -46,6 +51,10 @@ function isOnTrial(profile) {
   const daysLeft = Math.ceil((created + TRIAL_DAYS * 86400000 - Date.now()) / 86400000)
   const status = profile.sub_status
   return daysLeft > 0 && (!status || status === 'trial' || status === 'pending')
+}
+
+function isSubscribed(profile) {
+  return profile?.sub_status === 'active'
 }
 
 // Unlike the operator routes elsewhere in this project, this one is called
@@ -136,6 +145,14 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Could not load your profile' }, { status: 500, headers: corsHeaders(origin) })
   }
 
+  const onTrial = isOnTrial(profile)
+  if (!onTrial && !isSubscribed(profile)) {
+    return NextResponse.json(
+      { error: 'Your free trial has ended. Subscribe to keep booking.', code: 'SUBSCRIPTION_REQUIRED' },
+      { status: 402, headers: corsHeaders(origin) }
+    )
+  }
+
   // Price: always derived from the actual wash point + service rows, never
   // from the client's wash_price/app_fee/total_amount/operator_amount/
   // splash_commission/commission_tier fields — those five numbers were
@@ -179,8 +196,7 @@ export async function POST(request) {
   }
 
   const washPrice = Number(service.price)
-  const onTrial = isOnTrial(profile)
-  const appFee = onTrial && washPrice > 0 ? APP_BOOKING_FEE : 0
+  const appFee = 0 // no booking fee under the freemium model
   const totalAmount = washPrice + appFee
   const split = splitWashPrice(washPrice, washPoint.commission_tier)
 
