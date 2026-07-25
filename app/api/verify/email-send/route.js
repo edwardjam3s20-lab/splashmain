@@ -7,11 +7,9 @@ import { getSupabaseAdmin } from '@/lib/supabase'
 import { Resend } from 'resend'
 import { checkRateLimit } from '@/lib/rateLimit'
 import { jwtVerify } from 'jose'
+import { getSecret } from '@/lib/session'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
-const SECRET = new TextEncoder().encode(
-  process.env.SESSION_SECRET || 'fallback_secret_32_chars_minimum!!'
-)
 
 // SECURITY/BUGFIX: this used to be a single hardcoded string
 // (CUSTOMER_APP_ORIGIN || the old splashpass-react.vercel.app URL), so it
@@ -77,7 +75,7 @@ export async function POST(request) {
 
   // Validate the pending token
   try {
-    const { payload } = await jwtVerify(pendingToken, SECRET)
+    const { payload } = await jwtVerify(pendingToken, getSecret())
     if (payload.email !== email.toLowerCase().trim()) {
       return NextResponse.json(
         { error: 'Invalid session. Please log in again.' },

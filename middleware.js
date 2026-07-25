@@ -93,6 +93,7 @@ function absoluteUrlForSite(site, pathname, request) {
 // ── Inlined from @/lib/auth-middleware ───────────────────────────
 const ADMIN_COOKIE = 'splashpass_session'
 const OPERATOR_COOKIE = 'splashpass_operator_session'
+const ORG_COOKIE = 'splashpass_org_session'
 
 // SECURITY: no fallback secret -- see lib/session.js for why. Every request
 // that needs a session check will throw (caught below, treated as
@@ -133,11 +134,40 @@ async function verifyOperatorSession(request) {
   }
 }
 
+// SaaS-redesign account type (organization_users) — a person, not tied to
+// a single operator row. Own cookie, own role check, but the same signing
+// key as every other session type (see getSecretKey() above).
+async function verifyOrgSession(request) {
+  const token = request.cookies.get(ORG_COOKIE)?.value
+  if (!token) return null
+  try {
+    const { payload } = await jwtVerify(token, getSecretKey())
+    if (payload.role !== 'org_user') return null
+    return payload
+  } catch {
+    return null
+  }
+}
+
 const STATIC_EXT = /\.(?:html|css|js|mjs|json|svg|ico|png|jpe?g|webp|gif|woff2?|webmanifest|txt|map)$/i
 
 const OPERATOR_PUBLIC_API = new Set([
   '/api/operator/auth/login',
   '/api/operator/auth/logout',
+])
+
+// Onboarding steps that, by definition, happen before the caller has a
+// session yet (register) or are re-authenticating with credentials, not a
+// cookie (login) — plus the OTP endpoints, which authorize themselves via
+// the pendingToken in the request body rather than a cookie.
+const ORG_PUBLIC_API = new Set([
+  '/api/org/auth/register',
+  '/api/org/auth/login',
+  '/api/org/auth/logout',
+  '/api/org/verify/email-send',
+  '/api/org/verify/email-verify',
+  '/api/org/verify/phone-send',
+  '/api/org/verify/phone-verify',
 ])
 
 function hostnameFromRequest(request) {
@@ -167,6 +197,10 @@ function isAdminAuthApi(pathname) {
 
 function isOperatorApi(pathname) {
   return pathname.startsWith('/api/operator')
+}
+
+function isOrgApi(pathname) {
+  return pathname.startsWith('/api/org')
 }
 
 function isAdminPaymentsApi(pathname) {
@@ -226,6 +260,33 @@ export async function middleware(request) {
     return response
   }
 
+  // ── CORS + site-check bypass for /api/org (org SaaS onboarding) ──
+  // Same operator React app, same origins, same reasoning as the block
+  // above — the org endpoints are a new namespace on the same frontend,
+  // not a new deployment, so they share OPERATOR_REACT_ORIGINS rather
+  // than defining a second identical allowlist that could drift from it.
+  if (isOrgApi(pathname) && OPERATOR_REACT_ORIGINS.has(requestOrigin)) {
+    if (request.method === 'OPTIONS') {
+      return new NextResponse(null, {
+        status: 204,
+        headers: corsHeaders(requestOrigin),
+      })
+    }
+
+    if (!ORG_PUBLIC_API.has(pathname)) {
+      const session = await verifyOrgSession(request)
+      if (!session) {
+        const res = NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        Object.entries(corsHeaders(requestOrigin)).forEach(([k, v]) => res.headers.set(k, v))
+        return res
+      }
+    }
+
+    const response = NextResponse.next()
+    Object.entries(corsHeaders(requestOrigin)).forEach(([k, v]) => response.headers.set(k, v))
+    return response
+  }
+
   const site = getSiteFromHost(hostname, {
     devSiteHeader: request.headers.get('x-splashpass-site'),
     devProxyKey: request.headers.get('x-splashpass-dev-key'),
@@ -273,6 +334,26 @@ export async function middleware(request) {
       }
       if (!OPERATOR_PUBLIC_API.has(pathname)) {
         const session = await verifyOperatorSession(request)
+        if (!session) {
+          return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+      }
+      return NextResponse.next()
+    }
+
+    // Same-origin fallback for /api/org (e.g. requests hitting
+    // operator.splashpass.site directly rather than cross-origin from the
+    // Vercel-deployed React app) — the CORS bypass block above handles the
+    // cross-origin case, which is the actual production path today.
+    if (isOrgApi(pathname)) {
+      if (site !== SITE.OPERATOR) {
+        return NextResponse.json(
+          { error: 'Org API is only available on the operator subdomain.' },
+          { status: 403 }
+        )
+      }
+      if (!ORG_PUBLIC_API.has(pathname)) {
+        const session = await verifyOrgSession(request)
         if (!session) {
           return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }

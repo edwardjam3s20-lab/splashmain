@@ -4,12 +4,8 @@
 
 import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase'
-import { createSession, setSessionCookie } from '@/lib/session'
+import { createSession, setSessionCookie, getSecret } from '@/lib/session'
 import { jwtVerify } from 'jose'
-
-const SECRET = new TextEncoder().encode(
-  process.env.SESSION_SECRET || 'fallback_secret_32_chars_minimum!!'
-)
 
 // SECURITY/BUGFIX: this used to be a single hardcoded string
 // (CUSTOMER_APP_ORIGIN || the old splashpass-react.vercel.app URL), so it
@@ -65,7 +61,7 @@ export async function POST(request) {
 
   // Validate pending token
   try {
-    const { payload } = await jwtVerify(pendingToken, SECRET)
+    const { payload } = await jwtVerify(pendingToken, getSecret())
     if (payload.email !== cleanEmail) {
       return NextResponse.json(
         { error: 'Invalid session. Please log in again.' },
