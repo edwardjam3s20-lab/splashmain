@@ -32,6 +32,24 @@ function isUniqueViolation(error) {
   return error?.code === '23505'
 }
 
+// Bookings created before app/api/bookings/route.js started writing
+// washpoint_id (or any that fell through some other gap) won't have it
+// set. Opportunistically backfill on every write to this booking rather
+// than requiring a separate one-time migration pass — same location-name
+// match booking creation itself uses, so it's exactly as reliable (and
+// exactly as limited: still null organization_id for washpoints that
+// pre-date the org model).
+async function backfillWashpointAttribution(supabase, booking) {
+  if (booking.washpoint_id) return {}
+  const { data: wp } = await supabase
+    .from('wash_points')
+    .select('id, organization_id')
+    .eq('name', booking.location)
+    .maybeSingle()
+  if (!wp) return {}
+  return { washpoint_id: wp.id, organization_id: wp.organization_id || null }
+}
+
 // Fire-and-forget SMS via the existing /api/send-sms endpoint. Booking
 // accept/reject should never fail (and the operator should never see an
 // error) just because the SMS provider hiccupped — the status update is
@@ -168,6 +186,8 @@ export async function PATCH(request, { params }) {
   if (!Object.keys(updates).length) {
     return NextResponse.json({ error: 'No valid updates' }, { status: 400 })
   }
+
+  Object.assign(updates, await backfillWashpointAttribution(supabase, booking))
 
   const { data, error } = await supabase
     .from('bookings')

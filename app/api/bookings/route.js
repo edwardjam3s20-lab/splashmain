@@ -162,7 +162,7 @@ export async function POST(request) {
   // split.
   const { data: washPoint, error: wpError } = await supabase
     .from('wash_points')
-    .select('id, name, commission_tier')
+    .select('id, name, commission_tier, organization_id')
     .eq('name', body.location)
     .maybeSingle()
 
@@ -209,6 +209,19 @@ export async function POST(request) {
       date: body.date,
       time: body.time,
       location: washPoint.name,
+      // washpoint_id: the first real FK from bookings to wash_points --
+      // everything before this wrote/matched on `location` (the name
+      // string) alone. Keeping `location` too since the whole rest of the
+      // codebase (operator matching, push notifications below, the
+      // operator app's own queries) still reads it; not a migration to
+      // do in this one route.
+      washpoint_id: washPoint.id,
+      // organization_id is only non-null for washpoints created through
+      // the new SaaS org flow (POST /api/org/washpoints) -- washpoints
+      // created via the legacy admin panel have no organization yet
+      // until the operator->org backfill migration runs. Staying null
+      // here is the accurate state, not a bug.
+      organization_id: washPoint.organization_id || null,
       status: 'pending',
       car_plate: body.car_plate,
       car_type: body.car_type,

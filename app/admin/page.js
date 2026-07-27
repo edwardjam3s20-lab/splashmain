@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Intelligence from './splashpass-admin-intelligence'
 import AdminDashboard from './AdminDashboard'
+import OrgVerificationsPanel from './OrgVerificationsPanel'
 
 export default function AdminPage() {
   const [screen, setScreen] = useState('login')
@@ -415,6 +416,7 @@ export default function AdminPage() {
           onAssignOperatorTier={handleAssignOperatorTier}
           analyticsPanel={<Intelligence />}
           operatorPayoutsPanel={<Intelligence initialTab="operators" compact />}
+          orgVerificationsPanel={<OrgVerificationsPanel />}
         />
       )}
 

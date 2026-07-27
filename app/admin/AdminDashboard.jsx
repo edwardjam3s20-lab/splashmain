@@ -99,6 +99,7 @@ const NAV = [
   { id: 'operators', label: 'Operators', icon: '👤' },
   { id: 'subscribers', label: 'Subscribers', icon: '◉' },
   { id: 'bookings', label: 'Bookings', icon: '📅' },
+  { id: 'verifications', label: 'Verifications', icon: '🛡' },
   { id: 'analytics', label: 'Analytics', icon: '📈' },
   { id: 'operator-payouts', label: 'Operator Payouts', icon: '💳' },
   { id: 'coupons', label: 'Coupons', icon: '🏷', soon: true },
@@ -235,6 +236,7 @@ export default function AdminDashboard({
   onAssignOperatorTier,
   analyticsPanel,
   operatorPayoutsPanel,
+  orgVerificationsPanel,
 }) {
   const name = adminDisplayName(adminEmail)
   const metrics = useMemo(() => computeDashboardMetrics(data), [data])
@@ -753,6 +755,10 @@ export default function AdminDashboard({
                 </div>
               </div>
             </>
+          )}
+
+          {adminTab === 'verifications' && (
+            <div className="adm-analytics-wrap">{orgVerificationsPanel}</div>
           )}
 
           {adminTab === 'analytics' && (

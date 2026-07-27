@@ -1,8 +1,13 @@
 // app/api/org/business/route.js
-// POST — Step 2+3 of onboarding: create the organization, make the caller
-// its Owner, and write the first organization_verifications submission.
-// Requires a verified organization_users account; does NOT require an
-// existing organization — this is what creates one.
+// GET  — the caller's own organization (if they own one) plus the latest
+//        review note, for prefilling the resubmission form so a rejected/
+//        action_required owner doesn't retype everything from scratch.
+// POST — Step 2+3 of onboarding: create the organization the first time,
+//        or RESUBMIT if the caller already owns one that's
+//        action_required/rejected (fixed and sending it back for review).
+//        Any other existing-org state (submitted/under_review/verified/
+//        suspended) still 409s -- this route isn't a general "edit my
+//        business" endpoint, just first-submission and fix-and-resend.
 //
 // Body: { name, businessType, registrationNumber, kraPin, businessPhone,
 //         businessEmail, address, lat, lng }
@@ -13,10 +18,49 @@ import { getSupabaseAdmin } from '@/lib/supabase'
 import { orgCorsHeaders } from '@/lib/orgCors'
 
 const BUSINESS_TYPES = new Set(['sole_proprietor', 'partnership', 'registered_company', 'other'])
+const RESUBMIT_FROM = new Set(['action_required', 'rejected'])
 
 export async function OPTIONS(request) {
   const origin = request.headers.get('origin') || ''
   return new NextResponse(null, { status: 200, headers: orgCorsHeaders(origin) })
+}
+
+export async function GET(request) {
+  const origin = request.headers.get('origin') || ''
+
+  const auth = await requireOrgUser()
+  if (auth.error) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status, headers: orgCorsHeaders(origin) })
+  }
+
+  const supabase = getSupabaseAdmin()
+  const { data: membership } = await supabase
+    .from('organization_members')
+    .select('organization_id')
+    .eq('user_id', auth.user.id)
+    .eq('role', 'owner')
+    .is('removed_at', null)
+    .maybeSingle()
+
+  if (!membership) {
+    return NextResponse.json({ organization: null, latest_review: null }, { headers: orgCorsHeaders(origin) })
+  }
+
+  const { data: organization } = await supabase
+    .from('organizations')
+    .select('*')
+    .eq('id', membership.organization_id)
+    .maybeSingle()
+
+  const { data: latestReview } = await supabase
+    .from('organization_verifications')
+    .select('status, notes, reviewed_by, reviewed_at')
+    .eq('organization_id', membership.organization_id)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  return NextResponse.json({ organization, latest_review: latestReview || null }, { headers: orgCorsHeaders(origin) })
 }
 
 export async function POST(request) {
@@ -53,6 +97,16 @@ export async function POST(request) {
 
   const supabase = getSupabaseAdmin()
 
+  const submittedData = {
+    name: String(name).trim(),
+    business_type: cleanType,
+    registration_number: registrationNumber || null,
+    kra_pin: kraPin || null,
+    business_phone: businessPhone || null,
+    business_email: businessEmail || null,
+    address: address || null,
+  }
+
   // One owner account can't create a second organization through this
   // route — additional locations belong inside a single organization as
   // more washpoints, not as separate organizations. (The same person CAN
@@ -67,22 +121,72 @@ export async function POST(request) {
     .maybeSingle()
 
   if (alreadyOwns) {
-    return NextResponse.json(
-      { error: 'You already own an organization.', organization_id: alreadyOwns.organization_id },
-      { status: 409, headers: orgCorsHeaders(origin) }
-    )
+    const { data: existingOrg } = await supabase
+      .from('organizations')
+      .select('id, verification_status')
+      .eq('id', alreadyOwns.organization_id)
+      .maybeSingle()
+
+    if (!existingOrg || !RESUBMIT_FROM.has(existingOrg.verification_status)) {
+      return NextResponse.json(
+        { error: 'You already own an organization.', organization_id: alreadyOwns.organization_id },
+        { status: 409, headers: orgCorsHeaders(origin) }
+      )
+    }
+
+    // Resubmission: same organization row, updated details, back to
+    // 'submitted' for another review pass -- not a new organization, and
+    // not a new owner membership (that already exists and is untouched).
+    const { data: updatedOrg, error: updateError } = await supabase
+      .from('organizations')
+      .update({
+        name: submittedData.name,
+        business_type: submittedData.business_type,
+        registration_number: submittedData.registration_number,
+        kra_pin: submittedData.kra_pin,
+        business_phone: submittedData.business_phone,
+        business_email: submittedData.business_email,
+        address: submittedData.address,
+        lat: typeof lat === 'number' ? lat : null,
+        lng: typeof lng === 'number' ? lng : null,
+        verification_status: 'submitted',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', existingOrg.id)
+      .select()
+      .single()
+
+    if (updateError || !updatedOrg) {
+      console.error('[org business] resubmit update error:', updateError?.message)
+      return NextResponse.json({ error: 'Could not resubmit your business details.' }, { status: 500, headers: orgCorsHeaders(origin) })
+    }
+
+    const { error: verificationError } = await supabase.from('organization_verifications').insert({
+      organization_id: existingOrg.id,
+      submitted_data: submittedData,
+      status: 'submitted',
+    })
+    if (verificationError) {
+      console.error('[org business] resubmit verification record failed:', verificationError.message)
+    }
+
+    await supabase.from('audit_logs').insert({
+      organization_id: existingOrg.id,
+      actor_user_id: auth.user.id,
+      actor_type: 'organization_user',
+      action: 'organization.resubmitted',
+      target_type: 'organization',
+      target_id: existingOrg.id,
+      metadata: { from_status: existingOrg.verification_status },
+    })
+
+    return NextResponse.json({ ok: true, organization: updatedOrg, resubmitted: true }, { headers: orgCorsHeaders(origin) })
   }
 
   const { data: organization, error: orgError } = await supabase
     .from('organizations')
     .insert({
-      name: String(name).trim(),
-      business_type: cleanType,
-      registration_number: registrationNumber || null,
-      kra_pin: kraPin || null,
-      business_phone: businessPhone || null,
-      business_email: businessEmail || null,
-      address: address || null,
+      ...submittedData,
       lat: typeof lat === 'number' ? lat : null,
       lng: typeof lng === 'number' ? lng : null,
       verification_status: 'submitted',
@@ -118,15 +222,7 @@ export async function POST(request) {
 
   const { error: verificationError } = await supabase.from('organization_verifications').insert({
     organization_id: organization.id,
-    submitted_data: {
-      name: organization.name,
-      business_type: cleanType,
-      registration_number: registrationNumber || null,
-      kra_pin: kraPin || null,
-      business_phone: businessPhone || null,
-      business_email: businessEmail || null,
-      address: address || null,
-    },
+    submitted_data: submittedData,
     status: 'submitted',
   })
 

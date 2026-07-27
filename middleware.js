@@ -168,6 +168,12 @@ const ORG_PUBLIC_API = new Set([
   '/api/org/verify/email-verify',
   '/api/org/verify/phone-send',
   '/api/org/verify/phone-verify',
+  // Public so an invited person can see "you've been invited to join X"
+  // before they've logged in or even created an account -- everything
+  // else under /api/org/invitations (create, revoke, accept) still
+  // requires a real session, this is read-only and reveals nothing
+  // beyond what the invite email itself already says.
+  '/api/org/invitations/lookup',
 ])
 
 function hostnameFromRequest(request) {
@@ -182,7 +188,8 @@ function isAdminProtectedApi(pathname) {
   return (
     pathname.startsWith('/api/data') ||
     pathname.startsWith('/api/operators') ||
-    pathname.startsWith('/api/wash-points')
+    pathname.startsWith('/api/wash-points') ||
+    pathname.startsWith('/api/org-verifications')
   )
 }
 

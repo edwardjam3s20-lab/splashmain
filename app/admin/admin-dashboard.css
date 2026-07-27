@@ -544,6 +544,33 @@
   color: var(--adm-gold);
 }
 
+.adm-status.danger {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--adm-red);
+}
+
+/* Verification review actions -- distinct from the default gold btn-outline
+   so approve/reject don't read as equally weighted next to each other. */
+.adm-review-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-approve {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--adm-green);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+.btn-approve:hover { background: rgba(16, 185, 129, 0.25); }
+
+.btn-danger-outline {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--adm-red);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+.btn-danger-outline:hover { background: rgba(239, 68, 68, 0.2); }
+
 .adm-empty {
   color: var(--adm-muted);
   font-size: 14px;
