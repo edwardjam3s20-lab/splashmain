@@ -109,7 +109,15 @@ export async function POST(request) {
 
   // If either verification is incomplete, return a pendingToken so the
   // client can resume the verification flow rather than blocking silently.
-  if (!user.email_verified || !user.phone_verified) {
+  // TEMPORARY BYPASS: phone_verified is intentionally left out of this
+  // gate for now. WapiSMS outbound SMS isn't activated yet (pending
+  // permissions), so phone_verified can never actually flip to true for
+  // any account — which meant EVERY login re-entered the pending/OTP
+  // branch below, sent the user to VerifyPhoneScreen, and from there
+  // unconditionally back into onboarding, forever. Re-add
+  // `|| !user.phone_verified` here once WapiSMS is confirmed working and
+  // existing accounts have had a chance to actually verify.
+  if (!user.email_verified) {
     const pendingToken = await createSession({
       email:   user.email,
       name:    user.name,
