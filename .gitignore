@@ -2,3 +2,5 @@
 .env
 node_modules/
 .next/
+migration-report.json
+migration-report.md
