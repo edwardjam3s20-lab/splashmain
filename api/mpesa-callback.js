@@ -150,6 +150,86 @@ async function activateOperatorSubscriptionByEmail(email) {
   }
 }
 
+// New path, for org subscriptions. Orgs aren't keyed by an `email` column
+// the way operators/profiles are — the paying identity is the org_user
+// who owns the org (organization_users.email), not organizations
+// .business_email — so this can't PATCH organizations?email=eq... the
+// way activateOperatorSubscriptionByEmail does. Two REST calls instead:
+// resolve organization_users.email -> id, then organization_members
+// (role=owner, removed_at=null) -> organization_id, then PATCH that
+// organization row directly by id. Same flat single-plan approach as the
+// operator path (org_monthly, 2000 KSh — see ORG_PLAN_PRICES in
+// lib/paystack/plans.js).
+async function activateOrgSubscriptionByEmail(email) {
+  if (!SUPABASE_SERVICE_KEY) {
+    console.error('Org subscription activation failed: SUPABASE_SERVICE_ROLE_KEY not configured')
+    return false
+  }
+  try {
+    const userRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/organization_users?email=eq.${encodeURIComponent(email)}&select=id`,
+      {
+        headers: {
+          apikey: SUPABASE_SERVICE_KEY,
+          Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
+        },
+      }
+    )
+    if (!userRes.ok) {
+      console.error('Org subscription: organization_users lookup failed:', await userRes.text())
+      return false
+    }
+    const users = await userRes.json()
+    const userId = users?.[0]?.id
+    if (!userId) {
+      console.error('Org subscription: no organization_users row for email', email)
+      return false
+    }
+
+    const memberRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/organization_members?user_id=eq.${userId}&role=eq.owner&removed_at=is.null&select=organization_id`,
+      {
+        headers: {
+          apikey: SUPABASE_SERVICE_KEY,
+          Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
+        },
+      }
+    )
+    if (!memberRes.ok) {
+      console.error('Org subscription: organization_members lookup failed:', await memberRes.text())
+      return false
+    }
+    const members = await memberRes.json()
+    const organizationId = members?.[0]?.organization_id
+    if (!organizationId) {
+      console.error('Org subscription: no owner membership found for organization_users.id', userId)
+      return false
+    }
+
+    const orgRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/organizations?id=eq.${organizationId}`,
+      {
+        method: 'PATCH',
+        headers: {
+          apikey: SUPABASE_SERVICE_KEY,
+          Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
+          'Content-Type': 'application/json',
+          Prefer: 'return=minimal',
+        },
+        body: JSON.stringify({ sub_status: 'active', sub_plan: 'org_monthly' }),
+      }
+    )
+    if (!orgRes.ok) {
+      console.error('Org subscription PATCH failed:', await orgRes.text())
+      return false
+    }
+    return true
+  } catch (e) {
+    console.error('activateOrgSubscriptionByEmail error:', e.message)
+    return false
+  }
+}
+
 // Original path, entirely unchanged from before this file was touched —
 // existing subscription activations must keep working exactly as they
 // did. Phone-match matching here is fragile (see code comments in the
@@ -285,6 +365,12 @@ export default async function handler(req, res) {
       const ok = await activateOperatorSubscriptionByEmail(pending.user_email)
       await markPendingTransaction(checkoutRequestId, ok ? 'completed' : 'failed')
       return res.status(200).json({ message: ok ? 'Operator subscription activated' : 'Operator subscription activation failed' });
+    }
+
+    if (pending?.purpose === 'org_subscription') {
+      const ok = await activateOrgSubscriptionByEmail(pending.user_email)
+      await markPendingTransaction(checkoutRequestId, ok ? 'completed' : 'failed')
+      return res.status(200).json({ message: ok ? 'Org subscription activated' : 'Org subscription activation failed' });
     }
 
     // purpose === 'subscription', or no tagged row found at all (legacy

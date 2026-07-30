@@ -30,10 +30,12 @@ export async function POST(request) {
 
   // Defaults to 'customer' so the existing customer app (which has never
   // sent this field) keeps working unchanged. Anything other than the
-  // two known values is rejected rather than silently coerced, since this
-  // string picks which table (profiles vs operators) gets written to.
-  const accountType = rawAccountType === 'operator' ? 'operator' : 'customer'
-  if (rawAccountType && rawAccountType !== 'customer' && rawAccountType !== 'operator') {
+  // three known values is rejected rather than silently coerced, since
+  // this string picks which table (profiles vs operators vs
+  // organizations) gets written to.
+  const VALID_ACCOUNT_TYPES = new Set(['customer', 'operator', 'org'])
+  const accountType = VALID_ACCOUNT_TYPES.has(rawAccountType) ? rawAccountType : 'customer'
+  if (rawAccountType && !VALID_ACCOUNT_TYPES.has(rawAccountType)) {
     return NextResponse.json({ error: `Invalid accountType: ${rawAccountType}` }, { status: 400 })
   }
 
@@ -82,5 +84,11 @@ export async function POST(request) {
     return NextResponse.json({ error: result.error }, { status: result.status })
   }
 
-  return NextResponse.json(accountType === 'operator' ? { operator: result.operator } : { profile: result.profile })
+  return NextResponse.json(
+    accountType === 'org'
+      ? { organization: result.organization }
+      : accountType === 'operator'
+      ? { operator: result.operator }
+      : { profile: result.profile }
+  )
 }

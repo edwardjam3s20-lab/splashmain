@@ -46,7 +46,7 @@ const MPESA_BASE = process.env.MPESA_BASE_URL;
 const SUPABASE_URL = 'https://msdvyiqjoogafzyaoycg.supabase.co';
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-const VALID_PURPOSES = new Set(['subscription', 'booking_payment', 'wallet_topup', 'operator_subscription']);
+const VALID_PURPOSES = new Set(['subscription', 'booking_payment', 'wallet_topup', 'operator_subscription', 'org_subscription']);
 
 // Adjust to your actual business policy — this is a sanity ceiling to
 // limit blast radius from abuse or a typo'd amount, not a number I know
@@ -192,6 +192,7 @@ export default async function handler(req, res) {
         TransactionDesc: transactionDesc || (
           purpose === 'booking_payment' ? 'SplashPass Booking' :
           purpose === 'operator_subscription' ? 'SplashPass Operator Subscription' :
+          purpose === 'org_subscription' ? 'SplashPass Org Subscription' :
           'SplashPass Subscription'
         )
       })

@@ -17,7 +17,7 @@
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { applyPaystackPayment } from '@/lib/paystack/applyPayment'
-import { PLAN_PRICES, OPERATOR_PLAN_PRICES } from '@/lib/paystack/plans'
+import { PLAN_PRICES, OPERATOR_PLAN_PRICES, ORG_PLAN_PRICES } from '@/lib/paystack/plans'
 
 export async function POST(request) {
   const secret = process.env.PAYSTACK_SECRET_KEY
@@ -68,12 +68,14 @@ export async function POST(request) {
   }
 
   // accountType must come from metadata set when the transaction was
-  // initialized — make sure both checkout screens pass
+  // initialized — make sure every checkout screen passes
   // metadata: { accountType, planId } into their Paystack popup config.
-  // Defaults to 'customer' so existing (pre-operator) charges, which
-  // never set this, keep resolving against PLAN_PRICES exactly as before.
-  const accountType = metadata?.accountType === 'operator' ? 'operator' : 'customer'
-  const plans = accountType === 'operator' ? OPERATOR_PLAN_PRICES : PLAN_PRICES
+  // Defaults to 'customer' so existing (pre-operator, pre-org) charges,
+  // which never set this, keep resolving against PLAN_PRICES exactly as
+  // before.
+  const VALID_ACCOUNT_TYPES = new Set(['customer', 'operator', 'org'])
+  const accountType = VALID_ACCOUNT_TYPES.has(metadata?.accountType) ? metadata.accountType : 'customer'
+  const plans = accountType === 'org' ? ORG_PLAN_PRICES : accountType === 'operator' ? OPERATOR_PLAN_PRICES : PLAN_PRICES
 
   // planId should come from metadata set when the transaction was
   // initialized. Falling back to a reverse price lookup only because

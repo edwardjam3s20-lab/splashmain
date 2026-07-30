@@ -11,6 +11,7 @@ import { requireOrgUser } from '@/lib/requireOrgUser'
 import { publicOrgUser } from '@/lib/orgSession'
 import { getSupabaseAdmin } from '@/lib/supabase'
 import { orgCorsHeaders } from '@/lib/orgCors'
+import { orgTrialDaysLeft } from '@/lib/orgAccess'
 
 export async function OPTIONS(request) {
   const origin = request.headers.get('origin') || ''
@@ -31,7 +32,7 @@ export async function GET(request) {
   const supabase = getSupabaseAdmin()
   const { data: memberships, error } = await supabase
     .from('organization_members')
-    .select('role, status, organization:organizations(id, name, verification_status, suspended_at)')
+    .select('role, status, organization:organizations(id, name, verification_status, suspended_at, sub_status, created_at)')
     .eq('user_id', auth.user.id)
     .is('removed_at', null)
 
@@ -43,8 +44,18 @@ export async function GET(request) {
     )
   }
 
+  // trial_days_left is derived, not stored — computed fresh here so the
+  // frontend banner never has to duplicate the ORG_TRIAL_DAYS math itself
+  // (same reasoning as publicOperator() doing this for the operator app).
+  const enriched = (memberships || []).map((m) => ({
+    ...m,
+    organization: m.organization
+      ? { ...m.organization, trial_days_left: orgTrialDaysLeft(m.organization) }
+      : m.organization,
+  }))
+
   return NextResponse.json(
-    { user: publicOrgUser(auth.user), organizations: memberships || [] },
+    { user: publicOrgUser(auth.user), organizations: enriched },
     { headers: orgCorsHeaders(origin) }
   )
 }
