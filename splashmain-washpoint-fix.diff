@@ -1,0 +1,16 @@
+diff --git a/app/api/org/washpoints/route.js b/app/api/org/washpoints/route.js
+index 2b34592..51ab4da 100644
+--- a/app/api/org/washpoints/route.js
++++ b/app/api/org/washpoints/route.js
+@@ -94,6 +94,11 @@ export async function POST(request) {
+     lng: typeof lng === 'number' ? lng : (lng ? parseFloat(lng) : null),
+     description: description || null,
+     photos: Array.isArray(photos) ? photos : [],
++    // Not tier-based for orgs (that's a legacy per-operator concept) — 1 is
++    // a harmless placeholder so this stays insertable now that the column
++    // is NOT NULL with no default. Same convention already used in
++    // lib/orgAccess.js's computeOrgCommissionSplit() for the same reason.
++    commission_tier: 1,
+   }
+   // opens_at/closes_at are optional at creation — an owner can set hours
+   // later from Settings (same PATCH the legacy operator hours route uses,
