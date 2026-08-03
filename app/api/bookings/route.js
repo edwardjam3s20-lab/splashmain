@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { sendPushToOperator } from '@/lib/push'
+import { computeOrgCommissionSplit } from '@/lib/orgAccess'
 
 // Fields the client still supplies as-is — none of these affect money, and
 // all describe a specific choice (which car, which slot) rather than a
@@ -17,9 +18,15 @@ const REQUIRED_FIELDS = [
 // FREEMIUM MODEL (replaces the old 30-day-trial + 30 KSh booking fee +
 // per-wash commission model): 14 days free from account creation, then a
 // hard paywall — no bookings at all without an active subscription. No
-// booking fee, no commission, ever; operator keeps 100% of wash_price
-// (see lib/commission.js / public/splashpass-commission.js, both zeroed
-// to match). Platform revenue is subscription-only from here on.
+// booking fee, ever.
+//
+// Commission: legacy (non-org) washpoints keep the flat 100%-to-operator/
+// 0%-platform split (see lib/commission.js, zeroed there deliberately).
+// Org-owned washpoints are different, by explicit later decision: 0%
+// platform commission while the org is on its own 14-day trial or
+// subscribed, 20% once that trial elapses without subscribing — see
+// computeOrgCommissionSplit in lib/orgAccess.js, which is the single
+// source of truth for that rule rather than duplicating it here.
 const TRIAL_DAYS = 14
 
 const COMMISSION_TIERS = {
@@ -198,7 +205,32 @@ export async function POST(request) {
   const washPrice = Number(service.price)
   const appFee = 0 // no booking fee under the freemium model
   const totalAmount = washPrice + appFee
-  const split = splitWashPrice(washPrice, washPoint.commission_tier)
+  // Legacy washpoints (no organization_id) keep the existing flat 100%/0%
+  // split unconditionally. Org-owned ones use the org's own trial/
+  // subscription status — computeOrgCommissionSplit reuses orgHasAccess()
+  // so this can never drift out of sync with what actually gates org
+  // login.
+  //
+  // Separate query rather than an embedded PostgREST join
+  // (wash_points.organization_id → organizations) on purpose: that
+  // column was added via SQL run directly in the Supabase editor, never
+  // committed here, so there's no way to confirm from this repo alone
+  // whether it's a real FK constraint or just a bare uuid column.
+  // PostgREST's embedded-resource syntax needs a real FK (or an explicit
+  // relationship hint) to resolve at all — get that wrong on a route real
+  // customers hit for every booking and the whole thing 500s. A plain
+  // second lookup costs one extra indexed query and can't fail that way.
+  let split
+  if (washPoint.organization_id) {
+    const { data: organization } = await supabase
+      .from('organizations')
+      .select('sub_status, created_at')
+      .eq('id', washPoint.organization_id)
+      .maybeSingle()
+    split = computeOrgCommissionSplit(washPrice, organization)
+  } else {
+    split = splitWashPrice(washPrice, washPoint.commission_tier)
+  }
 
   const { data: booking, error } = await supabase
     .from('bookings')
