@@ -1,0 +1,133 @@
+diff --git a/.env.example b/.env.example
+index b29464b..f3d88e6 100644
+--- a/.env.example
++++ b/.env.example
+@@ -50,3 +50,12 @@ NEXT_PUBLIC_ROOT_DOMAIN=splashpass.site
+ # DEV_SITE=admin
+ 
+ # Or send header: x-splashpass-site: operator
++
++# Admin notification email — sent via Resend whenever an organization is
++# submitted or resubmitted for verification review. Required for that
++# email to send at all; if unset, notifyAdminOrgSubmission no-ops with a
++# console.warn rather than failing the owner's submission.
++ADMIN_NOTIFICATION_EMAIL=
++# Optional. Adds a "Review in admin panel" button to that email.
++# ADMIN_PANEL_URL=https://splashpass.site/admin
++
+diff --git a/app/api/bookings/route.js b/app/api/bookings/route.js
+index 4f81e24..60d778e 100644
+--- a/app/api/bookings/route.js
++++ b/app/api/bookings/route.js
+@@ -191,6 +191,39 @@ export async function POST(request) {
+     return NextResponse.json({ error: 'This wash point is not currently accepting bookings' }, { status: 409, headers: corsHeaders(origin) })
+   }
+ 
++  // Org-owned washpoints only: block bookings until the organization has
++  // actually cleared verification review. Nothing previously checked this
++  // at all -- a washpoint went live and bookable the instant it was
++  // created in onboarding (Step 4), before any admin had looked at the
++  // application. Legacy washpoints (no organization_id) have no
++  // verification concept and are unaffected.
++  //
++  // Plain separate query rather than an embedded PostgREST join
++  // (wash_points.organization_id → organizations) on purpose: that column
++  // was added via SQL run directly in the Supabase editor, never
++  // committed here, so there's no way to confirm from this repo alone
++  // whether it's a real FK constraint or just a bare uuid column.
++  // PostgREST's embedded-resource syntax needs a real FK (or an explicit
++  // relationship hint) to resolve at all — get that wrong on a route real
++  // customers hit for every booking and the whole thing 500s. A plain
++  // second lookup costs one extra indexed query and can't fail that way.
++  let organization = null
++  if (washPoint.organization_id) {
++    const { data: org } = await supabase
++      .from('organizations')
++      .select('sub_status, created_at, verification_status')
++      .eq('id', washPoint.organization_id)
++      .maybeSingle()
++    organization = org
++
++    if (!organization || organization.verification_status !== 'verified') {
++      return NextResponse.json(
++        { error: 'This wash point is not yet accepting bookings' },
++        { status: 409, headers: corsHeaders(origin) }
++      )
++    }
++  }
++
+   const { data: service, error: svcError } = await supabase
+     .from('wash_point_extras')
+     .select('id, name, price')
+@@ -211,26 +244,12 @@ export async function POST(request) {
+   // so this can never drift out of sync with what actually gates org
+   // login.
+   //
+-  // Separate query rather than an embedded PostgREST join
+-  // (wash_points.organization_id → organizations) on purpose: that
+-  // column was added via SQL run directly in the Supabase editor, never
+-  // committed here, so there's no way to confirm from this repo alone
+-  // whether it's a real FK constraint or just a bare uuid column.
+-  // PostgREST's embedded-resource syntax needs a real FK (or an explicit
+-  // relationship hint) to resolve at all — get that wrong on a route real
+-  // customers hit for every booking and the whole thing 500s. A plain
+-  // second lookup costs one extra indexed query and can't fail that way.
+-  let split
+-  if (washPoint.organization_id) {
+-    const { data: organization } = await supabase
+-      .from('organizations')
+-      .select('sub_status, created_at')
+-      .eq('id', washPoint.organization_id)
+-      .maybeSingle()
+-    split = computeOrgCommissionSplit(washPrice, organization)
+-  } else {
+-    split = splitWashPrice(washPrice, washPoint.commission_tier)
+-  }
++  // organization was already fetched above (for the verification-status
++  // gate) when washPoint.organization_id is set, so this reuses that
++  // instead of querying organizations a second time.
++  const split = washPoint.organization_id
++    ? computeOrgCommissionSplit(washPrice, organization)
++    : splitWashPrice(washPrice, washPoint.commission_tier)
+ 
+   const { data: booking, error } = await supabase
+     .from('bookings')
+diff --git a/app/api/org/business/route.js b/app/api/org/business/route.js
+index dc954d5..a81b771 100644
+--- a/app/api/org/business/route.js
++++ b/app/api/org/business/route.js
+@@ -16,6 +16,7 @@ import { NextResponse } from 'next/server'
+ import { requireOrgUser } from '@/lib/requireOrgUser'
+ import { getSupabaseAdmin } from '@/lib/supabase'
+ import { orgCorsHeaders } from '@/lib/orgCors'
++import { notifyAdminOrgSubmission } from '@/lib/notifyAdminOrgSubmission'
+ 
+ const BUSINESS_TYPES = new Set(['sole_proprietor', 'partnership', 'registered_company', 'other'])
+ const RESUBMIT_FROM = new Set(['action_required', 'rejected'])
+@@ -180,6 +181,14 @@ export async function POST(request) {
+       metadata: { from_status: existingOrg.verification_status },
+     })
+ 
++    // Fire-and-forget: a failed notification email must never block the
++    // owner's resubmission response, which is why this isn't awaited into
++    // the response path with error handling of its own -- see
++    // notifyAdminOrgSubmission's internal try/catch-equivalent.
++    notifyAdminOrgSubmission({ organization: updatedOrg, isResubmission: true }).catch((err) => {
++      console.error('[org business] resubmit admin notification failed:', err?.message)
++    })
++
+     return NextResponse.json({ ok: true, organization: updatedOrg, resubmitted: true }, { headers: orgCorsHeaders(origin) })
+   }
+ 
+@@ -242,6 +251,11 @@ export async function POST(request) {
+     metadata: { business_type: cleanType },
+   })
+ 
++  // Fire-and-forget, same reasoning as the resubmission branch above.
++  notifyAdminOrgSubmission({ organization, isResubmission: false }).catch((err) => {
++    console.error('[org business] admin notification failed:', err?.message)
++  })
++
+   return NextResponse.json(
+     { ok: true, organization },
+     { headers: orgCorsHeaders(origin) }

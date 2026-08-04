@@ -16,6 +16,7 @@ import { NextResponse } from 'next/server'
 import { requireOrgUser } from '@/lib/requireOrgUser'
 import { getSupabaseAdmin } from '@/lib/supabase'
 import { orgCorsHeaders } from '@/lib/orgCors'
+import { notifyAdminOrgSubmission } from '@/lib/notifyAdminOrgSubmission'
 
 const BUSINESS_TYPES = new Set(['sole_proprietor', 'partnership', 'registered_company', 'other'])
 const RESUBMIT_FROM = new Set(['action_required', 'rejected'])
@@ -180,6 +181,14 @@ export async function POST(request) {
       metadata: { from_status: existingOrg.verification_status },
     })
 
+    // Fire-and-forget: a failed notification email must never block the
+    // owner's resubmission response, which is why this isn't awaited into
+    // the response path with error handling of its own -- see
+    // notifyAdminOrgSubmission's internal try/catch-equivalent.
+    notifyAdminOrgSubmission({ organization: updatedOrg, isResubmission: true }).catch((err) => {
+      console.error('[org business] resubmit admin notification failed:', err?.message)
+    })
+
     return NextResponse.json({ ok: true, organization: updatedOrg, resubmitted: true }, { headers: orgCorsHeaders(origin) })
   }
 
@@ -240,6 +249,11 @@ export async function POST(request) {
     target_type: 'organization',
     target_id: organization.id,
     metadata: { business_type: cleanType },
+  })
+
+  // Fire-and-forget, same reasoning as the resubmission branch above.
+  notifyAdminOrgSubmission({ organization, isResubmission: false }).catch((err) => {
+    console.error('[org business] admin notification failed:', err?.message)
   })
 
   return NextResponse.json(

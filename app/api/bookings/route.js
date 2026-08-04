@@ -191,6 +191,39 @@ export async function POST(request) {
     return NextResponse.json({ error: 'This wash point is not currently accepting bookings' }, { status: 409, headers: corsHeaders(origin) })
   }
 
+  // Org-owned washpoints only: block bookings until the organization has
+  // actually cleared verification review. Nothing previously checked this
+  // at all -- a washpoint went live and bookable the instant it was
+  // created in onboarding (Step 4), before any admin had looked at the
+  // application. Legacy washpoints (no organization_id) have no
+  // verification concept and are unaffected.
+  //
+  // Plain separate query rather than an embedded PostgREST join
+  // (wash_points.organization_id → organizations) on purpose: that column
+  // was added via SQL run directly in the Supabase editor, never
+  // committed here, so there's no way to confirm from this repo alone
+  // whether it's a real FK constraint or just a bare uuid column.
+  // PostgREST's embedded-resource syntax needs a real FK (or an explicit
+  // relationship hint) to resolve at all — get that wrong on a route real
+  // customers hit for every booking and the whole thing 500s. A plain
+  // second lookup costs one extra indexed query and can't fail that way.
+  let organization = null
+  if (washPoint.organization_id) {
+    const { data: org } = await supabase
+      .from('organizations')
+      .select('sub_status, created_at, verification_status')
+      .eq('id', washPoint.organization_id)
+      .maybeSingle()
+    organization = org
+
+    if (!organization || organization.verification_status !== 'verified') {
+      return NextResponse.json(
+        { error: 'This wash point is not yet accepting bookings' },
+        { status: 409, headers: corsHeaders(origin) }
+      )
+    }
+  }
+
   const { data: service, error: svcError } = await supabase
     .from('wash_point_extras')
     .select('id, name, price')
@@ -211,26 +244,12 @@ export async function POST(request) {
   // so this can never drift out of sync with what actually gates org
   // login.
   //
-  // Separate query rather than an embedded PostgREST join
-  // (wash_points.organization_id → organizations) on purpose: that
-  // column was added via SQL run directly in the Supabase editor, never
-  // committed here, so there's no way to confirm from this repo alone
-  // whether it's a real FK constraint or just a bare uuid column.
-  // PostgREST's embedded-resource syntax needs a real FK (or an explicit
-  // relationship hint) to resolve at all — get that wrong on a route real
-  // customers hit for every booking and the whole thing 500s. A plain
-  // second lookup costs one extra indexed query and can't fail that way.
-  let split
-  if (washPoint.organization_id) {
-    const { data: organization } = await supabase
-      .from('organizations')
-      .select('sub_status, created_at')
-      .eq('id', washPoint.organization_id)
-      .maybeSingle()
-    split = computeOrgCommissionSplit(washPrice, organization)
-  } else {
-    split = splitWashPrice(washPrice, washPoint.commission_tier)
-  }
+  // organization was already fetched above (for the verification-status
+  // gate) when washPoint.organization_id is set, so this reuses that
+  // instead of querying organizations a second time.
+  const split = washPoint.organization_id
+    ? computeOrgCommissionSplit(washPrice, organization)
+    : splitWashPrice(washPrice, washPoint.commission_tier)
 
   const { data: booking, error } = await supabase
     .from('bookings')
