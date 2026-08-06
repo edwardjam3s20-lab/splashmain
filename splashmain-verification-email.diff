@@ -1,0 +1,24 @@
+diff --git a/app/api/org-verifications/[id]/route.js b/app/api/org-verifications/[id]/route.js
+index 4fbce5c..95539dc 100644
+--- a/app/api/org-verifications/[id]/route.js
++++ b/app/api/org-verifications/[id]/route.js
+@@ -9,6 +9,7 @@
+ import { NextResponse } from 'next/server'
+ import { getSupabaseAdmin } from '@/lib/supabase'
+ import { getSession } from '@/lib/session'
++import { notifyOrgVerificationUpdate } from '@/lib/notifyOrgVerificationUpdate'
+ 
+ // Each action's allowed source states — prevents e.g. suspending an
+ // organization that was never verified, or approving one that's already
+@@ -123,5 +124,11 @@ export async function PATCH(request, { params }) {
+     metadata: { admin_email: session.email, notes: notes?.trim() || null, from: organization.verification_status, to: transition.to },
+   })
+ 
++  // Fire-and-forget: a failed/misconfigured email must never block the
++  // admin's review action from actually taking effect.
++  notifyOrgVerificationUpdate({ organization: updatedOrg, action, notes: notes?.trim() || null }).catch((err) => {
++    console.error('[org-verifications PATCH] owner notification failed:', err?.message)
++  })
++
+   return NextResponse.json({ ok: true, organization: updatedOrg })
+ }

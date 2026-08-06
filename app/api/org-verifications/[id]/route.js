@@ -9,6 +9,7 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
+import { notifyOrgVerificationUpdate } from '@/lib/notifyOrgVerificationUpdate'
 
 // Each action's allowed source states — prevents e.g. suspending an
 // organization that was never verified, or approving one that's already
@@ -121,6 +122,12 @@ export async function PATCH(request, { params }) {
     target_type: 'organization',
     target_id: organizationId,
     metadata: { admin_email: session.email, notes: notes?.trim() || null, from: organization.verification_status, to: transition.to },
+  })
+
+  // Fire-and-forget: a failed/misconfigured email must never block the
+  // admin's review action from actually taking effect.
+  notifyOrgVerificationUpdate({ organization: updatedOrg, action, notes: notes?.trim() || null }).catch((err) => {
+    console.error('[org-verifications PATCH] owner notification failed:', err?.message)
   })
 
   return NextResponse.json({ ok: true, organization: updatedOrg })
