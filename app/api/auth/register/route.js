@@ -6,6 +6,7 @@ import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase'
 import { createSession } from '@/lib/session'
 import { checkRateLimit } from '@/lib/rateLimit'
+import { generateUniqueReferralCode } from '@/lib/referralCode'
 import { Resend } from 'resend'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
@@ -70,7 +71,7 @@ export async function POST(request) {
     )
   }
 
-  const { name, email, phone, password } = await request.json()
+  const { name, email, phone, password, referral_code: referralCodeInput } = await request.json()
 
   if (!name || !email || !phone || !password) {
     return NextResponse.json(
@@ -122,19 +123,41 @@ export async function POST(request) {
 
   const hashedPassword = Array.isArray(hashData) ? hashData[0]?.hash_password : hashData
 
+  const referralCode = await generateUniqueReferralCode(supabase, name)
+
+  // A referral code is a nice-to-have, not a signup requirement — an
+  // invalid/mistyped code is silently ignored rather than blocking
+  // registration or leaking which codes are valid via an error message.
+  // Self-referral (someone using their own not-yet-created code, which
+  // can't happen here) isn't the concern; a returning user re-signing up
+  // under their old code would be, but email uniqueness above already
+  // blocks re-registration on the same address.
+  let referredByCode = null
+  if (referralCodeInput && String(referralCodeInput).trim()) {
+    const { data: referrer } = await supabase
+      .from('profiles')
+      .select('referral_code')
+      .eq('referral_code', String(referralCodeInput).trim().toUpperCase())
+      .maybeSingle()
+    if (referrer) referredByCode = referrer.referral_code
+  }
+
   const { data: newUsers, error: insertError } = await supabase
     .from('profiles')
     .insert({
       name,
-      email:          cleanEmail,
-      phone:          cleanPhone,
-      password:       hashedPassword,
-      role:           'customer',
-      sub_status:     'trial',
-      loyalty_points: 0,
-      loyalty_tier:   'Bronze',
-      email_verified: false,
-      phone_verified: false,
+      email:                  cleanEmail,
+      phone:                  cleanPhone,
+      password:               hashedPassword,
+      role:                   'customer',
+      sub_status:              'trial',
+      loyalty_points:          0,
+      loyalty_tier:            'Bronze',
+      email_verified:          false,
+      phone_verified:          false,
+      referral_code:           referralCode,
+      referred_by_code:        referredByCode,
+      referral_bonus_awarded:  false,
     })
     .select()
 

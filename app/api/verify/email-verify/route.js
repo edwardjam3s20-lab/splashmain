@@ -6,6 +6,7 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase'
 import { createSession, setSessionCookie, getSecret } from '@/lib/session'
+import { REFERRAL_BONUS_POINTS } from '@/lib/referralCode'
 import { jwtVerify } from 'jose'
 
 // SECURITY/BUGFIX: this used to be a single hardcoded string
@@ -126,6 +127,41 @@ export async function POST(request) {
     .single()
 
   delete profile.password
+
+  // Referral payout — email verification (not phone) is the trigger since
+  // it's the point at which a signup is confirmed to be a real, reachable
+  // person and is issued a full session; phone verification currently
+  // can't be used for this because outbound SMS is blocked pending the
+  // WapiSMS permission fix (see Profile > verify phone flow), which would
+  // make referral bonuses appear broken through no fault of their own.
+  // referral_bonus_awarded guards against a double payout if this route
+  // is ever called twice for the same profile.
+  if (profile.referred_by_code && !profile.referral_bonus_awarded) {
+    const { data: referrer } = await supabase
+      .from('profiles')
+      .select('email, loyalty_points')
+      .eq('referral_code', profile.referred_by_code)
+      .maybeSingle()
+
+    if (referrer) {
+      await supabase
+        .from('profiles')
+        .update({ loyalty_points: (referrer.loyalty_points || 0) + REFERRAL_BONUS_POINTS })
+        .eq('email', referrer.email)
+
+      await supabase.from('point_ledger').insert({
+        user_email: referrer.email,
+        delta:      REFERRAL_BONUS_POINTS,
+        reason:     'referral_bonus',
+        status:     'confirmed',
+      })
+    }
+
+    await supabase
+      .from('profiles')
+      .update({ referral_bonus_awarded: true })
+      .eq('email', cleanEmail)
+  }
 
   // Issue full session — phone verification deferred
   const token = await createSession({
