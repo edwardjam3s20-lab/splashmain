@@ -107,6 +107,27 @@ export async function POST(request) {
     )
   }
 
+  // BUGFIX: verify_password()'s RETURNS TABLE never included
+  // email_verified/phone_verified (it predates those columns), so
+  // `user.email_verified` below was always `undefined` — falsy — for
+  // EVERY account on EVERY login, regardless of what profiles actually
+  // had stored. That silently re-sent a fresh email OTP and routed every
+  // returning customer through onboarding again, every single time they
+  // signed in. Rather than changing verify_password's fixed return shape
+  // (SECURITY DEFINER, other code may depend on its exact columns), pull
+  // the real, current verification flags directly — same pattern
+  // email-verify/route.js already uses after its own update.
+  const { data: freshProfile } = await supabase
+    .from('profiles')
+    .select('email_verified, phone_verified')
+    .eq('id', user.id)
+    .single()
+
+  if (freshProfile) {
+    user.email_verified = freshProfile.email_verified
+    user.phone_verified = freshProfile.phone_verified
+  }
+
   // If either verification is incomplete, return a pendingToken so the
   // client can resume the verification flow rather than blocking silently.
   // TEMPORARY BYPASS: phone_verified is intentionally left out of this
