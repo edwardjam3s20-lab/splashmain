@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { randomUUID } from 'crypto'
 import { getSupabaseAdmin } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { sendPushToOperator } from '@/lib/push'
@@ -9,10 +10,14 @@ import { computeOrgCommissionSplit } from '@/lib/orgAccess'
 // value that could be forged for gain. `location` and `service_name` are
 // used only as lookup keys below, not written through directly — the
 // canonical name from the matched DB row is what actually gets stored.
+// booking_code is NOT here -- the server generates its own (see
+// generateUniqueBookingCode below); the client used to do this via a
+// direct anon-key Supabase read that has no grant on `bookings` (by
+// design -- see the RLS lockdown), so it always 403'd and blocked every
+// booking before this route was ever reached.
 const REQUIRED_FIELDS = [
   'date', 'time', 'location',
   'car_plate', 'car_type', 'car_make', 'car_model', 'service_name',
-  'booking_code',
 ]
 
 // FREEMIUM MODEL (replaces the old 30-day-trial + 30 KSh booking fee +
@@ -36,6 +41,28 @@ const COMMISSION_TIERS = {
 
 function normaliseTier(tier) {
   return Number(tier) === 2 ? 2 : 1
+}
+
+// Server-side counterpart of the customer app's old generateUniqueBookingCode
+// (src/lib/bookings.ts) -- moved here because that one ran as `anon` against
+// Supabase directly, which has zero grants on `bookings` intentionally.
+// getSupabaseAdmin() below is the service-role client this route already
+// uses for the insert itself, so this has real permission to check.
+// The insert's own 23505 (unique_violation) handling further down is the
+// last-resort safety net if every attempt here somehow still collides.
+async function generateUniqueBookingCode(supabase) {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const raw = randomUUID().replace(/-/g, '').toUpperCase()
+    const code = 'SP' + raw.slice(0, 6)
+    const { data, error } = await supabase
+      .from('bookings')
+      .select('id')
+      .eq('booking_code', code)
+      .maybeSingle()
+    if (error) throw error
+    if (!data) return code
+  }
+  throw new Error('Could not generate a unique booking code.')
 }
 
 // Mirrors public/splashpass-commission.js's splitWashPrice — reimplemented
@@ -251,6 +278,8 @@ export async function POST(request) {
     ? computeOrgCommissionSplit(washPrice, organization)
     : splitWashPrice(washPrice, washPoint.commission_tier)
 
+  const bookingCode = await generateUniqueBookingCode(supabase)
+
   const { data: booking, error } = await supabase
     .from('bookings')
     .insert({
@@ -286,7 +315,7 @@ export async function POST(request) {
       splash_commission: split.platformAmount,
       commission_tier: split.tier,
       booking_type: onTrial ? 'trial' : 'subscription',
-      booking_code: body.booking_code,
+      booking_code: bookingCode,
     })
     .select()
     .single()
