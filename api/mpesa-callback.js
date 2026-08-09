@@ -1,3 +1,5 @@
+import { notifyBookingConfirmed } from '@/lib/notifyBookingConfirmed'
+
 const SUPABASE_URL = 'https://msdvyiqjoogafzyaoycg.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_N_g24aU7TLHLNeu72gnfeg_1d7OleFW';
 // NOTE: SUPABASE_KEY above is a publishable/anon key, already present in
@@ -27,6 +29,23 @@ async function findPendingTransaction(checkoutRequestId) {
     return rows?.[0] || null
   } catch (e) {
     console.error('findPendingTransaction error:', e.message)
+    return null
+  }
+}
+
+async function fetchBooking(bookingId) {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/bookings?id=eq.${bookingId}&select=*`, {
+      headers: {
+        apikey: SUPABASE_SERVICE_KEY,
+        Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
+      },
+    })
+    if (!res.ok) return null
+    const rows = await res.json()
+    return rows?.[0] || null
+  } catch (e) {
+    console.error('fetchBooking error:', e.message)
     return null
   }
 }
@@ -327,16 +346,35 @@ export default async function handler(req, res) {
     }
 
     if (pending?.purpose === 'booking_payment') {
-      // FIX: this branch previously only marked the internal
+      // FIX (original): this branch used to only mark the internal
       // pending_transactions row as 'completed' and never touched the
       // actual bookings row. The customer app's useBookingPaymentPoll
       // hook polls bookings.payment_status waiting for it to equal
       // 'paid' (see getBookingPaymentStatus in src/lib/bookings.ts) —
       // since nothing ever wrote that value, the poll always timed out
       // and the app never auto-advanced to /confirmed, even though the
-      // payment had actually gone through. This PATCH is what was
-      // missing.
+      // payment had actually gone through.
+      //
+      // FIX (this change): setting payment_status alone still wasn't
+      // enough. The wallet-payment path (app/api/wallet/pay-booking/
+      // route.js) sets status: 'confirmed' too -- that's the field
+      // canViewPass actually checks to unlock the in-app QR pass, and
+      // the field notifyBookingConfirmed's callers key off. This branch
+      // never set it, so an M-Pesa-paid booking stayed stuck on
+      // 'accepted' forever: no QR pass, no confirmation email/push. Now
+      // it mirrors the wallet path exactly -- same status transition,
+      // same guard (only promote out of 'accepted'), same notification.
       if (pending.booking_id) {
+        const existing = await fetchBooking(pending.booking_id)
+        // Only promote all the way to 'confirmed' (and only fire the
+        // confirmation notifications) if the booking was actually
+        // sitting in 'accepted' waiting on this payment -- same guard
+        // the wallet-payment route applies. Protects against a retried/
+        // duplicate Daraja callback re-confirming (and re-notifying)
+        // a booking that's already confirmed, or forcing 'confirmed'
+        // onto a booking that's since moved to some other state.
+        const shouldConfirm = existing?.status === 'accepted'
+
         const bookingRes = await fetch(
           `${SUPABASE_URL}/rest/v1/bookings?id=eq.${pending.booking_id}`,
           {
@@ -345,13 +383,32 @@ export default async function handler(req, res) {
               apikey: SUPABASE_SERVICE_KEY,
               Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
               'Content-Type': 'application/json',
-              Prefer: 'return=minimal',
+              Prefer: 'return=representation',
             },
-            body: JSON.stringify({ payment_status: 'paid' }),
+            body: JSON.stringify(
+              shouldConfirm
+                ? { payment_status: 'paid', status: 'confirmed' }
+                : { payment_status: 'paid' }
+            ),
           }
         )
+
         if (!bookingRes.ok) {
           console.error('Failed to mark booking paid:', await bookingRes.text())
+        } else if (shouldConfirm) {
+          const rows = await bookingRes.json()
+          const updatedBooking = rows?.[0]
+          if (updatedBooking) {
+            try {
+              await notifyBookingConfirmed(updatedBooking)
+            } catch (e) {
+              console.error('notifyBookingConfirmed failed for M-Pesa booking:', e.message)
+            }
+          }
+        } else if (existing) {
+          console.warn(
+            `M-Pesa payment recorded for booking ${pending.booking_id} but its status was "${existing.status}", not "accepted" — payment_status set to paid, status left unchanged.`
+          )
         }
       } else {
         console.error('booking_payment callback with no booking_id on pending row — cannot update booking', checkoutRequestId)

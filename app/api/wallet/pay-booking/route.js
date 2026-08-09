@@ -5,6 +5,7 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
+import { notifyBookingConfirmed } from '@/lib/notifyBookingConfirmed'
 
 // SECURITY/BUGFIX: this used to be a single hardcoded string
 // (CUSTOMER_APP_ORIGIN || the old splashpass-react.vercel.app URL), so it
@@ -124,6 +125,12 @@ export async function POST(request) {
     status: 'completed',
     booking_id: bookingId,
   })
+
+  // Fire after the write (and the transaction log) succeed -- never worth
+  // blocking or failing a completed payment over an email/push hiccup.
+  // notifyBookingConfirmed swallows its own errors, so this can't throw
+  // back into the response below.
+  await notifyBookingConfirmed(updatedBooking)
 
   return NextResponse.json(
     { ok: true, balance: newBalance, booking: updatedBooking },
