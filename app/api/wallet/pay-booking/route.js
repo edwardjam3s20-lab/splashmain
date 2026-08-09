@@ -5,7 +5,26 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
-import { notifyBookingConfirmed } from '@/lib/notifyBookingConfirmed'
+
+// Deliberately a dynamic import inside a try/catch, NOT a static
+// top-of-file `import`. A static import of lib/notifyBookingConfirmed
+// (which pulls in the qrcode and resend packages) means: if that module
+// fails to load for ANY reason in the deployed environment -- a
+// dependency not fully installed, a bundling issue, anything -- this
+// entire route fails to load, and every single wallet payment starts
+// failing immediately. That would silently break the actual payment
+// (the thing that matters), not just the "nice to have" notification on
+// top of it. Loading it lazily, inside a try/catch, means a broken
+// notification module can only ever fail to notify -- it can never take
+// down a payment that already succeeded.
+async function safeNotifyBookingConfirmed(booking) {
+  try {
+    const { notifyBookingConfirmed } = await import('@/lib/notifyBookingConfirmed')
+    await notifyBookingConfirmed(booking)
+  } catch (e) {
+    console.error('safeNotifyBookingConfirmed: notification module failed to load or run:', e.message)
+  }
+}
 
 // SECURITY/BUGFIX: this used to be a single hardcoded string
 // (CUSTOMER_APP_ORIGIN || the old splashpass-react.vercel.app URL), so it
@@ -128,9 +147,7 @@ export async function POST(request) {
 
   // Fire after the write (and the transaction log) succeed -- never worth
   // blocking or failing a completed payment over an email/push hiccup.
-  // notifyBookingConfirmed swallows its own errors, so this can't throw
-  // back into the response below.
-  await notifyBookingConfirmed(updatedBooking)
+  await safeNotifyBookingConfirmed(updatedBooking)
 
   return NextResponse.json(
     { ok: true, balance: newBalance, booking: updatedBooking },

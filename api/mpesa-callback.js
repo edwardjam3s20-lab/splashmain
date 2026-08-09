@@ -1,5 +1,3 @@
-import { notifyBookingConfirmed } from '@/lib/notifyBookingConfirmed'
-
 const SUPABASE_URL = 'https://msdvyiqjoogafzyaoycg.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_N_g24aU7TLHLNeu72gnfeg_1d7OleFW';
 // NOTE: SUPABASE_KEY above is a publishable/anon key, already present in
@@ -30,6 +28,26 @@ async function findPendingTransaction(checkoutRequestId) {
   } catch (e) {
     console.error('findPendingTransaction error:', e.message)
     return null
+  }
+}
+
+// Deliberately a dynamic import inside a try/catch, NOT a static
+// top-of-file `import`. A static import of lib/notifyBookingConfirmed
+// (which pulls in the qrcode and resend packages) means: if that module
+// fails to load for ANY reason in the deployed environment -- a
+// dependency not fully installed, a bundling issue, anything -- this
+// entire file fails to load, and every single M-Pesa callback request
+// starts failing immediately. That would silently break the actual
+// payment confirmation (the thing that matters), not just the "nice to
+// have" notification on top of it. Loading it lazily, inside a try/catch,
+// means a broken notification module can only ever fail to notify -- it
+// can never take down the payment-status flip that already happened.
+async function safeNotifyBookingConfirmed(booking) {
+  try {
+    const { notifyBookingConfirmed } = await import('@/lib/notifyBookingConfirmed')
+    await notifyBookingConfirmed(booking)
+  } catch (e) {
+    console.error('safeNotifyBookingConfirmed: notification module failed to load or run:', e.message)
   }
 }
 
@@ -399,11 +417,7 @@ export default async function handler(req, res) {
           const rows = await bookingRes.json()
           const updatedBooking = rows?.[0]
           if (updatedBooking) {
-            try {
-              await notifyBookingConfirmed(updatedBooking)
-            } catch (e) {
-              console.error('notifyBookingConfirmed failed for M-Pesa booking:', e.message)
-            }
+            await safeNotifyBookingConfirmed(updatedBooking)
           }
         } else if (existing) {
           console.warn(
