@@ -19,7 +19,7 @@ import { getSession } from '@/lib/session'
 // down a payment that already succeeded.
 async function safeNotifyBookingConfirmed(booking) {
   try {
-    const { notifyBookingConfirmed } = await import('@/lib/notifyBookingConfirmed')
+    const { notifyBookingConfirmed } = await import('../../../../lib/notifyBookingConfirmed.js')
     await notifyBookingConfirmed(booking)
   } catch (e) {
     console.error('safeNotifyBookingConfirmed: notification module failed to load or run:', e.message)

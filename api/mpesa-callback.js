@@ -44,7 +44,7 @@ async function findPendingTransaction(checkoutRequestId) {
 // can never take down the payment-status flip that already happened.
 async function safeNotifyBookingConfirmed(booking) {
   try {
-    const { notifyBookingConfirmed } = await import('@/lib/notifyBookingConfirmed')
+    const { notifyBookingConfirmed } = await import('../lib/notifyBookingConfirmed.js')
     await notifyBookingConfirmed(booking)
   } catch (e) {
     console.error('safeNotifyBookingConfirmed: notification module failed to load or run:', e.message)
