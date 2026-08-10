@@ -610,6 +610,10 @@ function BookingsTab({ bookings }) {
 //  TAB: OPERATOR PAYMENTS
 // ════════════════════════════════════════════════════════════════════════════
 function isEarnedBooking(b) {
+  // See lib/operatorPayouts.js's isEarnedBooking (mirrored here) — cash
+  // bookings never had money pass through the platform, so they must
+  // never count toward what the platform owes the operator.
+  if (b.payment_status === "cash") return false;
   return (
     b.payment_status === "paid" ||
     b.payment_status === "completed" ||

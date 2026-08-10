@@ -15,6 +15,7 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
+import { isWashPointCashEligible } from '@/lib/cashEligibility'
 
 // SECURITY/BUGFIX: this used to be a single hardcoded string
 // (CUSTOMER_APP_ORIGIN || the old splashpass-react.vercel.app URL), so it
@@ -81,7 +82,13 @@ export async function GET(request) {
       // which booking IDs exist for other people just by probing.
       return NextResponse.json({ error: 'Booking not found' }, { status: 404, headers: corsHeaders(origin) })
     }
-    return NextResponse.json({ booking }, { headers: corsHeaders(origin) })
+
+    // Only computed on the single-booking fetch (used by the payment
+    // screen right before a customer picks a payment method) — not on the
+    // list below, where it isn't used and would mean two extra queries
+    // per booking in someone's whole history for no reason.
+    const cashEligible = await isWashPointCashEligible(supabase, booking.location)
+    return NextResponse.json({ booking: { ...booking, cash_eligible: cashEligible } }, { headers: corsHeaders(origin) })
   }
 
   const { data: bookings, error } = await supabase
