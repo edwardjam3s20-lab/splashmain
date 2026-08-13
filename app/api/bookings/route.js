@@ -4,6 +4,7 @@ import { getSupabaseAdmin } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
 import { sendPushToOperator } from '@/lib/push'
 import { computeOrgCommissionSplit } from '@/lib/orgAccess'
+import { findActivePromotion, applyPromotionDiscount } from '@/lib/promotions'
 
 // Fields the client still supplies as-is — none of these affect money, and
 // all describe a specific choice (which car, which slot) rather than a
@@ -262,8 +263,15 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Service not found at this wash point' }, { status: 400, headers: corsHeaders(origin) })
   }
 
-  const washPrice = Number(service.price)
+  const originalWashPrice = Number(service.price)
   const appFee = 0 // no booking fee under the freemium model
+
+  // A promotion is looked up here — server-side, at the moment of booking
+  // — never trusted from the client. Only one promotion ever applies per
+  // booking (a service-specific one wins over a washpoint-wide one); see
+  // lib/promotions.js for that priority.
+  const activePromotion = await findActivePromotion(supabase, washPoint.id, service.id)
+  const washPrice = applyPromotionDiscount(originalWashPrice, activePromotion)
   const totalAmount = washPrice + appFee
   // Legacy washpoints (no organization_id) keep the existing flat 100%/0%
   // split unconditionally. Org-owned ones use the org's own trial/
@@ -274,6 +282,13 @@ export async function POST(request) {
   // organization was already fetched above (for the verification-status
   // gate) when washPoint.organization_id is set, so this reuses that
   // instead of querying organizations a second time.
+  //
+  // Split is computed on the DISCOUNTED price, not the original — a
+  // promotion reduces what the customer actually pays, and since only
+  // orgs with 0% platform commission can run one in the first place (see
+  // the orgHasAccess gate in app/api/org/promotions/route.js), the entire
+  // discount is simply absorbed by the operator's own share, not the
+  // platform's.
   const split = washPoint.organization_id
     ? computeOrgCommissionSplit(washPrice, organization)
     : splitWashPrice(washPrice, washPoint.commission_tier)
@@ -316,6 +331,8 @@ export async function POST(request) {
       commission_tier: split.tier,
       booking_type: onTrial ? 'trial' : 'subscription',
       booking_code: bookingCode,
+      promotion_id: activePromotion?.id || null,
+      original_wash_price: originalWashPrice,
     })
     .select()
     .single()
